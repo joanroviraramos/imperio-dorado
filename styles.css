@@ -5218,3 +5218,42 @@ svg {
     border-radius: 0;
   }
 }
+
+@media (max-width: 768px) {
+
+  .resource-strip {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .resource-chip {
+    padding: 4px 6px;
+    min-height: auto;
+  }
+
+  .queue-strip {
+    top: 140px;
+  }
+
+  .world-march-panel {
+    top: 185px;
+    max-height: 60px;
+  }
+
+  .world-side-nav {
+    width: 72px;
+  }
+
+  .world-side-nav .label {
+    display: none;
+  }
+
+  .world-overlay-card,
+  .modal,
+  .dialog {
+    max-width: 95vw;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+}
