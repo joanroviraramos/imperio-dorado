@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#171513" />
+    <title>Imperio Dorado</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css?v=20260617-26" />
+  </head>
+  <body>
+    <svg class="icon-defs" aria-hidden="true">
+      <symbol id="i-crown" viewBox="0 0 24 24">
+        <path d="m3 8 4.3 4.1L12 4l4.7 8.1L21 8l-2 11H5L3 8Z" />
+      </symbol>
+      <symbol id="i-map" viewBox="0 0 24 24">
+        <path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2V6Z" />
+        <path d="M8 4v13M16 7v13" />
+      </symbol>
+      <symbol id="i-scroll" viewBox="0 0 24 24">
+        <path d="M7 4h11a3 3 0 0 1 0 6H7a3 3 0 0 0 0 6h10" />
+        <path d="M7 4a3 3 0 0 0 0 6h11M7 16a3 3 0 0 0 0 6h10v-6" />
+      </symbol>
+      <symbol id="i-user" viewBox="0 0 24 24">
+        <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+        <path d="M4 21a8 8 0 0 1 16 0" />
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path d="M12 3 20 6v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3Z" />
+      </symbol>
+      <symbol id="i-ship" viewBox="0 0 24 24">
+        <path d="M4 17h16l-2 4H6l-2-4Z" />
+        <path d="M7 17V6l9 4-9 4M12 8V3" />
+      </symbol>
+      <symbol id="i-hammer" viewBox="0 0 24 24">
+        <path d="m14 6 4 4M4 21l8-8M11 4l9 9-3 3-9-9 3-3Z" />
+      </symbol>
+      <symbol id="i-sword" viewBox="0 0 24 24">
+        <path d="M14 5 19 3l-2 5L8 17l-3-3 9-9Z" />
+        <path d="m5 14 5 5M3 21l4-4" />
+      </symbol>
+      <symbol id="i-book" viewBox="0 0 24 24">
+        <path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 0-4-4V4Z" />
+        <path d="M5 16V4M9 8h6M9 12h5" />
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol id="i-minus" viewBox="0 0 24 24">
+        <path d="M5 12h14" />
+      </symbol>
+      <symbol id="i-target" viewBox="0 0 24 24">
+        <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
+        <path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10ZM12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path d="m6 6 12 12M18 6 6 18" />
+      </symbol>
+      <symbol id="i-bag" viewBox="0 0 24 24">
+        <path d="M7 9h10l1 12H6L7 9Z" />
+        <path d="M9 9V7a3 3 0 0 1 6 0v2" />
+      </symbol>
+    </svg>
+
+    <main class="app-shell" id="app">
+      <header class="topbar">
+        <div class="realm">
+          <span class="realm-kicker">Reino 1</span>
+          <strong>Imperio Dorado</strong>
+        </div>
+        <button class="power-button" id="powerButton" type="button">
+          <svg><use href="#i-crown" /></svg>
+          <span id="powerValue">0</span>
+        </button>
+      </header>
+
+      <section class="resource-strip" id="resourceStrip" aria-label="Recursos"></section>
+      <section class="queue-strip" id="queueStrip" aria-label="Colas activas"></section>
+
+      <section class="screen is-active" id="screen-city" data-screen="city" aria-label="Fortaleza">
+        <div class="scene scene-city">
+          <img src="./assets/fortaleza-siglo-oro.png" alt="Fortaleza costera del Imperio Dorado" />
+          <div class="building-layer" id="buildingLayer"></div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-world" data-screen="world" aria-label="Mundo">
+        <div class="scene scene-world">
+          <div class="world-viewport" id="worldViewport">
+            <div class="world-canvas" id="worldCanvas">
+              <img src="./assets/mapa-imperial.png" alt="Mapa imperial con rutas, fortalezas y recursos" />
+              <div class="map-layer" id="mapLayer"></div>
+            </div>
+          </div>
+          <div class="world-march-panel" id="worldMarchPanel"></div>
+          <div class="world-hud">
+            <form class="world-jump-form" id="worldJumpForm" aria-label="Ir a coordenadas">
+              <span id="worldCoordinates">X:0 Y:0</span>
+              <label>
+                <span>X</span>
+                <input id="worldJumpX" type="number" min="0" max="512" inputmode="numeric" placeholder="X" />
+              </label>
+              <label>
+                <span>Y</span>
+                <input id="worldJumpY" type="number" min="0" max="1024" inputmode="numeric" placeholder="Y" />
+              </label>
+              <button type="submit" aria-label="Ir a coordenadas">
+                <svg><use href="#i-target" /></svg>
+              </button>
+            </form>
+            <button class="world-home-button" type="button" data-world-center="home" aria-label="Localizar fortaleza">
+              <svg><use href="#i-crown" /></svg>
+              <span>Mi fortaleza</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-wisdom" data-screen="wisdom" aria-label="Casa de Sabios">
+        <div class="wisdom-view">
+          <div class="view-head">
+            <span class="crest">CS</span>
+            <div>
+              <p>Casa de Sabios</p>
+              <h1>Cofres de Sabiduria</h1>
+            </div>
+          </div>
+          <div class="weekly-meter">
+            <div>
+              <span>Reclamados esta semana</span>
+              <strong id="weeklyCount">0/2</strong>
+            </div>
+            <div class="meter-track"><span id="weeklyMeterFill"></span></div>
+          </div>
+          <div class="pack-grid" id="packGrid"></div>
+          <div class="challenge-panel" id="challengePanel"></div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-hero" data-screen="hero" aria-label="Heroe">
+        <div class="hero-view">
+          <div class="hero-portrait">
+            <img src="./assets/hero-don-alonso.png" alt="Don Alonso de Acuna, capitan general" />
+            <div class="portrait-light"></div>
+          </div>
+          <div class="hero-copy">
+            <span>Capitan General</span>
+            <h1>Don Alonso de Acuna</h1>
+            <p>Nivel 12 · Maestro de Tercios · Cazador de leyendas</p>
+          </div>
+          <div class="hero-roster" id="heroRoster" aria-label="Seleccion de heroe"></div>
+          <div class="hero-progress" id="heroProgress"></div>
+          <div class="stat-row">
+            <div><span>Ataque</span><strong>+18%</strong></div>
+            <div><span>Marcha</span><strong>+11%</strong></div>
+            <div><span>Monstruos</span><strong>+24%</strong></div>
+          </div>
+          <div class="equipment-grid">
+            <button type="button">Morrión</button>
+            <button type="button">Espada</button>
+            <button type="button">Coraza</button>
+            <button type="button">Mapa</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-inventory" data-screen="inventory" aria-label="Inventario">
+        <div class="inventory-view">
+          <div class="view-head">
+            <span class="crest">IN</span>
+            <div>
+              <p>Almacen del bastion</p>
+              <h1>Inventario</h1>
+            </div>
+          </div>
+          <div class="inventory-summary" id="inventorySummary"></div>
+          <div class="inventory-tabs" id="inventoryTabs" aria-label="Filtros de inventario">
+            <button class="is-active" type="button" data-inventory-filter="all">Todo</button>
+            <button type="button" data-inventory-filter="resources">Rec.</button>
+            <button type="button" data-inventory-filter="boosts">Aceler.</button>
+            <button type="button" data-inventory-filter="hero">Heroe</button>
+            <button type="button" data-inventory-filter="equipment">Equipo</button>
+          </div>
+          <div class="inventory-grid" id="inventoryGrid"></div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-military" data-screen="military" aria-label="Militar">
+        <div class="military-view">
+          <div class="view-head">
+            <span class="crest">TR</span>
+            <div>
+              <p>Ejercito imperial</p>
+              <h1>Tropas y Marchas</h1>
+            </div>
+          </div>
+          <div class="military-summary" id="militarySummary"></div>
+          <div class="combat-ledger" id="combatLedger"></div>
+          <div class="troop-grid" id="troopGrid"></div>
+          <div class="march-list" id="marchList"></div>
+          <div class="report-list" id="reportList"></div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-alliance" data-screen="alliance" aria-label="Alianza">
+        <div class="alliance-view">
+          <div class="view-head">
+            <span class="crest">OD</span>
+            <div>
+              <p>Orden del Dorado</p>
+              <h1>Alianza</h1>
+            </div>
+          </div>
+          <div class="alliance-actions">
+            <button type="button" data-alliance-action="help">
+              <svg><use href="#i-plus" /></svg>
+              <span>Ayudar</span>
+            </button>
+            <button type="button" data-alliance-action="rally">
+              <svg><use href="#i-target" /></svg>
+              <span>Convocar</span>
+            </button>
+            <button type="button" data-alliance-action="ship">
+              <svg><use href="#i-ship" /></svg>
+              <span>Enviar</span>
+            </button>
+            <button type="button" data-alliance-action="beta">
+              <svg><use href="#i-scroll" /></svg>
+              <span>Beta</span>
+            </button>
+          </div>
+          <div class="alliance-summary" id="allianceSummary"></div>
+          <div class="alliance-members" id="allianceMembers"></div>
+          <div class="alliance-chat">
+            <div class="chat-tabs" id="chatTabs" aria-label="Canales de chat">
+              <button class="is-active" type="button" data-chat-channel="alliance">Alianza</button>
+              <button type="button" data-chat-channel="kingdom">Reino</button>
+            </div>
+            <div class="chat-log" id="chatLog" aria-live="polite"></div>
+            <form class="chat-compose" id="chatCompose">
+              <input id="chatInput" maxlength="140" autocomplete="off" placeholder="Mensaje" />
+              <button class="primary-action" type="submit">
+                <svg><use href="#i-scroll" /></svg>
+                Enviar
+              </button>
+            </form>
+          </div>
+          <div class="rally-list" id="rallyList"></div>
+          <div class="alliance-feed" id="allianceFeed"></div>
+        </div>
+      </section>
+
+      <aside class="detail-sheet" id="detailSheet" aria-live="polite">
+        <div class="sheet-handle"></div>
+        <div class="sheet-body" id="sheetBody"></div>
+      </aside>
+
+      <nav class="bottom-nav" aria-label="Navegacion principal">
+        <button class="is-active" type="button" data-tab="city" aria-label="Fortaleza">
+          <svg><use href="#i-crown" /></svg>
+          <span>Fortaleza</span>
+        </button>
+        <button type="button" data-tab="world" aria-label="Mundo">
+          <svg><use href="#i-map" /></svg>
+          <span>Mundo</span>
+        </button>
+        <button type="button" data-tab="wisdom" aria-label="Sabios">
+          <svg><use href="#i-scroll" /></svg>
+          <span>Sabios</span>
+        </button>
+        <button type="button" data-tab="inventory" aria-label="Inventario">
+          <svg><use href="#i-bag" /></svg>
+          <span>Invent.</span>
+        </button>
+        <button type="button" data-tab="military" aria-label="Militar">
+          <svg><use href="#i-sword" /></svg>
+          <span>Militar</span>
+        </button>
+        <button type="button" data-tab="hero" aria-label="Heroe">
+          <svg><use href="#i-user" /></svg>
+          <span>Heroe</span>
+        </button>
+        <button type="button" data-tab="alliance" aria-label="Alianza">
+          <svg><use href="#i-shield" /></svg>
+          <span>Alianza</span>
+        </button>
+      </nav>
+    </main>
+
+    <script src="./app.js?v=20260617-26"></script>
+  </body>
+</html>
