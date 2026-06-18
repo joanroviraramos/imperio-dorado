@@ -5257,3 +5257,48 @@ svg {
   }
 
 }
+
+@media (max-width: 768px) {
+
+  .building-ring,
+  .marker-ring {
+    width: 28px;
+    height: 28px;
+  }
+
+  .building-ring svg,
+  .marker-ring svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .monster-token,
+  .resource-token {
+    width: 36px;
+    height: 36px;
+  }
+
+  .home-token {
+    width: 42px;
+    height: 42px;
+  }
+
+  .home-token svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .home-token b,
+  .monster-token b,
+  .resource-token b {
+    width: 16px;
+    height: 16px;
+    font-size: 8px;
+  }
+
+  .building-label,
+  .map-label {
+    display: none;
+  }
+
+}
