@@ -4109,6 +4109,18 @@ const availableBuildings = buildings.filter((building) => {
   return building.kind !== "resource";
 });
 
+const uniqueAvailableBuildings = availableBuildings.filter(
+  (building, index, list) => {
+    if (!isResourcePlot) return true;
+
+    return (
+      list.findIndex(
+        (item) => item.resource === building.resource
+      ) === index
+    );
+  }
+);
+
   sheetBody.innerHTML = `
     <div class="sheet-title">
       <div>
@@ -4126,23 +4138,23 @@ const availableBuildings = buildings.filter((building) => {
     </div>
 
     <div class="build-list">
-      ${availableBuildings
-        .map((building) => `
-          <button class="build-list-item" type="button" data-build-option="${building.id}">
-            <span class="build-list-icon">
-              ${building.icon ? `<svg><use href="#${building.icon}" /></svg>` : "🏛️"}
-            </span>
-            <span>
-              <strong>${building.name}</strong>
-              <small>${building.description || "Construir edificio."}</small>
-            </span>
-          </button>
-        `)
-        .join("")}
-    </div>
+  ${uniqueAvailableBuildings
+    .map((building) => `
+      <button class="build-list-item" type="button" data-build-option="${building.id}">
+        <span class="build-list-icon">
+          ${building.icon ? `<svg><use href="#${building.icon}" /></svg>` : "🏛️"}
+        </span>
+        <span>
+          <strong>${building.name}</strong>
+          <small>${building.description || "Construir edificio."}</small>
+        </span>
+      </button>
+    `)
+    .join("")}
+</div>
 
-    <p class="challenge-feedback" id="sheetFeedback"></p>
-  `;
+<p class="challenge-feedback" id="sheetFeedback"></p>
+`;
 
   sheetBody.querySelectorAll("[data-build-option]").forEach((button) => {
     button.addEventListener("click", () => {
