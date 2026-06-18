@@ -4144,15 +4144,26 @@ function openMapMarker(id) {
         <svg><use href="#i-close" /></svg>
       </button>
     </div>
-    <div class="world-meta">
-      <div><span>Nivel</span><strong>${marker.level}</strong></div>
-      <div><span>Coords</span><strong>${markerCoordLabel(marker)}</strong></div>
-      <div><span>Premio</span><strong>${markerRewardLabel(marker)}</strong></div>
-      <div><span>Sector</span><strong>${markerSectorLabel(marker)}</strong></div>
-      <div><span>Marcha</span><strong>${marker.range}</strong></div>
-      <div><span>Tipo</span><strong>${marchKindName(marker.kind)}</strong></div>
-    </div>
-    ${renderMarkerIntel(marker)}
+    
+      <div class="world-meta world-meta--compact">
+  <div><span>Nivel</span><strong>${marker.level}</strong></div>
+  <div><span>Coords</span><strong>${markerCoordLabel(marker)}</strong></div>
+  ${
+    marker.kind === "enemy"
+      ? `<div><span>Alianza</span><strong>${marker.alliance || "Sin alianza"}</strong></div>`
+      : ""
+  }
+  ${
+    marker.kind === "monster"
+      ? `<div><span>Objetivo</span><strong>Monstruo</strong></div>`
+      : ""
+  }
+  ${
+    marker.kind === "resource"
+      ? `<div><span>Acción</span><strong>Recolectar</strong></div>`
+      : ""
+  }
+</div>
 
     ${compactActions}
     <div id="marchPlannerSlot"></div>
@@ -4213,6 +4224,7 @@ function renderMarchPlanner(marker, quick) {
   const defaultHeroId = quick?.heroId || defaultHeroForMarch(marker);
   const defaultHero = Boolean((quick ? quick.withHero : marker.kind === "monster") && defaultHeroId);
   const defaultTroops = quick?.troops || {};
+
   const totalSelected = Object.values(defaultTroops).reduce((sum, value) => sum + value, 0);
   const duration = totalSelected ? marchDuration(marker, defaultTroops, defaultHero) : null;
   const load = troopBundleLoad(defaultTroops);
