@@ -5407,3 +5407,25 @@ svg {
     font-size: 8px;
   }
 }
+
+.fortress-plot.is-occupied {
+  opacity: 1 !important;
+  visibility: visible !important;
+  background: rgba(80, 45, 20, 0.95) !important;
+  border: 2px solid #f5c76b !important;
+  color: #fff !important;
+}
+
+.fortress-plot.is-occupied span {
+  display: grid !important;
+  place-items: center !important;
+  font-size: 22px !important;
+  opacity: 1 !important;
+}
+
+.fortress-plot.is-occupied small {
+  display: block !important;
+  opacity: 1 !important;
+  color: #fff !important;
+  text-shadow: 0 2px 4px #000;
+}
