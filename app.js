@@ -3335,8 +3335,11 @@ function renderBuildings() {
   buildingLayer.querySelectorAll("[data-plot]").forEach((button) => {
     button.addEventListener("click", () => {
       const plot = fortressPlots.find((item) => item.id === button.dataset.plot);
-      if (plot?.buildingId) openBuilding(plot.buildingId);
-      else openFortressPlot(button.dataset.plot);
+     if (plot?.buildingId) {
+  openBuilding(plot.buildingId);
+} else {
+  openFortressPlot(button.dataset.plot);
+} 
     });
   });
 
@@ -4080,6 +4083,7 @@ function openBuilding(id) {
 function openFortressPlot(id) {
   const plot = fortressPlots.find((item) => item.id === id);
   if (!plot) return;
+
   if (plot.buildingId) {
     openBuilding(plot.buildingId);
     return;
@@ -4095,31 +4099,59 @@ function openFortressPlot(id) {
   renderBuildings();
 
   const zone = fortressPlotZoneLabel(plot.zone);
+  const isResourcePlot = plot.zone === "resources" || plot.zone === "resource" || plot.type === "resource";
+
+  const availableBuildings = buildings.filter((building) => {
+    if (isResourcePlot) {
+      return ["farm", "sawmill", "quarry", "mine"].includes(building.type) ||
+        ["food", "wood", "stone", "iron"].includes(building.resource);
+    }
+
+    return !["farm", "sawmill", "quarry", "mine"].includes(building.type) &&
+      !["food", "wood", "stone", "iron"].includes(building.resource);
+  });
+
   sheetBody.innerHTML = `
     <div class="sheet-title">
       <div>
-        <h2>${plot.label}</h2>
-        <p>Parcela libre dentro de la zona ${zone.toLowerCase()}.</p>
+        <h2>${isResourcePlot ? "Edificios de recursos" : "Lista de construcción"}</h2>
+        <p>${isResourcePlot ? "Elige qué recurso producir en esta parcela." : "Elige un edificio urbano para construir."}</p>
       </div>
       <button class="close-sheet" type="button" data-close-sheet aria-label="Cerrar">
         <svg><use href="#i-close" /></svg>
       </button>
     </div>
-    <div class="building-meta">
-      <div><span>Zona</span><strong>${zone}</strong></div>
-      <div><span>Estado</span><strong>Libre</strong></div>
-      <div><span>Uso</span><strong>${plot.allowed || "Edificio fijo"}</strong></div>
-    </div>
+
     <div class="building-guidance">
-      <strong>Reserva de construccion</strong>
-      <p>Esta casilla ya queda separada para la beta. Cuando pasemos a persistencia de servidor aqui elegiremos si construir granja, mina, cuartel, hospital u otro edificio compatible.</p>
+      <strong>${isResourcePlot ? "Parcela de recursos" : "Parcela urbana"}</strong>
+      <p>${isResourcePlot ? "Aquí solo se pueden construir edificios de producción." : "Aquí puedes construir edificios militares, económicos o de apoyo."}</p>
     </div>
-    <div class="action-row">
-      <button class="primary-action" type="button" data-close-sheet><svg><use href="#i-close" /></svg>Cerrar</button>
-      <button class="secondary-action" type="button" data-open-tab="${plot.zone === "military" ? "military" : "inventory"}"><svg><use href="#${plot.zone === "military" ? "i-sword" : "i-bag"}" /></svg>${plot.zone === "military" ? "Ver tropas" : "Ver recursos"}</button>
+
+    <div class="build-list">
+      ${availableBuildings
+        .map((building) => `
+          <button class="build-list-item" type="button" data-build-option="${building.id}">
+            <span class="build-list-icon">
+              ${building.icon ? `<svg><use href="#${building.icon}" /></svg>` : "🏛️"}
+            </span>
+            <span>
+              <strong>${building.name}</strong>
+              <small>${building.description || "Construir edificio."}</small>
+            </span>
+          </button>
+        `)
+        .join("")}
     </div>
+
     <p class="challenge-feedback" id="sheetFeedback"></p>
   `;
+
+  sheetBody.querySelectorAll("[data-build-option]").forEach((button) => {
+    button.addEventListener("click", () => {
+      buildOnPlot(button.dataset.buildOption, plot.id);
+    });
+  });
+
   openSheet();
 }
 
