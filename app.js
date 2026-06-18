@@ -309,16 +309,17 @@ const fortressPlots = [
   { id: "military-5", zone: "military", label: "Cuartel libre", x: 71, y: 49, allowed: "Cuartel, hospital o torre defensiva" },
   { id: "military-6", zone: "military", label: "Hospital libre", x: 85, y: 55, allowed: "Hospital, cuartel o taller defensivo" },
 
-  { id: "resource-1", zone: "resource", label: "Granja", x: 65, y: 70, buildingId: "granja-trigo-1" },
-  { id: "resource-2", zone: "resource", label: "Granja", x: 73, y: 68, buildingId: "granja-trigo-2" },
-  { id: "resource-3", zone: "resource", label: "Aserradero", x: 28, y: 66, buildingId: "aserradero-1" },
-  { id: "resource-4", zone: "resource", label: "Cantera", x: 22, y: 57, buildingId: "cantera-1" },
-  { id: "resource-5", zone: "resource", label: "Mina", x: 88, y: 62, buildingId: "mina-hierro-1" },
-  { id: "resource-6", zone: "resource", label: "Recurso libre", x: 47, y: 72, allowed: "Granja, aserradero, cantera o mina" },
-  { id: "resource-7", zone: "resource", label: "Recurso libre", x: 57, y: 76, allowed: "Granja, aserradero, cantera o mina" },
-  { id: "resource-8", zone: "resource", label: "Recurso libre", x: 70, y: 77, allowed: "Granja, aserradero, cantera o mina" },
-  { id: "resource-9", zone: "resource", label: "Recurso libre", x: 36, y: 76, allowed: "Granja, aserradero, cantera o mina" },
-  { id: "resource-10", zone: "resource", label: "Recurso libre", x: 84, y: 74, allowed: "Granja, aserradero, cantera o mina" }
+    { id: "resource-1", zone: "resource", label: "Recurso libre", x: 22, y: 69 },
+  { id: "resource-2", zone: "resource", label: "Recurso libre", x: 34, y: 69 },
+  { id: "resource-3", zone: "resource", label: "Recurso libre", x: 46, y: 69 },
+  { id: "resource-4", zone: "resource", label: "Recurso libre", x: 58, y: 69 },
+  { id: "resource-5", zone: "resource", label: "Recurso libre", x: 70, y: 69 },
+
+  { id: "resource-6", zone: "resource", label: "Recurso libre", x: 22, y: 77 },
+  { id: "resource-7", zone: "resource", label: "Recurso libre", x: 34, y: 77 },
+  { id: "resource-8", zone: "resource", label: "Recurso libre", x: 46, y: 77 },
+  { id: "resource-9", zone: "resource", label: "Recurso libre", x: 58, y: 77 },
+  { id: "resource-10", zone: "resource", label: "Recurso libre", x: 70, y: 77 }
 ];
 
 const fortressZones = [
