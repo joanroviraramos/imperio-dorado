@@ -4101,18 +4101,13 @@ function openFortressPlot(id) {
   const zone = fortressPlotZoneLabel(plot.zone);
   const isResourcePlot = plot.zone === "resources" || plot.zone === "resource" || plot.type === "resource";
 
-  const availableBuildings = buildings.filter((building) => {
+const availableBuildings = buildings.filter((building) => {
   if (isResourcePlot) {
     return building.kind === "resource";
   }
 
-  return !["farm", "sawmill", "quarry", "mine"].includes(building.type) &&
-    !["food", "wood", "stone", "iron"].includes(building.resource);
+  return building.kind !== "resource";
 });
-
-    return !["farm", "sawmill", "quarry", "mine"].includes(building.type) &&
-      !["food", "wood", "stone", "iron"].includes(building.resource);
-  });
 
   sheetBody.innerHTML = `
     <div class="sheet-title">
