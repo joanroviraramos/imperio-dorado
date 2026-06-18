@@ -3366,15 +3366,18 @@ function renderFortressPlots() {
     .map((plot) => {
       const building = plot.buildingId ? buildings.find((item) => item.id === plot.buildingId) : null;
       const occupied = Boolean(building);
+      const isResourcePlot = plot.zone === "resources" || plot.zone === "resource" || plot.type === "resource";
+      const isLocked = plot.locked || plot.zone === "locked";
+
       return `
         <button
-          class="fortress-plot fortress-plot--${plot.zone} ${occupied ? "is-occupied" : "is-empty"} ${activePlotId === plot.id ? "is-plot-active" : ""}"
+          class="fortress-plot fortress-plot--${plot.zone} ${occupied ? "is-occupied" : "is-empty"} ${isResourcePlot ? "is-resource-plot" : ""} ${isLocked ? "is-locked" : ""} ${activePlotId === plot.id ? "is-plot-active" : ""}"
           style="left:${plot.x}%; top:${plot.y}%"
           type="button"
           data-plot="${plot.id}"
           aria-label="${occupied ? building.name : plot.label}"
         >
-          <span>${occupied ? "" : "+"}</span>
+          <span>${occupied ? "" : isLocked ? "🔒" : isResourcePlot ? "🌾" : "+"}</span>
           <small>${occupied ? fortressPlotShortLabel(plot.zone) : plot.label}</small>
         </button>
       `;
