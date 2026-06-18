@@ -3571,7 +3571,7 @@ function renderMapMarkerIcon(marker) {
     return `<span class="resource-token resource-token--${marker.resource || "grain"}"><svg><use href="#${marker.icon}" /></svg><b>${marker.level}</b></span>`;
   }
 
-  return `<span class="marker-ring"><svg><use href="#${marker.icon}" /></svg></span>`;
+  return `<span class="castle-token castle-token--${marker.kind || "enemy"}"><span class="castle-roof"></span><span class="castle-body"></span><b>${marker.level || ""}</b></span>`;
 }
 
 function renderMapMarkerLabel(marker) {
