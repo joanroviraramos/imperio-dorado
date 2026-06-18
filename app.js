@@ -4102,10 +4102,13 @@ function openFortressPlot(id) {
   const isResourcePlot = plot.zone === "resources" || plot.zone === "resource" || plot.type === "resource";
 
   const availableBuildings = buildings.filter((building) => {
-    if (isResourcePlot) {
-      return ["farm", "sawmill", "quarry", "mine"].includes(building.type) ||
-        ["food", "wood", "stone", "iron"].includes(building.resource);
-    }
+  if (isResourcePlot) {
+    return building.kind === "resource";
+  }
+
+  return !["farm", "sawmill", "quarry", "mine"].includes(building.type) &&
+    !["food", "wood", "stone", "iron"].includes(building.resource);
+});
 
     return !["farm", "sawmill", "quarry", "mine"].includes(building.type) &&
       !["food", "wood", "stone", "iron"].includes(building.resource);
