@@ -3380,8 +3380,22 @@ function renderFortressPlots() {
           data-plot="${plot.id}"
           aria-label="${occupied ? building.name : plot.label}"
         >
-          <span>${occupied ? "" : isLocked ? "🔒" : isResourcePlot ? "🌾" : "+"}</span>
-          <small>${occupied ? fortressPlotShortLabel(plot.zone) : plot.label}</small>
+       
+<span>
+  ${
+    occupied
+      ? "🏛️"
+      : isLocked
+        ? "🔒"
+        : isResourcePlot
+          ? "🌾"
+          : "+"
+  }
+</span>
+
+<small>${occupied ? building.name : plot.label}</small>
+
+
         </button>
       `;
     })
