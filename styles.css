@@ -5429,3 +5429,27 @@ svg {
   color: #fff !important;
   text-shadow: 0 2px 4px #000;
 }
+.fortress-plot.built-plot {
+  opacity: 1 !important;
+  background: rgba(40, 22, 10, 0.95) !important;
+  border: 2px solid #f3c35b !important;
+  box-shadow: 0 0 14px rgba(243, 195, 91, 0.75) !important;
+}
+
+.fortress-plot.built-plot span {
+  display: grid !important;
+  place-items: center !important;
+  width: 28px !important;
+  height: 28px !important;
+  margin: 0 auto 2px !important;
+  border-radius: 50% !important;
+  background: rgba(120, 70, 20, 0.9) !important;
+  font-size: 18px !important;
+}
+
+.fortress-plot.built-plot small {
+  display: block !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+  text-shadow: 0 2px 4px #000 !important;
+}
