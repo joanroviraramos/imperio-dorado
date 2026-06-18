@@ -4207,6 +4207,8 @@ function renderCompactMapActions(marker, quick) {
     </div>
   `;
 }
+
+function renderMarchPlanner(marker, quick) {
   const available = availableTroops();
   const defaultHeroId = quick?.heroId || defaultHeroForMarch(marker);
   const defaultHero = Boolean((quick ? quick.withHero : marker.kind === "monster") && defaultHeroId);
