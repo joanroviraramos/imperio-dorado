@@ -4089,6 +4089,19 @@ function openFortressPlot(id) {
     return;
   }
 
+  function buildOnPlot(buildingId, plotId) {
+  const plot = fortressPlots.find((item) => item.id === plotId);
+  const building = buildings.find((item) => item.id === buildingId);
+
+  if (!plot || !building) return;
+
+  plot.buildingId = building.id;
+  activePlotId = plot.id;
+
+  renderBuildings();
+  closeSheet();
+}
+
   activePlotId = id;
   activeBuildingId = null;
   activeSheetMode = "plot";
