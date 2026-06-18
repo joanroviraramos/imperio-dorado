@@ -4132,6 +4132,7 @@ function openMapMarker(id) {
   activeRallyId = null;
   const canMarch = marker.kind !== "ally";
   const quick = canMarch ? buildQuickMarch(marker) : null;
+  const compactActions = renderCompactMapActions(marker, quick);
 
   sheetBody.innerHTML = `
     <div class="sheet-title">
@@ -4152,21 +4153,47 @@ function openMapMarker(id) {
       <div><span>Tipo</span><strong>${marchKindName(marker.kind)}</strong></div>
     </div>
     ${renderMarkerIntel(marker)}
-    <div class="action-row">
-      ${
-        canMarch
-          ? `<button class="primary-action" type="button" data-marker-action="${marker.id}"><svg><use href="#${marker.icon}" /></svg>${marker.kind === "monster" ? "Cazar" : marker.kind === "enemy" ? "Marchar" : "Recolectar"}</button>`
-          : `<button class="primary-action" type="button" data-open-tab="city"><svg><use href="#i-crown" /></svg>Volver</button>`
-      }
+
+    ${compactActions}
+    <div id="marchPlannerSlot"></div>
+
+    <p class="challenge-feedback" id="sheetFeedback"></p>
+      `;
+        openSheet();
+}
+
+function renderCompactMapActions(marker, quick) {
+  const mainLabel =
+    marker.kind === "resource"
+      ? "Recolectar"
+      : marker.kind === "monster"
+      ? "Cazar"
+      : "Atacar";
+
+  return `
+    <div class="compact-map-actions">
       ${
         marker.kind === "enemy"
-          ? `<button class="secondary-action" type="button" data-scout-marker="${marker.id}"><svg><use href="#i-map" /></svg>Espiar</button>`
+          ? `<button class="secondary-action" type="button" data-scout-marker="${marker.id}">
+              <svg><use href="#i-map" /></svg>Explorar
+            </button>`
           : ""
       }
       ${
         marker.kind === "enemy"
-          ? `<button class="secondary-action" type="button" data-rally-marker="${marker.id}"><svg><use href="#i-target" /></svg>Rally</button>`
+          ? `<button class="secondary-action" type="button" data-rally-marker="${marker.id}">
+              <svg><use href="#i-target" /></svg>Rally
+            </button>`
           : ""
+      }
+      ${
+        quick
+          ? `<button class="primary-action" type="button" data-open-planner="${marker.id}">
+              <svg><use href="#${marker.icon}" /></svg>${mainLabel}
+            </button>`
+          : `<button class="primary-action" type="button" data-open-tab="city">
+              <svg><use href="#i-crown" /></svg>Volver
+            </button>`
       }
       <button class="secondary-action" type="button" data-marker-action="bookmark">
         <svg><use href="#i-map" /></svg>Marcar
@@ -4178,17 +4205,8 @@ function openMapMarker(id) {
         <svg><use href="#i-map" /></svg>Reino
       </button>
     </div>
-    ${
-      canMarch
-        ? renderMarchPlanner(marker, quick)
-        : ""
-    }
-    <p class="challenge-feedback" id="sheetFeedback"></p>
   `;
-  openSheet();
 }
-
-function renderMarchPlanner(marker, quick) {
   const available = availableTroops();
   const defaultHeroId = quick?.heroId || defaultHeroForMarch(marker);
   const defaultHero = Boolean((quick ? quick.withHero : marker.kind === "monster") && defaultHeroId);
