@@ -2709,12 +2709,13 @@ function renderQueueStrip() {
       const helps = Math.max(0, Math.floor(queue.helpApplied || 0));
       const helpLimit = allianceHelpLimit();
       return `
-        <div class="queue-chip">
-          <span>${queueTypeName(queue.type)}</span>
-          <strong>${queue.label} Â· ${formatDuration(remaining)}</strong>
-          ${helpLimit ? `<small>Ayuda ${helps}/${helpLimit}</small>` : ""}
-          <div class="queue-progress"><i style="--progress:${progress}%"></i></div>
-          <div class="queue-speed-row">
+        <div class="queue-bar">
+          <i class="queue-bar-fill" style="--progress:${progress}%"></i>
+          <span class="queue-bar-name">${queue.label}</span>
+          <strong class="queue-bar-time">${formatDuration(remaining)}</strong>
+          
+          
+          <div class="queue-bar-actions">
             ${
               speedItems.length
                 ? speedItems
@@ -2723,7 +2724,7 @@ function renderQueueStrip() {
                         `<button class="queue-speed" type="button" data-queue-speed="${id}" data-queue-type="${queue.type}">${speedLabel(item)} x${quantity}</button>`
                     )
                     .join("")
-                : `<span class="queue-speed-empty">Sin aceleradores</span>`
+                : ""
             }
           </div>
         </div>

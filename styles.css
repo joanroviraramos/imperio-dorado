@@ -6778,3 +6778,60 @@ svg {
 .resource-strip {
   top: 68px;
 }
+
+/* ============================================================
+   Cola de construccion como BARRA fina (no tarjeta), estilo Game of War
+   ============================================================ */
+.queue-strip {
+  grid-template-columns: 1fr;
+  gap: 5px;
+}
+.queue-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(24, 19, 15, 0.84);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+.queue-bar-fill {
+  position: absolute;
+  inset: 0;
+  width: var(--progress);
+  background: linear-gradient(90deg, rgba(214, 184, 110, 0.32), rgba(214, 184, 110, 0.10));
+  pointer-events: none;
+}
+.queue-bar-name {
+  position: relative;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff4d7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.queue-bar-time {
+  position: relative;
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 850;
+  color: var(--gold-bright);
+}
+.queue-bar-actions {
+  position: relative;
+  display: flex;
+  gap: 4px;
+}
+.queue-bar-actions:empty {
+  display: none;
+}
+.queue-bar .queue-speed {
+  padding: 2px 6px;
+  font-size: 10px;
+}
