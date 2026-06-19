@@ -3606,6 +3606,12 @@ function buildingMapSprite(building) {
     if (lv <= 20) return "./assets/mina-hierro-mapa-11-20.png";
     return "./assets/mina-hierro-mapa-21-25.png";
   }
+  if (building.kind === "barracks") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/cuartel-mapa-1-10.png";
+    if (lv <= 20) return "./assets/cuartel-mapa-11-20.png";
+    return "./assets/cuartel-mapa-21-25.png";
+  }
   return null;
 }
 
@@ -3617,7 +3623,7 @@ function renderFortressPlots() {
       const resourceClass = building?.resource ? ` fortress-plot--${building.resource}` : "";
       const buildingKind = building?.kind || "";
       const sprite = buildingMapSprite(building);
-      const spriteStyle = "position:absolute;left:50%;bottom:50%;transform:translate(-50%,42%);width:75px;max-width:none;height:auto;pointer-events:auto;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45));z-index:2;";
+      const spriteStyle = "position:absolute;top:auto;right:auto;left:50%;bottom:50%;transform:translate(-50%,42%);width:75px;max-width:none;height:auto;object-fit:contain;pointer-events:auto;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45));z-index:5;";
       const plotExtra = sprite ? ";overflow:visible;background:transparent;border-color:transparent;box-shadow:none;" : "";
       const spriteHide = sprite ? " style=\"display:none\"" : "";
       const tokenIcon = occupied
