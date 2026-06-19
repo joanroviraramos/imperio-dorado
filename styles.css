@@ -6699,3 +6699,42 @@ svg {
   background: rgba(18, 14, 11, 0.84);
   font-size: 8px;
 }
+
+
+/* ============================================================
+   Recursos en UNA sola fila, mas limpio (al estilo de la barra de colas)
+   ============================================================ */
+.resource-strip {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+@media (max-width: 768px) {
+  .resource-strip {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+  }
+}
+.resource-chip {
+  gap: 3px;
+  padding: 3px 4px;
+  justify-content: center;
+  min-height: 24px;
+}
+.resource-dot {
+  width: 9px;
+  height: 9px;
+}
+.resource-chip span {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff4d7;
+}
+/* ocultamos el tope para dejar solo el valor (el tope sigue visible al pasar el raton) */
+.resource-chip b {
+  display: none;
+}
+/* barrita de lleno un poco mas visible */
+.resource-chip em {
+  height: 2.5px;
+  opacity: 0.85;
+}
