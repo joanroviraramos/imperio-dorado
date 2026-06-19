@@ -1913,7 +1913,7 @@ let worldFilter = "all";
 let worldZoom = 1;
 let worldHasCentered = false;
 let worldPinch = null;
-let heroPanelTab = "perfil";
+let heroPanelTab = "progress";
 
 const WORLD_MIN_ZOOM = 0.28;
 const WORLD_MAX_ZOOM = 1.8;
@@ -2694,8 +2694,8 @@ function tickGame() {
 
 function renderQueueStrip() {
   const queues = Object.values(state.queues).filter(Boolean);
-  if (!queues.length) {
-    queueStrip.innerHTML = `<div class="queue-chip is-free"><span>Colas</span><strong>Todas libres</strong></div>`;
+  if (currentTab !== "city" || !queues.length) {
+    queueStrip.innerHTML = "";
     return;
   }
 
@@ -4132,6 +4132,7 @@ function switchTab(tab) {
   document.querySelectorAll("[data-tab]").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.tab === tab);
   });
+  renderQueueStrip();
   if (tab === "world" && !worldHasCentered) {
     window.setTimeout(() => centerWorldOnMarker(HOME_MARKER_ID), 0);
   }
@@ -9285,8 +9286,8 @@ function bindHeroEquipment() {
     });
   }
 
-  if (heroDetailPanel) {
-    heroDetailPanel.addEventListener("click", (event) => {
+  if (heroProgress) {
+    heroProgress.addEventListener("click", (event) => {
       const button = event.target.closest("[data-select-loadout]");
       if (!button) return;
       selectEquipmentLoadout(button.dataset.selectLoadout);
@@ -9441,82 +9442,50 @@ function renderHeroEquipment() {
   }
   if (heroEyebrow) heroEyebrow.textContent = hero.title;
   if (heroName) heroName.textContent = hero.name;
-  if (heroSubtitle) heroSubtitle.textContent = `Nivel ${info.level} \u00B7 ${heroRankName(info.level)}`;
-
-  const ring = document.querySelector("#heroLevelRing");
-  const ringNum = document.querySelector("#heroLevelNum");
-  if (ring) ring.style.background = `conic-gradient(var(--gold-bright) ${info.progress}%, rgba(0,0,0,.5) 0)`;
-  if (ringNum) ringNum.textContent = info.level;
+  if (heroSubtitle) {
+    heroSubtitle.textContent = `Nivel ${info.level} - ${heroRankName(info.level)} - Energia de caza`;
+  }
 
   if (heroRosterEl) {
     heroRosterEl.innerHTML = heroRoster
       .map((item) => {
         const itemInfo = heroLevelInfo(item.id);
+        const itemState = heroState(item.id);
         const busy = heroIsMarching(item.id);
         return `
-          <button class="h2-med ${item.id === hero.id ? "is-sel" : ""} ${busy ? "is-busy" : ""}" type="button" data-select-hero="${item.id}" aria-label="${item.name}">
-            <span class="ms s1"></span><span class="ms s2"></span><span class="ms s3"></span><span class="ms s4"></span>
-            <span class="h2-mi"><img src="${item.portrait}" alt="" loading="lazy" /></span>
-            <span class="h2-ml">${itemInfo.level}</span>
-          </button>`;
+          <button class="hero-card ${item.id === hero.id ? "is-active" : ""} ${busy ? "is-busy" : ""}" type="button" data-select-hero="${item.id}">
+            <span class="hero-card-mark">
+              <img src="${item.portrait}" alt="" loading="lazy" />
+              <em>${item.initials}</em>
+            </span>
+            <span>
+              <strong>${item.name}</strong>
+              <span>Nv. ${itemInfo.level} - ${formatNumber(Math.floor(itemState.energy || 0))}/${formatNumber(heroEnergyMax(item.id))}${busy ? " - ocupado" : ""}</span>
+            </span>
+          </button>
+        `;
       })
       .join("");
   }
 
   if (heroProgress) {
     heroProgress.innerHTML = `
-      <div class="h2-bar-row">
-        <div class="h2-lab"><span>Energia heroica</span><b>${formatNumber(energy)} / ${formatNumber(energyMax)}</b></div>
-        <div class="h2-bar energy"><i style="width:${energyProgress}%"></i></div>
+      <div class="hero-progress-row">
+        <div><span>Energia heroica</span><strong>${formatNumber(energy)} / ${formatNumber(energyMax)}</strong></div>
+        <b class="hero-progress-bar"><i style="--bar:${energyProgress}%"></i></b>
       </div>
-      <div class="h2-bar-row">
-        <div class="h2-lab"><span>Proximo nivel</span><b>${formatNumber(info.currentXp)} / ${formatNumber(info.nextXp)} XP</b></div>
-        <div class="h2-bar"><i style="width:${info.progress}%"></i></div>
+      <div class="hero-progress-row">
+        <div><span>Proximo nivel</span><strong>${formatNumber(info.currentXp)} / ${formatNumber(info.nextXp)} XP</strong></div>
+        <b class="hero-progress-bar"><i style="--bar:${info.progress}%"></i></b>
       </div>
-      <div class="h2-role-grid">
-        <div><span>Ataque</span><b>+${formatNumber(heroEquipmentBonus("attack"))}%</b></div>
-        <div><span>Defensa</span><b>+${formatNumber(heroEquipmentBonus("defense"))}%</b></div>
-        <div><span>Invest.</span><b>+${formatNumber(heroEquipmentBonus("research"))}%</b></div>
-        <div><span>Recolect.</span><b>+${formatNumber(heroEquipmentBonus("gathering"))}%</b></div>
+      <div class="hero-role-grid">
+        <div><span>Ataque</span><strong>+${formatNumber(heroEquipmentBonus("attack"))}%</strong></div>
+        <div><span>Defensa</span><strong>+${formatNumber(heroEquipmentBonus("defense"))}%</strong></div>
+        <div><span>Invest.</span><strong>+${formatNumber(heroEquipmentBonus("research"))}%</strong></div>
+        <div><span>Recolect.</span><strong>+${formatNumber(heroEquipmentBonus("gathering"))}%</strong></div>
       </div>
-      <p class="h2-note">El heroe sube con caza y cronicas. El equipo define si destaca en ataque, defensa, investigacion o recoleccion.</p>`;
-  }
-
-  if (heroStatRow) {
-    heroStatRow.innerHTML = `
-      <div><span>Ataque heroe</span><b>+${formatNumber(heroCommandAttackBonus(hero.id))}%</b></div>
-      <div><span>Marcha</span><b>${formatNumber(maxMarchSize())}</b></div>
-      <div><span>Monstruos</span><b>+${formatNumber(heroMonsterAttackBonus(hero.id))}%</b></div>`;
-  }
-
-  if (heroDetailPanel) {
-    heroDetailPanel.innerHTML = `
-      ${renderEquipmentLoadoutButtons()}
-      <div class="h2-set-note">
-        <strong>${equipmentSetStatus().rule?.name || "Conjunto"}</strong>
-        <span>${equipmentSetBonusText()}</span>
-      </div>
-      ${renderLoadoutBonusBreakdown()}`;
-  }
-
-  if (heroEquipmentGrid) {
-    heroEquipmentGrid.innerHTML = forgeRecipes
-      .map((recipe) => {
-        const level = equipmentLevel(recipe.id);
-        const qualityIndex = equipmentQualityIndex(recipe.id);
-        const quality = forgeQualities[qualityIndex];
-        const activeInProfile = equipmentActiveInLoadout(recipe);
-        const primaryBonus = formatEquipmentPrimaryBonus(recipe, level, qualityIndex);
-        return `
-          <button class="h2-slot ${activeInProfile ? "is-active-loadout" : ""}" type="button" data-open-forge="${recipe.id}" style="${level ? `--q:${quality.color}` : ""}" aria-label="${recipe.slot}">
-            <span class="h2-si"><svg><use href="#${recipe.icon}" /></svg></span>
-            <span class="h2-sb">
-              <strong>${recipe.slot}</strong>
-              <small>${level ? `Nv. ${level} ${quality.label}${primaryBonus ? ` \u00B7 ${primaryBonus}` : ""}${activeInProfile ? " \u00B7 activo" : ""}` : "Sin forjar"}</small>
-            </span>
-          </button>`;
-      })
-      .join("");
+      <p class="hero-progress-note">El heroe sube con caza y cronicas. El equipo define si destaca en ataque, defensa, investigacion o recoleccion.</p>
+    `;
   }
 
   if (heroPanelTabs) {
@@ -9524,9 +9493,50 @@ function renderHeroEquipment() {
       button.classList.toggle("is-active", button.dataset.heroPanel === heroPanelTab);
     });
   }
-  document.querySelectorAll("#screen-hero [data-panel]").forEach((panel) => {
-    panel.hidden = panel.dataset.panel !== heroPanelTab;
-  });
+
+  if (heroProgress) heroProgress.hidden = heroPanelTab !== "progress";
+  if (heroRosterEl) heroRosterEl.hidden = heroPanelTab !== "heroes";
+
+  if (heroDetailPanel) {
+    heroDetailPanel.hidden = heroPanelTab !== "sets";
+    heroDetailPanel.innerHTML = `
+      ${renderEquipmentLoadoutButtons()}
+      <div class="equipment-set-note">
+        <strong>${equipmentSetStatus().rule?.name || "Conjunto"}</strong>
+        <span>${equipmentSetBonusText()}</span>
+      </div>
+      ${renderLoadoutBonusBreakdown()}
+    `;
+  }
+
+  if (heroStatRow) {
+    const commandBonus = heroCommandAttackBonus(hero.id);
+    heroStatRow.innerHTML = `
+      <div><span>Ataque heroe</span><strong>+${formatNumber(commandBonus)}%</strong></div>
+      <div><span>Marcha</span><strong>${formatNumber(maxMarchSize())}</strong></div>
+      <div><span>Monstruos</span><strong>+${formatNumber(heroMonsterAttackBonus(hero.id))}%</strong></div>
+    `;
+  }
+
+  if (!heroEquipmentGrid) return;
+  heroEquipmentGrid.innerHTML = forgeRecipes
+    .map((recipe) => {
+      const level = equipmentLevel(recipe.id);
+      const qualityIndex = equipmentQualityIndex(recipe.id);
+      const quality = forgeQualities[qualityIndex];
+      const activeInProfile = equipmentActiveInLoadout(recipe);
+      const primaryBonus = formatEquipmentPrimaryBonus(recipe, level, qualityIndex);
+      return `
+        <button class="${activeInProfile ? "is-active-loadout" : ""}" type="button" data-open-forge="${recipe.id}" style="${level ? `--item-color:${quality.color}` : ""}" aria-label="${recipe.slot}">
+          <svg><use href="#${recipe.icon}" /></svg>
+          <span>
+            <strong>${recipe.slot}</strong>
+            <small>${level ? `Nv. ${level} ${quality.label}${primaryBonus ? ` - ${primaryBonus}` : ""}${activeInProfile ? " - activo" : ""}` : "Sin forjar"}</small>
+          </span>
+        </button>
+      `;
+    })
+    .join("");
 }
 
 function renderInventory(message = "") {

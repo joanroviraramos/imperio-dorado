@@ -6738,3 +6738,38 @@ svg {
   height: 2.5px;
   opacity: 0.85;
 }
+
+
+/* ============================================================
+   Avatar del heroe: solo la foto, redonda (estilo Game of War)
+   ============================================================ */
+.hero-access {
+  display: block;
+  grid-template-columns: none;
+  gap: 0;
+  min-width: 0;
+  max-width: none;
+  width: 52px;
+  min-height: 52px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+.hero-access-copy {
+  display: none;
+}
+.hero-access-portrait {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--gold-bright);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.hero-access-portrait img {
+  object-position: center 14%;
+}
+.hero-access-portrait b {
+  right: -2px;
+  bottom: -2px;
+}
