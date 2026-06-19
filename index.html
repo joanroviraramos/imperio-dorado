@@ -6,7 +6,11 @@
     <meta name="theme-color" content="#171513" />
     <title>Imperio Dorado</title>
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=20260617-26" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260619-hero" />
+    <link rel="stylesheet" href="./hero.css?v=20260619-hero" />
   </head>
   <body>
     <svg class="icon-defs" aria-hidden="true">
@@ -64,10 +68,16 @@
 
     <main class="app-shell" id="app">
       <header class="topbar">
-        <div class="realm">
-          <span class="realm-kicker">Reino 1</span>
-          <strong>Imperio Dorado</strong>
-        </div>
+        <button class="hero-access" id="heroAccessButton" type="button" aria-label="Abrir perfil del heroe">
+          <span class="hero-access-portrait">
+            <img id="heroAccessImage" src="./assets/hero-don-alonso.png" alt="Heroe activo" />
+            <b id="heroAccessLevel">1</b>
+          </span>
+          <span class="hero-access-copy">
+            <strong id="heroAccessName">Heroe</strong>
+            <small>Equipo y perfil</small>
+          </span>
+        </button>
         <button class="power-button" id="powerButton" type="button">
           <svg><use href="#i-crown" /></svg>
           <span id="powerValue">0</span>
@@ -79,7 +89,8 @@
 
       <section class="screen is-active" id="screen-city" data-screen="city" aria-label="Fortaleza">
         <div class="scene scene-city">
-          <img src="./assets/fortaleza-siglo-oro.png" alt="Fortaleza costera del Imperio Dorado" />
+          <img src="./assets/fortaleza-base-beta.png" alt="Fortaleza costera del Imperio Dorado" />
+          <div class="city-terrain" aria-hidden="true"></div>
           <div class="building-layer" id="buildingLayer"></div>
         </div>
       </section>
@@ -139,27 +150,36 @@
 
       <section class="screen" id="screen-hero" data-screen="hero" aria-label="Heroe">
         <div class="hero-view">
-          <div class="hero-portrait">
-            <img src="./assets/hero-don-alonso.png" alt="Don Alonso de Acuna, capitan general" />
-            <div class="portrait-light"></div>
+          <div class="h2-card">
+            <span class="h2-stud tl"></span><span class="h2-stud tr"></span>
+            <span class="h2-stud bl"></span><span class="h2-stud br"></span>
+            <div class="h2-in">
+              <div class="hero-portrait">
+                <img src="./assets/hero-don-alonso.png" alt="Heroe activo" />
+                <span class="h2-lring" id="heroLevelRing" style="background:conic-gradient(var(--gold-bright) 0%, rgba(0,0,0,.5) 0)"><i id="heroLevelNum">1</i></span>
+              </div>
+              <div class="hero-copy">
+                <span>Capitan General</span>
+                <h1>Don Alonso de Acuna</h1>
+                <p>Nivel 1 &middot; Recluta</p>
+              </div>
+            </div>
           </div>
-          <div class="hero-copy">
-            <span>Capitan General</span>
-            <h1>Don Alonso de Acuna</h1>
-            <p>Nivel 12 · Maestro de Tercios · Cazador de leyendas</p>
+          <div id="heroRoster" aria-label="Seleccion de heroe"></div>
+          <div id="heroPanelTabs" aria-label="Paneles de heroe">
+            <button class="is-active" type="button" data-hero-panel="perfil">Perfil</button>
+            <button type="button" data-hero-panel="conjuntos">Conjuntos</button>
+            <button type="button" data-hero-panel="equipo">Equipo</button>
           </div>
-          <div class="hero-roster" id="heroRoster" aria-label="Seleccion de heroe"></div>
-          <div class="hero-progress" id="heroProgress"></div>
-          <div class="stat-row">
-            <div><span>Ataque</span><strong>+18%</strong></div>
-            <div><span>Marcha</span><strong>+11%</strong></div>
-            <div><span>Monstruos</span><strong>+24%</strong></div>
+          <div class="h2-panel" data-panel="perfil">
+            <div id="heroProgress"></div>
+            <div class="stat-row"></div>
           </div>
-          <div class="equipment-grid">
-            <button type="button">Morrión</button>
-            <button type="button">Espada</button>
-            <button type="button">Coraza</button>
-            <button type="button">Mapa</button>
+          <div class="h2-panel" data-panel="conjuntos" hidden>
+            <div id="heroDetailPanel"></div>
+          </div>
+          <div class="h2-panel" data-panel="equipo" hidden>
+            <div class="equipment-grid"></div>
           </div>
         </div>
       </section>
@@ -287,6 +307,6 @@
       </nav>
     </main>
 
-    <script src="./app.js?v=20260617-26"></script>
+    <script src="./app.js?v=20260619-hero"></script>
   </body>
 </html>

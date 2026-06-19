@@ -1,4 +1,4 @@
-﻿const STORAGE_KEY = "imperioDoradoState.v1";
+const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
 const BUILDING_MAX_LEVEL = 25;
 const WORLD_COORD_MAX_X = 512;
@@ -121,6 +121,48 @@ const buildings = [
     body: "Intercambia recursos con aliados y prepara convoyes para el mapa del mundo.",
     action: "Comerciar",
     cost: { grain: 350, wood: 350, silver: 120 }
+  },
+  {
+    id: "embajada",
+    name: "Embajada Imperial",
+    icon: "i-user",
+    x: 31,
+    y: 35,
+    level: 1,
+    role: "Refuerzos",
+    status: "Sin emisarios",
+    bonus: "+5% refuerzos",
+    body: "Permite recibir refuerzos de la alianza y aumentar la capacidad de tropas aliadas en la fortaleza.",
+    action: "Gestionar",
+    cost: { stone: 780, wood: 520, silver: 210 }
+  },
+  {
+    id: "prision",
+    name: "Prision Real",
+    icon: "i-shield",
+    x: 69,
+    y: 39,
+    level: 1,
+    role: "Control",
+    status: "Celdas vacias",
+    bonus: "+4% defensa",
+    body: "Mas adelante permitira capturar heroes enemigos tras grandes batallas y rallies.",
+    action: "Custodiar",
+    cost: { stone: 950, iron: 360, silver: 260 }
+  },
+  {
+    id: "salon-guerra",
+    name: "Salon de Guerra",
+    icon: "i-sword",
+    x: 50,
+    y: 43,
+    level: 1,
+    role: "Rally",
+    status: "Sin convocatoria",
+    bonus: "+5% ataque conjunto",
+    body: "Organiza rallies de alianza, aumenta el tamano de las convocatorias y mejora ataques coordinados.",
+    action: "Convocar",
+    cost: { wood: 850, iron: 420, silver: 320 }
   },
   {
     id: "almacen",
@@ -292,35 +334,47 @@ const buildings = [
 ];
 
 const fortressPlots = [
-  { id: "base-alcazar", zone: "base", label: "Alcazar", x: 52, y: 27, buildingId: "alcazar" },
-  { id: "base-academia", zone: "base", label: "Academia", x: 67, y: 25, buildingId: "academia" },
-  { id: "base-forja", zone: "base", label: "Forja", x: 61, y: 50, buildingId: "forja" },
-  { id: "base-mercado", zone: "base", label: "Mercado", x: 39, y: 50, buildingId: "mercado" },
-  { id: "base-alianza", zone: "base", label: "Alianza", x: 31, y: 53, buildingId: "casa-alianza" },
-  { id: "base-sabios", zone: "base", label: "Sabios", x: 34, y: 59, buildingId: "sabios" },
-  { id: "base-almacen", zone: "base", label: "Almacen", x: 47, y: 56, buildingId: "almacen" },
-  { id: "base-astillero", zone: "base", label: "Astillero", x: 21, y: 43, buildingId: "astillero" },
-  { id: "base-muralla", zone: "base", label: "Muralla", x: 50, y: 64, buildingId: "muralla" },
+  { id: "base-alcazar", zone: "base", label: "Alcazar", x: 50, y: 13, buildingId: "alcazar" },
+  { id: "base-academia", zone: "base", label: "Academia", x: 62, y: 31, buildingId: "academia" },
+  { id: "base-forja", zone: "base", label: "Solar de forja", x: 72, y: 32 },
+  { id: "base-mercado", zone: "base", label: "Solar de mercado", x: 31, y: 32 },
+  { id: "base-embajada", zone: "base", label: "Solar de embajada", x: 43, y: 32 },
+  { id: "base-prision", zone: "base", label: "Solar de prision", x: 82, y: 33 },
+  { id: "base-alianza", zone: "base", label: "Solar de alianza", x: 25, y: 40 },
+  { id: "base-salon-guerra", zone: "base", label: "Solar de guerra", x: 51, y: 37 },
+  { id: "base-sabios", zone: "base", label: "Solar de sabios", x: 37, y: 40 },
+  { id: "base-almacen", zone: "base", label: "Solar de almacen", x: 76, y: 40 },
+  { id: "base-astillero", zone: "base", label: "Solar naval", x: 62, y: 40 },
+  { id: "base-muralla", zone: "base", label: "Muralla", x: 50, y: 57, buildingId: "muralla" },
 
-  { id: "military-1", zone: "military", label: "Cuartel", x: 74, y: 40, buildingId: "cuartel" },
-  { id: "military-2", zone: "military", label: "Cuartel", x: 84, y: 44, buildingId: "cuartel-sur" },
-  { id: "military-3", zone: "military", label: "Hospital", x: 76, y: 57, buildingId: "hospital" },
-  { id: "military-4", zone: "military", label: "Hospital", x: 63, y: 60, buildingId: "hospital-puerto" },
-  { id: "military-5", zone: "military", label: "Cuartel libre", x: 71, y: 49, allowed: "Cuartel, hospital o torre defensiva" },
-  { id: "military-6", zone: "military", label: "Hospital libre", x: 85, y: 55, allowed: "Hospital, cuartel o taller defensivo" },
+  { id: "military-1", zone: "military", label: "Solar militar", x: 27, y: 60 },
+  { id: "military-2", zone: "military", label: "Solar militar", x: 40, y: 60 },
+  { id: "military-3", zone: "military", label: "Solar militar", x: 60, y: 60 },
+  { id: "military-4", zone: "military", label: "Solar militar", x: 73, y: 60 },
+  { id: "military-5", zone: "military", label: "Solar militar", x: 34, y: 67, allowed: "Cuartel u hospital" },
+  { id: "military-6", zone: "military", label: "Solar militar", x: 50, y: 67, allowed: "Cuartel u hospital" },
+  { id: "military-7", zone: "military", label: "Solar militar", x: 66, y: 67, allowed: "Cuartel u hospital" },
+  { id: "military-8", zone: "military", label: "Solar militar", x: 17, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-9", zone: "military", label: "Solar militar", x: 17, y: 54, allowed: "Cuartel u hospital" },
+  { id: "military-10", zone: "military", label: "Solar militar", x: 18, y: 62, allowed: "Cuartel u hospital" },
+  { id: "military-11", zone: "military", label: "Solar militar", x: 84, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-12", zone: "military", label: "Solar militar", x: 83, y: 56, allowed: "Cuartel u hospital" },
 
-    { id: "resource-1", zone: "resource", label: "Recurso libre", x: 22, y: 69 },
-  { id: "resource-2", zone: "resource", label: "Recurso libre", x: 34, y: 69 },
-  { id: "resource-3", zone: "resource", label: "Recurso libre", x: 46, y: 69 },
-  { id: "resource-4", zone: "resource", label: "Recurso libre", x: 58, y: 69 },
-  { id: "resource-5", zone: "resource", label: "Recurso libre", x: 70, y: 69 },
-
-  { id: "resource-6", zone: "resource", label: "Recurso libre", x: 22, y: 77 },
-  { id: "resource-7", zone: "resource", label: "Recurso libre", x: 34, y: 77 },
-  { id: "resource-8", zone: "resource", label: "Recurso libre", x: 46, y: 77 },
-  { id: "resource-9", zone: "resource", label: "Recurso libre", x: 58, y: 77 },
-  { id: "resource-10", zone: "resource", label: "Recurso libre", x: 70, y: 77 }
+  { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 18, y: 78 },
+  { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 31, y: 78 },
+  { id: "resource-3", zone: "resource", label: "Parcela de recursos", x: 18, y: 86 },
+  { id: "resource-4", zone: "resource", label: "Parcela de recursos", x: 32, y: 86 },
+  { id: "resource-5", zone: "resource", label: "Parcela de recursos", x: 45, y: 88 },
+  { id: "resource-6", zone: "resource", label: "Parcela de recursos", x: 55, y: 86 },
+  { id: "resource-7", zone: "resource", label: "Parcela de recursos", x: 73, y: 78 },
+  { id: "resource-8", zone: "resource", label: "Parcela de recursos", x: 86, y: 78 },
+  { id: "resource-9", zone: "resource", label: "Parcela de recursos", x: 72, y: 88 },
+  { id: "resource-10", zone: "resource", label: "Parcela de recursos", x: 85, y: 88 }
 ];
+
+const initialFortressAssignments = Object.fromEntries(
+  fortressPlots.filter((plot) => plot.buildingId).map((plot) => [plot.id, plot.buildingId])
+);
 
 const fortressZones = [
   { id: "zone-core", label: "Edificios base", x: 45, y: 45, w: 57, h: 44, tone: "base" },
@@ -1733,6 +1787,7 @@ const defaultState = {
     claimed: 0
   },
   buildingLevels: {},
+  fortressAssignments: {},
   enemyResources: {},
   enemyTroops: {},
   enemyWounded: {},
@@ -1858,6 +1913,7 @@ let worldFilter = "all";
 let worldZoom = 1;
 let worldHasCentered = false;
 let worldPinch = null;
+let heroPanelTab = "perfil";
 
 const WORLD_MIN_ZOOM = 0.28;
 const WORLD_MAX_ZOOM = 1.8;
@@ -1889,12 +1945,18 @@ const combatLedger = document.querySelector("#combatLedger");
 const troopGrid = document.querySelector("#troopGrid");
 const marchList = document.querySelector("#marchList");
 const reportList = document.querySelector("#reportList");
+const heroAccessButton = document.querySelector("#heroAccessButton");
+const heroAccessImage = document.querySelector("#heroAccessImage");
+const heroAccessLevel = document.querySelector("#heroAccessLevel");
+const heroAccessName = document.querySelector("#heroAccessName");
 const heroPortraitImage = document.querySelector(".hero-portrait img");
 const heroEyebrow = document.querySelector(".hero-copy span");
 const heroName = document.querySelector(".hero-copy h1");
 const heroSubtitle = document.querySelector(".hero-copy p");
 const heroRosterEl = document.querySelector("#heroRoster");
 const heroProgress = document.querySelector("#heroProgress");
+const heroPanelTabs = document.querySelector("#heroPanelTabs");
+const heroDetailPanel = document.querySelector("#heroDetailPanel");
 const heroStatRow = document.querySelector(".hero-view .stat-row");
 const heroEquipmentGrid = document.querySelector(".equipment-grid");
 const rallyList = document.querySelector("#rallyList");
@@ -1910,6 +1972,7 @@ init();
 
 function init() {
   applySavedBuildingLevels();
+  restoreFortressAssignments();
   normalizeWoundedState(true);
   applyOfflineProduction();
   processHeroEnergy();
@@ -1977,6 +2040,7 @@ function mergeState(base, saved) {
     resources: { ...base.resources, ...(saved.resources || {}) },
     wisdom: { ...base.wisdom, ...(saved.wisdom || {}) },
     buildingLevels: { ...base.buildingLevels, ...(saved.buildingLevels || {}) },
+    fortressAssignments: { ...(saved.fortressAssignments || {}) },
     enemyResources: { ...base.enemyResources, ...(saved.enemyResources || {}) },
     enemyTroops: { ...base.enemyTroops, ...(saved.enemyTroops || {}) },
     enemyWounded: { ...base.enemyWounded, ...(saved.enemyWounded || {}) },
@@ -2335,6 +2399,144 @@ function applySavedBuildingLevels() {
   });
 }
 
+function restoreFortressAssignments() {
+  for (let index = buildings.length - 1; index >= 0; index -= 1) {
+    if (buildings[index].isPlotInstance) buildings.splice(index, 1);
+  }
+
+  fortressPlots.forEach((plot) => {
+    if (initialFortressAssignments[plot.id]) {
+      plot.buildingId = initialFortressAssignments[plot.id];
+      return;
+    }
+    delete plot.buildingId;
+  });
+
+  Object.entries(state.fortressAssignments || {}).forEach(([plotId, assignment]) => {
+    const plot = fortressPlots.find((item) => item.id === plotId);
+    if (!plot) return;
+
+    const assignmentId = typeof assignment === "string" ? assignment : assignment?.buildingId;
+    const templateId = typeof assignment === "string" ? assignment : assignment?.templateId;
+    if (plot.zone === "military" && typeof assignment === "string") {
+      const template = buildings.find((item) => item.id === templateId);
+      if (!template) return;
+      const instance = createPlotBuildingInstance(template, plot);
+      plot.buildingId = instance.id;
+      state.fortressAssignments[plot.id] = {
+        buildingId: instance.id,
+        templateId: template.id
+      };
+      return;
+    }
+    const building = buildings.find((item) => item.id === assignmentId);
+    if (building) {
+      plot.buildingId = building.id;
+      return;
+    }
+
+    const template = buildings.find((item) => item.id === templateId);
+    if (!template) return;
+    const instance = createPlotBuildingInstance(template, plot);
+    const savedLevel = state.buildingLevels[instance.id];
+    if (Number.isFinite(savedLevel)) instance.level = clampBuildingLevel(savedLevel);
+    state.buildingLevels[instance.id] = instance.level;
+    plot.buildingId = instance.id;
+  });
+}
+
+function visibleCityBuildings() {
+  const assignedIds = new Set(
+    fortressPlots
+      .map((plot) => plot.buildingId)
+      .filter(Boolean)
+  );
+  return buildings.filter((building) => assignedIds.has(building.id));
+}
+
+function availableBuildingsForPlot(plot) {
+  const assignedIds = new Set(
+    fortressPlots
+      .map((item) => item.buildingId)
+      .filter(Boolean)
+  );
+
+  return buildings.filter((building) => {
+    if (!["resource", "military"].includes(plot.zone) && assignedIds.has(building.id)) return false;
+
+    if (plot.zone === "resource") {
+      if (building.kind !== "resource") return false;
+      return buildings.findIndex((item) => item.kind === "resource" && item.resource === building.resource) === buildings.indexOf(building);
+    }
+    if (plot.zone === "military") {
+      if (building.kind !== "barracks" && building.kind !== "hospital") return false;
+      return buildings.findIndex((item) => item.kind === building.kind) === buildings.indexOf(building);
+    }
+    if (plot.zone === "base") {
+      return !["alcazar", "academia", "muralla"].includes(building.id) && building.kind !== "resource" && building.kind !== "barracks" && building.kind !== "hospital";
+    }
+    return false;
+  });
+}
+
+function instanceNameForPlot(template, plot) {
+  const slotNumber = Number((plot.id.match(/(\d+)$/) || [])[1] || 1);
+  const roman = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"][slotNumber - 1] || `${slotNumber}`;
+  const baseName = template.resource ? template.name.replace(/\s+[IVX]+$/u, "").trim() : template.name;
+  return ["resource", "military"].includes(plot.zone) ? `${baseName} ${roman}` : baseName;
+}
+
+function createPlotBuildingInstance(template, plot) {
+  const building = {
+    ...template,
+    id: `${template.id}--${plot.id}`,
+    x: plot.x,
+    y: plot.y,
+    level: 1,
+    name: instanceNameForPlot(template, plot),
+    status: template.kind === "resource" ? `+${resourceProductionRate({ ...template, level: 1 })}/h` : template.status,
+    bonus: template.kind === "resource"
+      ? `+${resourceProductionRate({ ...template, level: 1 })} ${resourceName(template.resource).toLowerCase()}/h`
+      : template.bonus,
+    body: template.body,
+    cost: { ...(template.cost || {}) },
+    templateId: template.id,
+    plotId: plot.id,
+    isPlotInstance: true
+  };
+  buildings.push(building);
+  state.buildingLevels[building.id] = building.level;
+  return building;
+}
+
+function assignBuildingToPlot(plotId, buildingId) {
+  const plot = fortressPlots.find((item) => item.id === plotId);
+  const building = buildings.find((item) => item.id === buildingId);
+  if (!plot || !building || plot.buildingId) return false;
+
+  const targetBuilding = ["resource", "military"].includes(plot.zone)
+    ? createPlotBuildingInstance(building, plot)
+    : building;
+
+  plot.buildingId = targetBuilding.id;
+  state.fortressAssignments[plot.id] = {
+    buildingId: targetBuilding.id,
+    templateId: targetBuilding.templateId || targetBuilding.id
+  };
+  state.buildingLevels[targetBuilding.id] = targetBuilding.level;
+  saveState();
+  return true;
+}
+
+function activeResourceBuildings() {
+  const assignedIds = new Set(
+    fortressPlots
+      .map((plot) => plot.buildingId)
+      .filter(Boolean)
+  );
+  return buildings.filter((building) => building.kind === "resource" && assignedIds.has(building.id));
+}
+
 function clampBuildingLevel(level) {
   return Math.min(BUILDING_MAX_LEVEL, Math.max(1, Math.floor(Number(level) || 1)));
 }
@@ -2376,8 +2578,7 @@ function applyOfflineProduction() {
 
   let changed = false;
   const rates = {};
-  buildings
-    .filter((building) => building.kind === "resource")
+  activeResourceBuildings()
     .forEach((building) => {
       rates[building.resource] = (rates[building.resource] || 0) + resourceProductionRate(building);
     });
@@ -2449,6 +2650,18 @@ function renderResources() {
     })
     .join("");
   powerValue.textContent = formatNumber(state.power);
+  renderHeroAccess();
+}
+
+function renderHeroAccess() {
+  const hero = heroById();
+  const info = heroLevelInfo(hero.id);
+  if (heroAccessImage) {
+    heroAccessImage.src = hero.portrait;
+    heroAccessImage.alt = hero.name;
+  }
+  if (heroAccessLevel) heroAccessLevel.textContent = String(info.level);
+  if (heroAccessName) heroAccessName.textContent = hero.name;
 }
 
 function tickGame() {
@@ -3314,7 +3527,8 @@ function renderBuildings() {
   buildingLayer.innerHTML =
     renderFortressZones() +
     renderFortressPlots() +
-    buildings
+    visibleCityBuildings()
+      .filter((building) => building.kind !== "resource" && !building.isPlotInstance)
       .map((building) => {
         const position = buildingPosition(building);
         return `
@@ -3370,33 +3584,30 @@ function renderFortressPlots() {
     .map((plot) => {
       const building = plot.buildingId ? buildings.find((item) => item.id === plot.buildingId) : null;
       const occupied = Boolean(building);
-      const isResourcePlot = plot.zone === "resources" || plot.zone === "resource" || plot.type === "resource";
-      const isLocked = plot.locked || plot.zone === "locked";
+      const resourceClass = building?.resource ? ` fortress-plot--${building.resource}` : "";
+      const buildingKind = building?.kind || "";
+      const tokenIcon = occupied
+        ? building.icon
+        : plot.zone === "resource"
+          ? "i-bag"
+          : plot.zone === "military"
+            ? "i-sword"
+            : "i-hammer";
 
       return `
         <button
-          class="fortress-plot fortress-plot--${plot.zone} ${occupied ? "is-occupied" : "is-empty"} ${isResourcePlot ? "is-resource-plot" : ""} ${isLocked ? "is-locked" : ""} ${activePlotId === plot.id ? "is-plot-active" : ""}"
+          class="fortress-plot fortress-plot--${plot.zone}${resourceClass} ${occupied ? "is-occupied" : "is-empty"} ${activePlotId === plot.id ? "is-plot-active" : ""}"
           style="left:${plot.x}%; top:${plot.y}%"
           type="button"
           data-plot="${plot.id}"
+          data-zone="${plot.zone}"
+          data-building-kind="${buildingKind}"
+          data-resource="${building?.resource || ""}"
           aria-label="${occupied ? building.name : plot.label}"
         >
-       
-<span>
-  ${
-    occupied
-      ? "🏛️"
-      : isLocked
-        ? "🔒"
-        : isResourcePlot
-          ? "🌾"
-          : "+"
-  }
-</span>
-
-<small>${occupied ? building.name : plot.label}</small>
-
-
+          <span class="fortress-plot-icon"><svg><use href="#${tokenIcon}" /></svg></span>
+          <b>${occupied ? building.level : "+"}</b>
+          <small>${occupied ? building.name : plot.label}</small>
         </button>
       `;
     })
@@ -3909,6 +4120,7 @@ function bindNavigation() {
   document.querySelectorAll("[data-tab]").forEach((button) => {
     button.addEventListener("click", () => switchTab(button.dataset.tab));
   });
+  heroAccessButton?.addEventListener("click", () => switchTab("hero"));
 }
 
 function switchTab(tab) {
@@ -4058,6 +4270,16 @@ function openBuilding(id) {
   activeRallyId = null;
   renderBuildings();
 
+  if (building.kind === "resource") {
+    renderResourceBuildingSheet(building);
+    return;
+  }
+
+  if (building.id === "academia") {
+    renderAcademyOverview();
+    return;
+  }
+
   const cost = buildingLevelCost(building);
   const costLabel = formatCost(cost);
   const stats = getBuildingStats(building);
@@ -4095,6 +4317,131 @@ function openBuilding(id) {
   openSheet();
 }
 
+function renderResourceBuildingSheet(building, message = "") {
+  const rate = resourceProductionRate(building);
+  const activeResources = activeResourceBuildings();
+  const totalRate = activeResources
+    .filter((item) => item.resource === building.resource)
+    .reduce((sum, item) => sum + resourceProductionRate(item), 0);
+  const reserve = state.resources[building.resource] || 0;
+  const capacity = resourceCapacity(building.resource);
+  const fillRate = Math.max(0, Math.min(100, (reserve / Math.max(1, capacity)) * 100));
+  const queue = activeQueueForBuilding(building.id);
+  const cost = buildingLevelCost(building);
+
+  sheetBody.innerHTML = `
+    <div class="sheet-title resource-sheet-title">
+      <div>
+        <h2>${building.name}</h2>
+        <p>${queue ? `Mejora en curso: ${formatDuration(queue.finishAt - Date.now())}` : `Produciendo ${resourceName(building.resource).toLowerCase()} automaticamente.`}</p>
+      </div>
+      <button class="close-sheet" type="button" data-close-sheet aria-label="Cerrar">
+        <svg><use href="#i-close" /></svg>
+      </button>
+    </div>
+
+    <section class="resource-sheet-compact">
+      <div class="resource-sheet-art resource-sheet-art--${building.resource}" aria-hidden="true">
+        <strong>${resourceName(building.resource)}</strong>
+        <small>Nv. ${building.level}</small>
+      </div>
+      <div class="resource-sheet-compact-stats">
+        <div>
+          <span>Reserva</span>
+          <strong>${formatNumber(reserve)} / ${formatNumber(capacity)}</strong>
+        </div>
+        <div>
+          <span>Este edificio</span>
+          <strong>${formatNumber(rate)}/h</strong>
+        </div>
+        <div>
+          <span>Total ${resourceName(building.resource).toLowerCase()}</span>
+          <strong>${formatNumber(totalRate)}/h</strong>
+        </div>
+      </div>
+    </section>
+
+    <div class="resource-sheet-meter">
+      <div class="resource-sheet-bar"><i style="--progress:${fillRate}%"></i></div>
+      <small>${queue ? "Mejorando edificio" : "Produccion pasiva hasta el limite del almacen"}</small>
+    </div>
+
+    <div class="action-row resource-sheet-bottom">
+      ${renderBuildingLevelButton(building)}
+      <button class="primary-action" type="button" data-open-tab="inventory">
+        <svg><use href="#i-bag" /></svg>Obtener ${resourceName(building.resource)}
+      </button>
+    </div>
+
+    <p class="challenge-feedback" id="sheetFeedback">${message}</p>
+  `;
+  openSheet();
+}
+
+function renderAcademyOverview(message = "") {
+  const academy = buildings.find((item) => item.id === "academia");
+  const queue = state.queues.research;
+  const queueText = queue ? `${queue.label} · ${formatDuration(queue.finishAt - Date.now())}` : "Cola de investigacion vacia...";
+
+  sheetBody.innerHTML = `
+    <div class="sheet-title academy-sheet-title">
+      <div>
+        <h2>Academia</h2>
+        <p>Elige una rama y despues entra en su arbol de investigaciones.</p>
+      </div>
+      <button class="close-sheet" type="button" data-close-sheet aria-label="Cerrar">
+        <svg><use href="#i-close" /></svg>
+      </button>
+    </div>
+
+    <section class="academy-overview-card">
+      <div class="academy-overview-top">
+        <div class="academy-overview-building">
+          <span class="academy-overview-icon"><svg><use href="#${academy.icon}" /></svg></span>
+          <div>
+            <strong>${academy.name}</strong>
+            <small>Nivel ${academy.level} / ${BUILDING_MAX_LEVEL}</small>
+          </div>
+        </div>
+        <div class="academy-overview-actions">
+          ${renderBuildingLevelButton(academy)}
+        </div>
+      </div>
+
+      <div class="academy-queue-strip">
+        <span>Cola de investigacion</span>
+        <strong>${queueText}</strong>
+      </div>
+    </section>
+
+    <div class="academy-branch-list">
+      ${researchBranches
+        .map((branch) => {
+          const progress = researchBranchProgress(branch);
+          const percent = Math.round((progress.levels / Math.max(1, progress.maxLevels)) * 1000) / 10;
+          return `
+            <button class="academy-branch-row" type="button" data-research-branch="${branch.id}">
+              <span class="academy-branch-icon"><svg><use href="#${branch.icon}" /></svg></span>
+              <span class="academy-branch-copy">
+                <strong>${branch.name}</strong>
+                <small>${branch.body}</small>
+              </span>
+              <span class="academy-branch-progress">
+                <strong>${percent}%</strong>
+                <small>${progress.completed}/${progress.total}</small>
+              </span>
+              <span class="academy-branch-arrow">›</span>
+            </button>
+          `;
+        })
+        .join("")}
+    </div>
+
+    <p class="challenge-feedback" id="sheetFeedback">${message}</p>
+  `;
+  openSheet();
+}
+
 function openFortressPlot(id) {
   const plot = fortressPlots.find((item) => item.id === id);
   if (!plot) return;
@@ -4103,19 +4450,6 @@ function openFortressPlot(id) {
     openBuilding(plot.buildingId);
     return;
   }
-
-  function buildOnPlot(buildingId, plotId) {
-  const plot = fortressPlots.find((item) => item.id === plotId);
-  const building = buildings.find((item) => item.id === buildingId);
-
-  if (!plot || !building) return;
-
-  plot.buildingId = building.id;
-  activePlotId = plot.id;
-
-  renderBuildings();
-  closeSheet();
-}
 
   activePlotId = id;
   activeBuildingId = null;
@@ -4127,66 +4461,69 @@ function openFortressPlot(id) {
   renderBuildings();
 
   const zone = fortressPlotZoneLabel(plot.zone);
-  const isResourcePlot = plot.zone === "resources" || plot.zone === "resource" || plot.type === "resource";
-
-const availableBuildings = buildings.filter((building) => {
-  if (isResourcePlot) {
-    return building.kind === "resource";
-  }
-
-  return building.kind !== "resource";
-});
-
-const uniqueAvailableBuildings = availableBuildings.filter(
-  (building, index, list) => {
-    if (!isResourcePlot) return true;
-
-    return (
-      list.findIndex(
-        (item) => item.resource === building.resource
-      ) === index
-    );
-  }
-);
+  const options = availableBuildingsForPlot(plot);
+  const title = plot.zone === "resource" ? "Parcela de recursos" : plot.zone === "military" ? "Solar militar" : "Solar urbano";
+  const subtitle = plot.zone === "resource"
+    ? "Elige qué edificio de producción quieres colocar en esta plataforma."
+    : plot.zone === "military"
+      ? "Aquí van cuarteles y hospitales, no un bloque de edificios apretados."
+      : "Este solar queda libre hasta que decidas qué edificio urbano construir.";
 
   sheetBody.innerHTML = `
     <div class="sheet-title">
       <div>
-        <h2>${isResourcePlot ? "Edificios de recursos" : "Lista de construcción"}</h2>
-        <p>${isResourcePlot ? "Elige qué recurso producir en esta parcela." : "Elige un edificio urbano para construir."}</p>
+        <h2>${title}</h2>
+        <p>${subtitle}</p>
       </div>
       <button class="close-sheet" type="button" data-close-sheet aria-label="Cerrar">
         <svg><use href="#i-close" /></svg>
       </button>
     </div>
 
+    <div class="building-meta">
+      <div><span>Zona</span><strong>${zone}</strong></div>
+      <div><span>Estado</span><strong>Vacía</strong></div>
+      <div><span>Modelo</span><strong>Parcela abierta</strong></div>
+    </div>
+
     <div class="building-guidance">
-      <strong>${isResourcePlot ? "Parcela de recursos" : "Parcela urbana"}</strong>
-      <p>${isResourcePlot ? "Aquí solo se pueden construir edificios de producción." : "Aquí puedes construir edificios militares, económicos o de apoyo."}</p>
+      <strong>Vista de fortaleza</strong>
+      <p>La idea aquí es acercarnos a Game of War: menos iconos flotando y más solares visibles donde eliges qué construir.</p>
     </div>
 
     <div class="build-list">
-  ${uniqueAvailableBuildings
-    .map((building) => `
-      <button class="build-list-item" type="button" data-build-option="${building.id}">
-        <span class="build-list-icon">
-          ${building.icon ? `<svg><use href="#${building.icon}" /></svg>` : "🏛️"}
-        </span>
-        <span>
-          <strong>${building.name}</strong>
-          <small>${building.description || "Construir edificio."}</small>
-        </span>
-      </button>
-    `)
-    .join("")}
-</div>
+      ${
+        options.length
+          ? options
+              .map(
+                (building) => `
+                  <button class="build-list-item" type="button" data-build-option="${building.id}">
+                    <span class="build-list-icon"><svg><use href="#${building.icon}" /></svg></span>
+                    <span class="build-list-copy">
+                      <strong>${building.name}</strong>
+                      <small>${building.role} · ${building.bonus}</small>
+                      <em>${building.body}</em>
+                    </span>
+                  </button>
+                `
+              )
+              .join("")
+          : `<div class="empty-inventory">Ya no quedan edificios disponibles para esta zona.</div>`
+      }
+    </div>
 
-<p class="challenge-feedback" id="sheetFeedback"></p>
-`;
+    <p class="challenge-feedback" id="sheetFeedback"></p>
+  `;
 
   sheetBody.querySelectorAll("[data-build-option]").forEach((button) => {
     button.addEventListener("click", () => {
-      buildOnPlot(button.dataset.buildOption, plot.id);
+      const ok = assignBuildingToPlot(plot.id, button.dataset.buildOption);
+      if (!ok) return;
+      renderBuildings();
+      renderResources();
+      openBuilding(button.dataset.buildOption);
+      const feedback = document.querySelector("#sheetFeedback");
+      if (feedback) feedback.textContent = "Edificio colocado en la parcela.";
     });
   });
 
@@ -4872,12 +5209,15 @@ function runBuildingAction(command) {
   }
 
   if (action === "production") {
-    feedback.textContent = `${building.name} produce automaticamente. Reserva: ${formatNumber(state.resources[building.resource] || 0)} / ${formatNumber(resourceCapacity(building.resource))}.`;
+    renderResourceBuildingSheet(
+      building,
+      `${building.name} produce automaticamente. Reserva: ${formatNumber(state.resources[building.resource] || 0)} / ${formatNumber(resourceCapacity(building.resource))}.`
+    );
     return;
   }
 
   if (action === "research") {
-    renderResearchTree(academyBranchId);
+    renderAcademyOverview();
     return;
   }
 
@@ -6038,41 +6378,46 @@ function renderResearchTree(branchId = academyBranchId, message = "") {
   const activeQueue = state.queues.research;
   const branchProgress = researchBranchProgress(branch);
   const nextUnlock = nextBranchUnlock(branch);
+  const tiers = Array.from(new Set(branch.nodes.map((node) => node.tier || 1))).sort((a, b) => a - b);
 
   sheetBody.innerHTML = `
     <div class="sheet-title">
       <div>
-        <h2>Academia de Navegacion</h2>
-        <p>Elige una rama y decide que investigar primero.</p>
+        <h2>${branch.name}</h2>
+        <p>Arbol de investigaciones de la Academia. Pulsa una mejora para ver su siguiente nivel.</p>
       </div>
       <button class="close-sheet" type="button" data-close-sheet aria-label="Cerrar">
         <svg><use href="#i-close" /></svg>
       </button>
     </div>
-    <div class="research-tabs">
-      ${researchBranches
-        .map(
-          (item) => `
-            <button class="${item.id === branch.id ? "is-active" : ""}" type="button" data-research-branch="${item.id}">
-              <svg><use href="#${item.icon}" /></svg>
-              <span>${item.name}</span>
-            </button>
-          `
-        )
-        .join("")}
-    </div>
-    <div class="research-overview">
+    <div class="academy-tree-head">
+      <button class="secondary-action" type="button" data-building-action="research:academia">
+        <svg><use href="#i-close" /></svg>Volver a ramas
+      </button>
+      <div class="research-overview">
       <div><span>Rama</span><strong>${branch.name}</strong></div>
       <div><span>Progreso</span><strong>${branchProgress.completed}/${branchProgress.total}</strong></div>
       <div><span>Niveles</span><strong>${branchProgress.levels}/${branchProgress.maxLevels}</strong></div>
+      </div>
     </div>
     <div class="building-guidance">
       <strong>${branch.name}</strong>
       <p>${branch.body}${nextUnlock ? ` Siguiente bloqueo: ${nextUnlock}.` : " Rama sin bloqueos pendientes."}</p>
     </div>
     ${activeQueue ? `<div class="research-active">Investigando ${activeQueue.label} Â· ${formatDuration(activeQueue.finishAt - Date.now())}</div>` : ""}
-    <div class="research-tree">
-      ${branch.nodes.map((node) => renderResearchNode(node, activeQueue)).join("")}
+    <div class="research-tree-grid">
+      ${tiers
+        .map(
+          (tier) => `
+            <section class="research-tier">
+              <header><span>Nivel de rama</span><strong>Fase ${tier}</strong></header>
+              <div class="research-tier-nodes">
+                ${branch.nodes.filter((node) => (node.tier || 1) === tier).map((node) => renderResearchNode(node, activeQueue)).join("")}
+              </div>
+            </section>
+          `
+        )
+        .join("")}
     </div>
     <div class="planner-actions">
       <button class="secondary-action" type="button" data-building-action="doctrines:academia"><svg><use href="#i-map" /></svg>Editar doctrinas</button>
@@ -6092,8 +6437,8 @@ function renderResearchNode(node, activeQueue) {
   const nextLevel = Math.min(node.max, level + 1);
   return `
     <article class="research-node ${active ? "is-active" : ""} ${locked ? "is-locked" : ""}">
-      <div>
-        <span>${maxed ? "Completado" : active ? "En curso" : locked ? "Bloqueado" : "Disponible"} - Nivel ${node.tier || 1}</span>
+      <div class="research-node-top">
+        <span>${maxed ? "Completado" : active ? "En curso" : locked ? "Bloqueado" : "Disponible"}</span>
         <strong>${node.name}</strong>
         <p>${node.effect}</p>
       </div>
@@ -8005,8 +8350,7 @@ function troopCounterLabel(bonus, strongest) {
 }
 
 function totalResourceProductionRate() {
-  return buildings
-    .filter((building) => building.kind === "resource")
+  return activeResourceBuildings()
     .reduce((sum, building) => sum + resourceProductionRate(building), 0);
 }
 
@@ -8941,13 +9285,20 @@ function bindHeroEquipment() {
     });
   }
 
-  if (heroProgress) {
-    heroProgress.addEventListener("click", (event) => {
+  if (heroDetailPanel) {
+    heroDetailPanel.addEventListener("click", (event) => {
       const button = event.target.closest("[data-select-loadout]");
       if (!button) return;
       selectEquipmentLoadout(button.dataset.selectLoadout);
     });
   }
+
+  heroPanelTabs?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-hero-panel]");
+    if (!button) return;
+    heroPanelTab = button.dataset.heroPanel;
+    renderHeroEquipment();
+  });
 
   if (!heroEquipmentGrid) return;
   heroEquipmentGrid.addEventListener("click", (event) => {
@@ -9090,86 +9441,92 @@ function renderHeroEquipment() {
   }
   if (heroEyebrow) heroEyebrow.textContent = hero.title;
   if (heroName) heroName.textContent = hero.name;
-  if (heroSubtitle) {
-    heroSubtitle.textContent = `Nivel ${info.level} - ${heroRankName(info.level)} - Energia de caza`;
-  }
+  if (heroSubtitle) heroSubtitle.textContent = `Nivel ${info.level} \u00B7 ${heroRankName(info.level)}`;
+
+  const ring = document.querySelector("#heroLevelRing");
+  const ringNum = document.querySelector("#heroLevelNum");
+  if (ring) ring.style.background = `conic-gradient(var(--gold-bright) ${info.progress}%, rgba(0,0,0,.5) 0)`;
+  if (ringNum) ringNum.textContent = info.level;
 
   if (heroRosterEl) {
     heroRosterEl.innerHTML = heroRoster
       .map((item) => {
         const itemInfo = heroLevelInfo(item.id);
-        const itemState = heroState(item.id);
         const busy = heroIsMarching(item.id);
         return `
-          <button class="hero-card ${item.id === hero.id ? "is-active" : ""} ${busy ? "is-busy" : ""}" type="button" data-select-hero="${item.id}">
-            <span class="hero-card-mark">
-              <img src="${item.portrait}" alt="" loading="lazy" />
-              <em>${item.initials}</em>
-            </span>
-            <span>
-              <strong>${item.name}</strong>
-              <span>Nv. ${itemInfo.level} - ${formatNumber(Math.floor(itemState.energy || 0))}/${formatNumber(heroEnergyMax(item.id))}${busy ? " - ocupado" : ""}</span>
-            </span>
-          </button>
-        `;
+          <button class="h2-med ${item.id === hero.id ? "is-sel" : ""} ${busy ? "is-busy" : ""}" type="button" data-select-hero="${item.id}" aria-label="${item.name}">
+            <span class="ms s1"></span><span class="ms s2"></span><span class="ms s3"></span><span class="ms s4"></span>
+            <span class="h2-mi"><img src="${item.portrait}" alt="" loading="lazy" /></span>
+            <span class="h2-ml">${itemInfo.level}</span>
+          </button>`;
       })
       .join("");
   }
 
   if (heroProgress) {
     heroProgress.innerHTML = `
-      <div class="hero-progress-row">
-        <div><span>Energia heroica</span><strong>${formatNumber(energy)} / ${formatNumber(energyMax)}</strong></div>
-        <b class="hero-progress-bar"><i style="--bar:${energyProgress}%"></i></b>
+      <div class="h2-bar-row">
+        <div class="h2-lab"><span>Energia heroica</span><b>${formatNumber(energy)} / ${formatNumber(energyMax)}</b></div>
+        <div class="h2-bar energy"><i style="width:${energyProgress}%"></i></div>
       </div>
-      <div class="hero-progress-row">
-        <div><span>Proximo nivel</span><strong>${formatNumber(info.currentXp)} / ${formatNumber(info.nextXp)} XP</strong></div>
-        <b class="hero-progress-bar"><i style="--bar:${info.progress}%"></i></b>
+      <div class="h2-bar-row">
+        <div class="h2-lab"><span>Proximo nivel</span><b>${formatNumber(info.currentXp)} / ${formatNumber(info.nextXp)} XP</b></div>
+        <div class="h2-bar"><i style="width:${info.progress}%"></i></div>
       </div>
-      ${renderEquipmentLoadoutButtons()}
-      <div class="equipment-set-note">
-        <strong>${equipmentSetStatus().rule?.name || "Conjunto"}</strong>
-        <span>${equipmentSetBonusText()}</span>
+      <div class="h2-role-grid">
+        <div><span>Ataque</span><b>+${formatNumber(heroEquipmentBonus("attack"))}%</b></div>
+        <div><span>Defensa</span><b>+${formatNumber(heroEquipmentBonus("defense"))}%</b></div>
+        <div><span>Invest.</span><b>+${formatNumber(heroEquipmentBonus("research"))}%</b></div>
+        <div><span>Recolect.</span><b>+${formatNumber(heroEquipmentBonus("gathering"))}%</b></div>
       </div>
-      ${renderLoadoutBonusBreakdown()}
-      <div class="hero-role-grid">
-        <div><span>Ataque</span><strong>+${formatNumber(heroEquipmentBonus("attack"))}%</strong></div>
-        <div><span>Defensa</span><strong>+${formatNumber(heroEquipmentBonus("defense"))}%</strong></div>
-        <div><span>Invest.</span><strong>+${formatNumber(heroEquipmentBonus("research"))}%</strong></div>
-        <div><span>Recolect.</span><strong>+${formatNumber(heroEquipmentBonus("gathering"))}%</strong></div>
-      </div>
-      <p class="hero-progress-note">El heroe sube con caza y cronicas. El equipo define si destaca en ataque, defensa, investigacion o recoleccion.</p>
-    `;
+      <p class="h2-note">El heroe sube con caza y cronicas. El equipo define si destaca en ataque, defensa, investigacion o recoleccion.</p>`;
   }
 
   if (heroStatRow) {
-    const commandBonus = heroCommandAttackBonus(hero.id);
     heroStatRow.innerHTML = `
-      <div><span>Ataque heroe</span><strong>+${formatNumber(commandBonus)}%</strong></div>
-      <div><span>Marcha</span><strong>${formatNumber(maxMarchSize())}</strong></div>
-      <div><span>Monstruos</span><strong>+${formatNumber(heroMonsterAttackBonus(hero.id))}%</strong></div>
-    `;
+      <div><span>Ataque heroe</span><b>+${formatNumber(heroCommandAttackBonus(hero.id))}%</b></div>
+      <div><span>Marcha</span><b>${formatNumber(maxMarchSize())}</b></div>
+      <div><span>Monstruos</span><b>+${formatNumber(heroMonsterAttackBonus(hero.id))}%</b></div>`;
   }
 
-  if (!heroEquipmentGrid) return;
-  heroEquipmentGrid.innerHTML = forgeRecipes
-    .map((recipe) => {
-      const level = equipmentLevel(recipe.id);
-      const qualityIndex = equipmentQualityIndex(recipe.id);
-      const quality = forgeQualities[qualityIndex];
-      const activeInProfile = equipmentActiveInLoadout(recipe);
-      const primaryBonus = formatEquipmentPrimaryBonus(recipe, level, qualityIndex);
-      return `
-        <button class="${activeInProfile ? "is-active-loadout" : ""}" type="button" data-open-forge="${recipe.id}" style="${level ? `--item-color:${quality.color}` : ""}">
-          <svg><use href="#${recipe.icon}" /></svg>
-          <span>
-            <strong>${recipe.slot}</strong>
-            <small>${level ? `Nv. ${level} ${quality.label}${primaryBonus ? ` - ${primaryBonus}` : ""}${activeInProfile ? " - activo" : ""}` : "Sin forjar"}</small>
-          </span>
-        </button>
-      `;
-    })
-    .join("");
+  if (heroDetailPanel) {
+    heroDetailPanel.innerHTML = `
+      ${renderEquipmentLoadoutButtons()}
+      <div class="h2-set-note">
+        <strong>${equipmentSetStatus().rule?.name || "Conjunto"}</strong>
+        <span>${equipmentSetBonusText()}</span>
+      </div>
+      ${renderLoadoutBonusBreakdown()}`;
+  }
+
+  if (heroEquipmentGrid) {
+    heroEquipmentGrid.innerHTML = forgeRecipes
+      .map((recipe) => {
+        const level = equipmentLevel(recipe.id);
+        const qualityIndex = equipmentQualityIndex(recipe.id);
+        const quality = forgeQualities[qualityIndex];
+        const activeInProfile = equipmentActiveInLoadout(recipe);
+        const primaryBonus = formatEquipmentPrimaryBonus(recipe, level, qualityIndex);
+        return `
+          <button class="h2-slot ${activeInProfile ? "is-active-loadout" : ""}" type="button" data-open-forge="${recipe.id}" style="${level ? `--q:${quality.color}` : ""}" aria-label="${recipe.slot}">
+            <span class="h2-si"><svg><use href="#${recipe.icon}" /></svg></span>
+            <span class="h2-sb">
+              <strong>${recipe.slot}</strong>
+              <small>${level ? `Nv. ${level} ${quality.label}${primaryBonus ? ` \u00B7 ${primaryBonus}` : ""}${activeInProfile ? " \u00B7 activo" : ""}` : "Sin forjar"}</small>
+            </span>
+          </button>`;
+      })
+      .join("");
+  }
+
+  if (heroPanelTabs) {
+    heroPanelTabs.querySelectorAll("[data-hero-panel]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.heroPanel === heroPanelTab);
+    });
+  }
+  document.querySelectorAll("#screen-hero [data-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.panel !== heroPanelTab;
+  });
 }
 
 function renderInventory(message = "") {

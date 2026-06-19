@@ -1,0 +1,163 @@
+/* ===========================================================
+   Imperio Dorado · Pantalla de Héroe (rediseño)
+   Acotado bajo #screen-hero para no colisionar con styles.css.
+   Cárgalo DESPUÉS de styles.css en index.html.
+   =========================================================== */
+#screen-hero{
+  --gold:#C9A24B; --gold-bright:#EBC868; --gold-deep:#7d6328; --gold-dark:#5c4719;
+  --crimson:#8E2230; --crimson-bright:#b8323f;
+  --parchment:#efe3c6;
+  --disp:'Cinzel', Georgia, serif;
+  overflow-y:auto;
+}
+#screen-hero .hero-view{
+  padding:6px 14px 96px;
+  font-family:'Inter', system-ui, sans-serif;
+  color:var(--parchment);
+}
+
+/* ---- Tarjeta principal ---- */
+#screen-hero .h2-card{
+  position:relative; border-radius:16px; padding:3px;
+  background:linear-gradient(150deg,#f0d488,#b78b32 50%,#6d521f);
+  box-shadow:0 0 26px rgba(235,200,104,.22);
+}
+#screen-hero .h2-card>.h2-in{
+  border-radius:13px; overflow:hidden; position:relative;
+  background:linear-gradient(180deg,#241c12,#15110c);
+}
+#screen-hero .h2-stud{
+  position:absolute; width:9px; height:9px; z-index:4;
+  background:var(--gold-bright); border:1px solid var(--gold-dark); transform:rotate(45deg);
+}
+#screen-hero .h2-stud.tl{top:-3px;left:14px}
+#screen-hero .h2-stud.tr{top:-3px;right:14px}
+#screen-hero .h2-stud.bl{bottom:-3px;left:14px}
+#screen-hero .h2-stud.br{bottom:-3px;right:14px}
+
+#screen-hero .hero-portrait{
+  position:relative; height:300px; overflow:hidden;
+  background:radial-gradient(70% 50% at 50% 26%, #44597d, #243454 45%, #131d31);
+}
+#screen-hero .hero-portrait img{
+  width:100%; height:100%; object-fit:cover; object-position:center top; display:block;
+}
+#screen-hero .hero-portrait::after{
+  content:''; position:absolute; inset:auto 0 0 0; height:48%;
+  background:linear-gradient(180deg,transparent,rgba(20,16,10,.97));
+}
+#screen-hero .h2-lring{
+  position:absolute; left:14px; bottom:14px; z-index:3;
+  width:48px; height:48px; border-radius:50%; display:grid; place-items:center;
+  box-shadow:0 3px 10px rgba(0,0,0,.5);
+}
+#screen-hero .h2-lring i{
+  width:39px; height:39px; border-radius:50%; background:#15110c; display:grid; place-items:center;
+  font-weight:800; font-size:16px; color:var(--gold-bright); font-style:normal;
+}
+
+#screen-hero .hero-copy{
+  position:relative; z-index:3; padding:0 16px 16px; margin-top:-54px;
+}
+#screen-hero .hero-copy span{
+  font-size:11px; letter-spacing:.16em; color:var(--gold); text-transform:uppercase; display:block;
+}
+#screen-hero .hero-copy h1{
+  font-family:var(--disp); font-weight:900; font-size:22px; color:var(--parchment);
+  line-height:1.1; margin:2px 0 4px;
+}
+#screen-hero .hero-copy p{ font-size:12px; color:#b7a682; margin:0; }
+
+/* ---- Roster de medallones ---- */
+#screen-hero #heroRoster{
+  display:flex; gap:12px; justify-content:center; padding:14px 0 4px; list-style:none;
+}
+#screen-hero .h2-med{
+  position:relative; width:60px; height:60px; border-radius:50%; padding:3px; border:none; cursor:pointer;
+  background:linear-gradient(145deg,#f0d488,#b78b32 55%,#6d521f); transition:transform .1s;
+}
+#screen-hero .h2-med:active{ transform:scale(.94); }
+#screen-hero .h2-med.is-sel{ box-shadow:0 0 0 2px var(--crimson-bright), 0 0 16px rgba(235,200,104,.5); }
+#screen-hero .h2-med.is-busy{ filter:grayscale(.5) brightness(.8); }
+#screen-hero .h2-mi{
+  display:block; width:100%; height:100%; border-radius:50%; overflow:hidden;
+  border:2px solid #15110c; background:#16223a;
+}
+#screen-hero .h2-mi img{ width:100%; height:100%; object-fit:cover; object-position:center top; }
+#screen-hero .h2-ml{
+  position:absolute; bottom:-4px; left:50%; transform:translateX(-50%);
+  background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep)); color:#2a2009;
+  font-weight:800; font-size:9px; padding:1px 6px; border-radius:999px; border:1px solid #efe3c6;
+}
+#screen-hero .h2-med .ms{
+  position:absolute; width:7px; height:7px; background:var(--gold-bright);
+  border:1px solid var(--gold-dark); transform:rotate(45deg);
+}
+#screen-hero .h2-med .s1{top:-2px;left:50%;margin-left:-3.5px}
+#screen-hero .h2-med .s2{bottom:-2px;left:50%;margin-left:-3.5px}
+#screen-hero .h2-med .s3{left:-2px;top:50%;margin-top:-3.5px}
+#screen-hero .h2-med .s4{right:-2px;top:50%;margin-top:-3.5px}
+
+/* ---- Pestañas ---- */
+#screen-hero #heroPanelTabs{ display:flex; gap:6px; margin:14px 0 12px; }
+#screen-hero #heroPanelTabs button{
+  flex:1; border:1px solid var(--gold-deep); background:rgba(20,16,10,.5); color:#b7a682;
+  font-family:var(--disp); font-weight:700; font-size:12px; letter-spacing:.04em;
+  padding:9px 4px; border-radius:10px; cursor:pointer;
+}
+#screen-hero #heroPanelTabs button.is-active{
+  color:#2a2009; background:linear-gradient(180deg,var(--gold-bright),var(--gold-deep)); border-color:#efe3c6;
+}
+
+/* ---- Paneles ---- */
+#screen-hero .h2-panel[hidden]{ display:none; }
+
+/* barras (panel perfil) */
+#screen-hero .h2-bar-row{ margin-bottom:12px; }
+#screen-hero .h2-lab{ display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px; }
+#screen-hero .h2-lab span{ color:#a99873; letter-spacing:.03em; }
+#screen-hero .h2-lab b{ color:var(--parchment); font-variant-numeric:tabular-nums; }
+#screen-hero .h2-bar{ height:9px; border-radius:999px; background:rgba(0,0,0,.45); overflow:hidden; border:1px solid rgba(201,162,75,.2); }
+#screen-hero .h2-bar i{ display:block; height:100%; background:linear-gradient(90deg,var(--gold),var(--gold-bright)); }
+#screen-hero .h2-bar.energy i{ background:linear-gradient(90deg,#3f7bbf,#67b0ff); }
+
+#screen-hero .h2-role-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:6px 0 12px; }
+#screen-hero .h2-role-grid div{ background:rgba(0,0,0,.3); border:1px solid rgba(201,162,75,.25); border-radius:10px; padding:9px 4px; text-align:center; }
+#screen-hero .h2-role-grid span{ display:block; font-size:9px; color:#a99873; letter-spacing:.04em; text-transform:uppercase; }
+#screen-hero .h2-role-grid b{ font-size:15px; color:var(--gold-bright); font-variant-numeric:tabular-nums; }
+#screen-hero .h2-note{ font-size:11px; color:#8c7c5c; line-height:1.4; font-style:italic; }
+
+/* fila roja de stats */
+#screen-hero .stat-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+#screen-hero .stat-row div{ background:rgba(142,34,48,.14); border:1px solid rgba(184,50,63,.35); border-radius:10px; padding:9px 6px; text-align:center; }
+#screen-hero .stat-row span{ display:block; font-size:9px; color:#caa; letter-spacing:.04em; text-transform:uppercase; }
+#screen-hero .stat-row b{ font-size:15px; color:var(--gold-bright); font-variant-numeric:tabular-nums; }
+
+/* panel conjuntos (loadouts que ya genera renderEquipmentLoadoutButtons) */
+#screen-hero .equipment-loadouts{ display:grid; grid-template-columns:repeat(2,1fr); gap:7px; margin-bottom:12px; }
+#screen-hero .equipment-loadouts button{
+  display:flex; gap:8px; align-items:center; text-align:left;
+  border:1px solid var(--gold-deep); background:rgba(20,16,10,.5); color:#b7a682;
+  border-radius:10px; padding:8px 10px; cursor:pointer;
+}
+#screen-hero .equipment-loadouts button.is-active{ color:var(--gold-bright); border-color:var(--gold-bright); background:rgba(201,162,75,.12); }
+#screen-hero .equipment-loadouts svg{ width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.6; flex:0 0 auto; }
+#screen-hero .equipment-loadouts strong{ font-family:var(--disp); font-size:12px; display:block; color:inherit; }
+#screen-hero .equipment-loadouts small{ font-size:10px; color:#a99873; }
+#screen-hero .h2-set-note{ background:rgba(0,0,0,.3); border:1px solid rgba(201,162,75,.25); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+#screen-hero .h2-set-note strong{ font-family:var(--disp); color:var(--gold-bright); font-size:13px; display:block; margin-bottom:2px; }
+#screen-hero .h2-set-note span{ font-size:11px; color:#b7a682; }
+
+/* panel equipo (forja) */
+#screen-hero .equipment-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+#screen-hero .h2-slot{
+  display:flex; gap:9px; align-items:center; text-align:left; cursor:pointer;
+  border:1px solid rgba(201,162,75,.3); border-left:3px solid var(--q,#5a4a2a);
+  border-radius:10px; padding:8px; background:rgba(0,0,0,.25); color:var(--parchment);
+}
+#screen-hero .h2-slot.is-active-loadout{ box-shadow:inset 0 0 0 1px rgba(235,200,104,.4); }
+#screen-hero .h2-si{ width:38px; height:38px; border-radius:9px; background:linear-gradient(160deg,#3a2c10,#1a140d); border:1px solid var(--gold-deep); display:grid; place-items:center; flex:0 0 auto; }
+#screen-hero .h2-si svg{ width:19px; height:19px; fill:none; stroke:var(--gold-bright); stroke-width:1.6; }
+#screen-hero .h2-sb{ min-width:0; }
+#screen-hero .h2-sb strong{ font-family:var(--disp); font-size:12px; color:var(--parchment); display:block; }
+#screen-hero .h2-sb small{ font-size:10px; color:#a99873; }
