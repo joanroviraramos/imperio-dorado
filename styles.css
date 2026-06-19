@@ -6773,3 +6773,8 @@ svg {
   right: -2px;
   bottom: -2px;
 }
+
+/* bajar la barra de recursos para que se vea la foto del heroe entera */
+.resource-strip {
+  top: 68px;
+}
