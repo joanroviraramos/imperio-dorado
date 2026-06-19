@@ -3588,6 +3588,24 @@ function buildingMapSprite(building) {
     if (lv <= 20) return "./assets/granja-mapa-11-20.png";
     return "./assets/granja-mapa-21-25.png";
   }
+  if (building.resource === "wood") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/aserradero-mapa-1-10.png";
+    if (lv <= 20) return "./assets/aserradero-mapa-11-20.png";
+    return "./assets/aserradero-mapa-21-25.png";
+  }
+  if (building.resource === "stone") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/cantera-mapa-1-10.png";
+    if (lv <= 20) return "./assets/cantera-mapa-11-20.png";
+    return "./assets/cantera-mapa-21-25.png";
+  }
+  if (building.resource === "iron") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/mina-hierro-mapa-1-10.png";
+    if (lv <= 20) return "./assets/mina-hierro-mapa-11-20.png";
+    return "./assets/mina-hierro-mapa-21-25.png";
+  }
   return null;
 }
 
