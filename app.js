@@ -3580,6 +3580,17 @@ function renderFortressZones() {
     .join("");
 }
 
+function buildingMapSprite(building) {
+  if (!building) return null;
+  if (building.resource === "grain") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/granja-mapa-1-10.png";
+    if (lv <= 20) return "./assets/granja-mapa-11-20.png";
+    return "./assets/granja-mapa-21-25.png";
+  }
+  return null;
+}
+
 function renderFortressPlots() {
   return fortressPlots
     .map((plot) => {
@@ -3587,6 +3598,7 @@ function renderFortressPlots() {
       const occupied = Boolean(building);
       const resourceClass = building?.resource ? ` fortress-plot--${building.resource}` : "";
       const buildingKind = building?.kind || "";
+      const sprite = buildingMapSprite(building);
       const tokenIcon = occupied
         ? building.icon
         : plot.zone === "resource"
@@ -3597,7 +3609,7 @@ function renderFortressPlots() {
 
       return `
         <button
-          class="fortress-plot fortress-plot--${plot.zone}${resourceClass} ${occupied ? "is-occupied" : "is-empty"} ${activePlotId === plot.id ? "is-plot-active" : ""}"
+          class="fortress-plot fortress-plot--${plot.zone}${resourceClass} ${occupied ? "is-occupied" : "is-empty"} ${activePlotId === plot.id ? "is-plot-active" : ""}${sprite ? " has-sprite" : ""}"
           style="left:${plot.x}%; top:${plot.y}%"
           type="button"
           data-plot="${plot.id}"
@@ -3606,7 +3618,7 @@ function renderFortressPlots() {
           data-resource="${building?.resource || ""}"
           aria-label="${occupied ? building.name : plot.label}"
         >
-          <span class="fortress-plot-icon"><svg><use href="#${tokenIcon}" /></svg></span>
+          ${sprite ? `<img class="fortress-plot-sprite" src="${sprite}" alt="" />` : `<span class="fortress-plot-icon"><svg><use href="#${tokenIcon}" /></svg></span>`}
           <b>${occupied ? building.level : "+"}</b>
           <small>${occupied ? building.name : plot.label}</small>
         </button>

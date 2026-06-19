@@ -6835,3 +6835,44 @@ svg {
   padding: 2px 6px;
   font-size: 10px;
 }
+
+/* ============================================================
+   Parcelas con dibujo de edificio (granjas): sin recuadro de franjas,
+   el edificio se apoya en la casilla y asoma hacia arriba (estilo Game of War)
+   ============================================================ */
+.fortress-plot.has-sprite,
+.fortress-plot.has-sprite.is-occupied,
+.scene-city .fortress-plot.has-sprite.is-occupied {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.fortress-plot.has-sprite::before {
+  display: none !important;
+}
+.fortress-plot.has-sprite .fortress-plot-icon {
+  display: none !important;
+}
+.fortress-plot-sprite {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  transform: translate(-50%, 42%);
+  width: 80px;
+  height: auto;
+  pointer-events: auto;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45));
+  z-index: 2;
+}
+/* el numero de nivel, encima del dibujo y abajo del todo */
+.fortress-plot.has-sprite b {
+  position: absolute;
+  z-index: 3;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.fortress-plot.has-sprite small {
+  display: none;
+}
