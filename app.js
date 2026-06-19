@@ -347,18 +347,18 @@ const fortressPlots = [
   { id: "base-astillero", zone: "base", label: "Solar naval", x: 62, y: 40 },
   { id: "base-muralla", zone: "base", label: "Muralla", x: 50, y: 57, buildingId: "muralla" },
 
-  { id: "military-1", zone: "military", label: "Solar militar", x: 27, y: 60 },
-  { id: "military-2", zone: "military", label: "Solar militar", x: 40, y: 60 },
-  { id: "military-3", zone: "military", label: "Solar militar", x: 60, y: 60 },
-  { id: "military-4", zone: "military", label: "Solar militar", x: 73, y: 60 },
-  { id: "military-5", zone: "military", label: "Solar militar", x: 34, y: 67, allowed: "Cuartel u hospital" },
+  { id: "military-1", zone: "military", label: "Solar militar", x: 22, y: 60 },
+  { id: "military-2", zone: "military", label: "Solar militar", x: 41, y: 60 },
+  { id: "military-3", zone: "military", label: "Solar militar", x: 59, y: 60 },
+  { id: "military-4", zone: "military", label: "Solar militar", x: 78, y: 60 },
+  { id: "military-5", zone: "military", label: "Solar militar", x: 33, y: 67, allowed: "Cuartel u hospital" },
   { id: "military-6", zone: "military", label: "Solar militar", x: 50, y: 67, allowed: "Cuartel u hospital" },
-  { id: "military-7", zone: "military", label: "Solar militar", x: 66, y: 67, allowed: "Cuartel u hospital" },
-  { id: "military-8", zone: "military", label: "Solar militar", x: 17, y: 46, allowed: "Cuartel u hospital" },
-  { id: "military-9", zone: "military", label: "Solar militar", x: 17, y: 54, allowed: "Cuartel u hospital" },
-  { id: "military-10", zone: "military", label: "Solar militar", x: 18, y: 62, allowed: "Cuartel u hospital" },
-  { id: "military-11", zone: "military", label: "Solar militar", x: 84, y: 46, allowed: "Cuartel u hospital" },
-  { id: "military-12", zone: "military", label: "Solar militar", x: 83, y: 56, allowed: "Cuartel u hospital" },
+  { id: "military-7", zone: "military", label: "Solar militar", x: 67, y: 67, allowed: "Cuartel u hospital" },
+  { id: "military-8", zone: "military", label: "Solar militar", x: 14, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-9", zone: "military", label: "Solar militar", x: 14, y: 56, allowed: "Cuartel u hospital" },
+  { id: "military-10", zone: "military", label: "Solar militar", x: 15, y: 66, allowed: "Cuartel u hospital" },
+  { id: "military-11", zone: "military", label: "Solar militar", x: 86, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-12", zone: "military", label: "Solar militar", x: 86, y: 57, allowed: "Cuartel u hospital" },
 
   { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 16, y: 68 },
   { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 38, y: 70 },
@@ -3532,17 +3532,22 @@ function renderBuildings() {
       .filter((building) => building.kind !== "resource" && !building.isPlotInstance)
       .map((building) => {
         const position = buildingPosition(building);
+        const sprite = buildingMapSprite(building);
+        const hotspotSpriteStyle = "position:absolute;top:auto;right:auto;left:50%;bottom:50%;transform:translate(-50%,42%);width:70px;max-width:none;height:auto;object-fit:contain;pointer-events:auto;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45));z-index:5;";
+        const hotspotExtra = sprite ? ";background:transparent;border:0;box-shadow:none;overflow:visible;" : "";
         return `
           <button
-            class="building-hotspot ${activeBuildingId === building.id ? "is-building-active" : ""}"
-            style="left:${position.x}%; top:${position.y}%"
+            class="building-hotspot ${sprite ? "has-sprite " : ""}${activeBuildingId === building.id ? "is-building-active" : ""}"
+            style="left:${position.x}%; top:${position.y}%${hotspotExtra}"
             type="button"
             data-building="${building.id}"
             data-kind="${building.kind || building.role.toLowerCase()}"
             aria-label="${building.name}"
           >
-            <span class="building-ring"><svg><use href="#${building.icon}" /></svg></span>
-            <span class="building-label"><small>${building.level}</small><strong>${building.name}</strong></span>
+            ${sprite
+              ? `<img class="building-hotspot-sprite" src="${sprite}" alt="" style="${hotspotSpriteStyle}" />`
+              : `<span class="building-ring"><svg><use href="#${building.icon}" /></svg></span>
+            <span class="building-label"><small>${building.level}</small><strong>${building.name}</strong></span>`}
           </button>
         `;
       })
@@ -3611,6 +3616,24 @@ function buildingMapSprite(building) {
     if (lv <= 10) return "./assets/cuartel-mapa-1-10.png";
     if (lv <= 20) return "./assets/cuartel-mapa-11-20.png";
     return "./assets/cuartel-mapa-21-25.png";
+  }
+  if (building.kind === "hospital") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/hospital-mapa-1-10.png";
+    if (lv <= 20) return "./assets/hospital-mapa-11-20.png";
+    return "./assets/hospital-mapa-21-25.png";
+  }
+  if (building.id === "mercado") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/mercado-mapa-1-10.png";
+    if (lv <= 20) return "./assets/mercado-mapa-11-20.png";
+    return "./assets/mercado-mapa-21-25.png";
+  }
+  if (building.id === "academia") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/academia-mapa-1-10.png";
+    if (lv <= 20) return "./assets/academia-mapa-11-20.png";
+    return "./assets/academia-mapa-21-25.png";
   }
   return null;
 }
