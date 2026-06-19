@@ -3617,6 +3617,9 @@ function renderFortressPlots() {
       const resourceClass = building?.resource ? ` fortress-plot--${building.resource}` : "";
       const buildingKind = building?.kind || "";
       const sprite = buildingMapSprite(building);
+      const spriteStyle = "position:absolute;left:50%;bottom:50%;transform:translate(-50%,42%);width:75px;max-width:none;height:auto;pointer-events:auto;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45));z-index:2;";
+      const plotExtra = sprite ? ";overflow:visible;background:transparent;border-color:transparent;box-shadow:none;" : "";
+      const spriteHide = sprite ? " style=\"display:none\"" : "";
       const tokenIcon = occupied
         ? building.icon
         : plot.zone === "resource"
@@ -3628,7 +3631,7 @@ function renderFortressPlots() {
       return `
         <button
           class="fortress-plot fortress-plot--${plot.zone}${resourceClass} ${occupied ? "is-occupied" : "is-empty"} ${activePlotId === plot.id ? "is-plot-active" : ""}${sprite ? " has-sprite" : ""}"
-          style="left:${plot.x}%; top:${plot.y}%"
+          style="left:${plot.x}%; top:${plot.y}%${plotExtra}"
           type="button"
           data-plot="${plot.id}"
           data-zone="${plot.zone}"
@@ -3636,9 +3639,9 @@ function renderFortressPlots() {
           data-resource="${building?.resource || ""}"
           aria-label="${occupied ? building.name : plot.label}"
         >
-          ${sprite ? `<img class="fortress-plot-sprite" src="${sprite}" alt="" />` : `<span class="fortress-plot-icon"><svg><use href="#${tokenIcon}" /></svg></span>`}
-          <b>${occupied ? building.level : "+"}</b>
-          <small>${occupied ? building.name : plot.label}</small>
+          ${sprite ? `<img class="fortress-plot-sprite" src="${sprite}" alt="" style="${spriteStyle}" />` : `<span class="fortress-plot-icon"><svg><use href="#${tokenIcon}" /></svg></span>`}
+          <b${spriteHide}>${occupied ? building.level : "+"}</b>
+          <small${spriteHide}>${occupied ? building.name : plot.label}</small>
         </button>
       `;
     })
