@@ -6859,7 +6859,7 @@ svg {
   left: 50%;
   bottom: 50%;
   transform: translate(-50%, 42%);
-  width: 120px;
+  width: 105px;
   height: auto;
   pointer-events: auto;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));

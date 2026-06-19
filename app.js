@@ -360,16 +360,16 @@ const fortressPlots = [
   { id: "military-11", zone: "military", label: "Solar militar", x: 84, y: 46, allowed: "Cuartel u hospital" },
   { id: "military-12", zone: "military", label: "Solar militar", x: 83, y: 56, allowed: "Cuartel u hospital" },
 
-  { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 18, y: 78 },
-  { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 31, y: 78 },
-  { id: "resource-3", zone: "resource", label: "Parcela de recursos", x: 18, y: 86 },
-  { id: "resource-4", zone: "resource", label: "Parcela de recursos", x: 32, y: 86 },
-  { id: "resource-5", zone: "resource", label: "Parcela de recursos", x: 45, y: 88 },
-  { id: "resource-6", zone: "resource", label: "Parcela de recursos", x: 55, y: 86 },
-  { id: "resource-7", zone: "resource", label: "Parcela de recursos", x: 73, y: 78 },
-  { id: "resource-8", zone: "resource", label: "Parcela de recursos", x: 86, y: 78 },
-  { id: "resource-9", zone: "resource", label: "Parcela de recursos", x: 72, y: 88 },
-  { id: "resource-10", zone: "resource", label: "Parcela de recursos", x: 85, y: 88 }
+  { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 16, y: 68 },
+  { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 38, y: 70 },
+  { id: "resource-3", zone: "resource", label: "Parcela de recursos", x: 62, y: 70 },
+  { id: "resource-4", zone: "resource", label: "Parcela de recursos", x: 84, y: 68 },
+  { id: "resource-5", zone: "resource", label: "Parcela de recursos", x: 26, y: 80 },
+  { id: "resource-6", zone: "resource", label: "Parcela de recursos", x: 50, y: 81 },
+  { id: "resource-7", zone: "resource", label: "Parcela de recursos", x: 74, y: 80 },
+  { id: "resource-8", zone: "resource", label: "Parcela de recursos", x: 16, y: 90 },
+  { id: "resource-9", zone: "resource", label: "Parcela de recursos", x: 40, y: 91 },
+  { id: "resource-10", zone: "resource", label: "Parcela de recursos", x: 64, y: 91 }
 ];
 
 const initialFortressAssignments = Object.fromEntries(
