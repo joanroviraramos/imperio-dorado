@@ -353,10 +353,10 @@ const fortressPlots = [
   { id: "military-4", zone: "military", label: "Solar militar", x: 78, y: 60 },
   { id: "military-5", zone: "military", label: "Solar militar", x: 33, y: 67, allowed: "Cuartel u hospital" },
   { id: "military-7", zone: "military", label: "Solar militar", x: 67, y: 67, allowed: "Cuartel u hospital" },
-  { id: "military-8", zone: "military", label: "Solar militar", x: 22, y: 46, allowed: "Cuartel u hospital" },
-  { id: "military-10", zone: "military", label: "Solar militar", x: 22, y: 66, allowed: "Cuartel u hospital" },
-  { id: "military-11", zone: "military", label: "Solar militar", x: 78, y: 46, allowed: "Cuartel u hospital" },
-  { id: "military-12", zone: "military", label: "Solar militar", x: 78, y: 57, allowed: "Cuartel u hospital" },
+  { id: "military-8", zone: "military", label: "Solar militar", x: 30, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-10", zone: "military", label: "Solar militar", x: 30, y: 66, allowed: "Cuartel u hospital" },
+  { id: "military-11", zone: "military", label: "Solar militar", x: 70, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-12", zone: "military", label: "Solar militar", x: 70, y: 57, allowed: "Cuartel u hospital" },
 
   { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 16, y: 68 },
   { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 38, y: 70 },
@@ -1990,7 +1990,9 @@ function init() {
         display: none !important;
       }
       .fortress-plot.has-sprite .fortress-plot-sprite {
-        inset: unset !important;
+        top: auto !important;
+        right: auto !important;
+        width: auto;
         height: auto !important;
         object-fit: contain !important;
         max-width: none !important;
@@ -2002,7 +2004,9 @@ function init() {
         box-shadow: none !important;
       }
       .building-hotspot.has-sprite .building-hotspot-sprite {
-        inset: unset !important;
+        top: auto !important;
+        right: auto !important;
+        width: auto;
         height: auto !important;
         object-fit: contain !important;
         max-width: none !important;
