@@ -353,10 +353,10 @@ const fortressPlots = [
   { id: "military-4", zone: "military", label: "Solar militar", x: 78, y: 60 },
   { id: "military-5", zone: "military", label: "Solar militar", x: 33, y: 67, allowed: "Cuartel u hospital" },
   { id: "military-7", zone: "military", label: "Solar militar", x: 67, y: 67, allowed: "Cuartel u hospital" },
-  { id: "military-8", zone: "military", label: "Solar militar", x: 24, y: 52, allowed: "Cuartel u hospital" },
-  { id: "military-10", zone: "military", label: "Solar militar", x: 24, y: 74, allowed: "Cuartel u hospital" },
-  { id: "military-11", zone: "military", label: "Solar militar", x: 76, y: 52, allowed: "Cuartel u hospital" },
-  { id: "military-12", zone: "military", label: "Solar militar", x: 76, y: 74, allowed: "Cuartel u hospital" },
+  { id: "military-8", zone: "military", label: "Solar militar", x: 22, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-10", zone: "military", label: "Solar militar", x: 22, y: 66, allowed: "Cuartel u hospital" },
+  { id: "military-11", zone: "military", label: "Solar militar", x: 78, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-12", zone: "military", label: "Solar militar", x: 78, y: 57, allowed: "Cuartel u hospital" },
 
   { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 16, y: 68 },
   { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 38, y: 70 },
@@ -1969,6 +1969,47 @@ const chatInput = document.querySelector("#chatInput");
 init();
 
 function init() {
+  /* ── Sprite CSS overrides (beats styles.css !important rules) ── */
+  if (!document.getElementById("sprite-overrides")) {
+    const st = document.createElement("style");
+    st.id = "sprite-overrides";
+    st.textContent = `
+      .fortress-plot.has-sprite {
+        overflow: visible !important;
+        background: transparent !important;
+        border-color: transparent !important;
+        box-shadow: none !important;
+        opacity: 1 !important;
+        border: none !important;
+      }
+      .fortress-plot.has-sprite b,
+      .fortress-plot.has-sprite small {
+        display: none !important;
+      }
+      .fortress-plot.has-sprite::before {
+        display: none !important;
+      }
+      .fortress-plot.has-sprite .fortress-plot-sprite {
+        inset: unset !important;
+        height: auto !important;
+        object-fit: contain !important;
+        max-width: none !important;
+      }
+      .building-hotspot.has-sprite {
+        overflow: visible !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+      .building-hotspot.has-sprite .building-hotspot-sprite {
+        inset: unset !important;
+        height: auto !important;
+        object-fit: contain !important;
+        max-width: none !important;
+      }
+    `;
+    document.head.appendChild(st);
+  }
   applySavedBuildingLevels();
   restoreFortressAssignments();
   normalizeWoundedState(true);
