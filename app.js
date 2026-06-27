@@ -474,9 +474,10 @@ const mapMarkers = [
   },
   {
     id: "monster-boar",
-    name: "Jabali de Sierra",
+    name: "Licantropo de Sierra",
     icon: "i-target",
     sprite: "boar",
+    image: "./assets/monster-licantropo.png",
     kind: "monster",
     x: 20,
     y: 37,
@@ -488,9 +489,10 @@ const mapMarkers = [
   },
   {
     id: "monster-griffin",
-    name: "Grifo del Estrecho",
+    name: "Ogro de la Cantera",
     icon: "i-target",
     sprite: "griffin",
+    image: "./assets/monster-ogro-martillo.png",
     kind: "monster",
     x: 67,
     y: 52,
@@ -498,13 +500,14 @@ const mapMarkers = [
     range: "00:18",
     material: "frag-sword",
     reward: "Materiales",
-    body: "Criatura mitica. Requiere energia del heroe y da piezas de arma."
+    body: "Bruto de roca. Requiere energia del heroe y da piezas de arma."
   },
   {
     id: "monster-basilisk",
-    name: "Basilisco de Hierro",
+    name: "Ogro del Garrote",
     icon: "i-target",
     sprite: "basilisk",
+    image: "./assets/monster-ogro-garrote.png",
     kind: "monster",
     x: 84,
     y: 25,
@@ -544,9 +547,10 @@ const mapMarkers = [
   },
   {
     id: "monster-dragon",
-    name: "Draco Sombrio",
+    name: "Dragon Rojo",
     icon: "i-target",
     sprite: "dragon",
+    image: "./assets/monster-dragon-rojo.png",
     kind: "monster",
     x: 90,
     y: 51,
@@ -1990,12 +1994,32 @@ function init() {
         display: none !important;
       }
       .fortress-plot.has-sprite .fortress-plot-sprite {
-        top: auto !important;
-        right: auto !important;
-        width: auto;
+        position: absolute !important;
+        inset: auto auto 50% 50% !important;
+        left: 50% !important;
+        bottom: 50% !important;
+        transform: translate(-50%, 44%) !important;
+        width: 72px !important;
         height: auto !important;
         object-fit: contain !important;
         max-width: none !important;
+      }
+      .scene-city .fortress-plot--resource .fortress-plot-sprite {
+        transform: translate(-50%, 46%) !important;
+        width: 82px !important;
+      }
+      .scene-city .fortress-plot--grain .fortress-plot-sprite,
+      .scene-city .fortress-plot--wood .fortress-plot-sprite {
+        width: 88px !important;
+      }
+      .scene-city .fortress-plot--stone .fortress-plot-sprite,
+      .scene-city .fortress-plot--iron .fortress-plot-sprite,
+      .scene-city .fortress-plot--silver .fortress-plot-sprite {
+        width: 78px !important;
+      }
+      .scene-city .fortress-plot--military .fortress-plot-sprite {
+        transform: translate(-50%, 43%) !important;
+        width: 66px !important;
       }
       .building-hotspot.has-sprite {
         overflow: visible !important;
@@ -3672,6 +3696,18 @@ function buildingMapSprite(building) {
     if (lv <= 20) return "./assets/mercado-mapa-11-20.png";
     return "./assets/mercado-mapa-21-25.png";
   }
+  if (building.id === "embajada") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/embajada-mapa-1-10.png";
+    if (lv <= 20) return "./assets/embajada-mapa-11-20.png";
+    return "./assets/embajada-mapa-21-25.png";
+  }
+  if (building.id === "forja") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/forja-mapa-1-10.png";
+    if (lv <= 20) return "./assets/forja-mapa-11-20.png";
+    return "./assets/forja-mapa-21-25.png";
+  }
   if (building.id === "academia") {
     const lv = building.level || 1;
     if (lv <= 10) return "./assets/academia-mapa-1-10.png";
@@ -3689,8 +3725,6 @@ function renderFortressPlots() {
       const resourceClass = building?.resource ? ` fortress-plot--${building.resource}` : "";
       const buildingKind = building?.kind || "";
       const sprite = buildingMapSprite(building);
-      const spriteWidth = 75;
-      const spriteStyle = `position:absolute;top:auto;right:auto;left:50%;bottom:50%;transform:translate(-50%,42%);width:${spriteWidth}px;max-width:none;height:auto;object-fit:contain;pointer-events:auto;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45));z-index:5;`;
       const plotExtra = sprite ? ";overflow:visible;background:transparent;border-color:transparent;box-shadow:none;" : "";
       const spriteHide = sprite ? " style=\"display:none\"" : "";
       const tokenIcon = occupied
@@ -3712,7 +3746,7 @@ function renderFortressPlots() {
           data-resource="${building?.resource || ""}"
           aria-label="${occupied ? building.name : plot.label}"
         >
-          ${sprite ? `<img class="fortress-plot-sprite" src="${sprite}" alt="" style="${spriteStyle}" />` : `<span class="fortress-plot-icon"><svg><use href="#${tokenIcon}" /></svg></span>`}
+          ${sprite ? `<img class="fortress-plot-sprite" src="${sprite}" alt="" />` : `<span class="fortress-plot-icon"><svg><use href="#${tokenIcon}" /></svg></span>`}
           <b${spriteHide}>${occupied ? building.level : "+"}</b>
           <small${spriteHide}>${occupied ? building.name : plot.label}</small>
         </button>
@@ -3903,7 +3937,7 @@ function renderMapMarkerIcon(marker) {
   }
 
   if (marker.kind === "monster") {
-    return `<span class="monster-token monster-token--${marker.sprite || "boar"}"><b>${marker.level}</b></span>`;
+    return renderMonsterToken(marker);
   }
 
   if (marker.kind === "resource") {
@@ -3911,6 +3945,13 @@ function renderMapMarkerIcon(marker) {
   }
 
   return `<span class="castle-token castle-token--${marker.kind || "enemy"}"><span class="castle-roof"></span><span class="castle-body"></span><b>${marker.level || ""}</b></span>`;
+}
+
+function renderMonsterToken(marker) {
+  if (marker.image) {
+    return `<span class="monster-token monster-token--image"><img src="${marker.image}" alt="" loading="lazy"><b>${marker.level}</b></span>`;
+  }
+  return `<span class="monster-token monster-token--${marker.sprite || "boar"}"><b>${marker.level}</b></span>`;
 }
 
 function renderMapMarkerLabel(marker) {
@@ -4256,6 +4297,7 @@ function bindSheet() {
     const action = event.target.closest("[data-building-action]");
     const tab = event.target.closest("[data-open-tab]");
     const markerAction = event.target.closest("[data-marker-action]");
+    const openPlanner = event.target.closest("[data-open-planner]");
     const scoutMarker = event.target.closest("[data-scout-marker]");
     const rallyMarker = event.target.closest("[data-rally-marker]");
     const rallyLaunch = event.target.closest("[data-rally-launch]");
@@ -4308,6 +4350,7 @@ function bindSheet() {
       centerWorldOnMarker(centerMarker.dataset.centerMarker);
       closeSheet();
     }
+    if (openPlanner) openMarchPlanner(openPlanner.dataset.openPlanner);
     if (marchClear) clearMarchPlanner(marchClear.dataset.marchClear);
     if (doctrineSave) saveDoctrineEditor();
     if (doctrineReset) resetDoctrineEditor();
@@ -4698,6 +4741,7 @@ function renderCompactMapActions(marker, quick) {
       : marker.kind === "monster"
       ? "Cazar"
       : "Atacar";
+  const canMarch = marker.kind !== "ally";
 
   return `
     <div class="compact-map-actions">
@@ -4716,7 +4760,7 @@ function renderCompactMapActions(marker, quick) {
           : ""
       }
       ${
-        quick
+        canMarch
           ? `<button class="primary-action" type="button" data-open-planner="${marker.id}">
               <svg><use href="#${marker.icon}" /></svg>${mainLabel}
             </button>`
@@ -4735,6 +4779,17 @@ function renderCompactMapActions(marker, quick) {
       </button>
     </div>
   `;
+}
+
+function openMarchPlanner(markerId) {
+  const marker = mapMarkers.find((item) => item.id === markerId);
+  if (!marker || marker.kind === "ally") return;
+  const slot = sheetBody.querySelector("#marchPlannerSlot");
+  if (!slot) return;
+  const quick = buildQuickMarch(marker);
+  slot.innerHTML = renderMarchPlanner(marker, quick);
+  const planner = slot.querySelector(`[data-march-target="${marker.id}"]`);
+  if (planner) updateMarchPlannerSummary(planner);
 }
 
 function renderMarchPlanner(marker, quick) {
@@ -5543,7 +5598,7 @@ function renderMarkerIntel(marker) {
     return `
       <div class="building-guidance marker-intel marker-intel--monster" style="--monster-quality:${quality.color}">
         <div class="monster-intel-head">
-          <span class="monster-token monster-token--${marker.sprite || "boar"}"><b>${marker.level}</b></span>
+          ${renderMonsterToken(marker)}
           <div>
             <strong>${monsterThreatLabel(marker)}</strong>
             <p>${marker.body}</p>

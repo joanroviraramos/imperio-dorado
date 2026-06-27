@@ -1159,6 +1159,32 @@ svg {
 .monster-token--leviathan { background-position: 50% 100%; }
 .monster-token--dragon { background-position: 100% 100%; }
 
+.monster-token--image {
+  overflow: visible;
+  background:
+    radial-gradient(circle at 50% 70%, rgba(255, 217, 122, 0.28), rgba(31, 24, 16, 0.9) 66%, rgba(10, 8, 6, 0.96));
+}
+
+.monster-token--image img {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  width: 76px;
+  height: 76px;
+  max-width: none;
+  object-fit: contain;
+  transform: translateX(-50%);
+  pointer-events: none;
+  filter:
+    drop-shadow(0 8px 8px rgba(0, 0, 0, 0.72))
+    drop-shadow(0 0 10px rgba(255, 196, 92, 0.34));
+}
+
+.world-canvas.is-overview .monster-token--image img {
+  width: 58px;
+  height: 58px;
+}
+
 .monster-token b,
 .resource-token b {
   position: absolute;
@@ -5336,6 +5362,12 @@ svg {
     height: 36px;
   }
 
+  .monster-token--image img {
+    width: 54px;
+    height: 54px;
+    bottom: 2px;
+  }
+
   .home-token {
     width: 42px;
     height: 42px;
@@ -6854,16 +6886,51 @@ svg {
 .fortress-plot.has-sprite .fortress-plot-icon {
   display: none !important;
 }
-.fortress-plot-sprite {
+.scene .fortress-plot-sprite {
   position: absolute;
+  inset: auto auto 50% 50%;
   left: 50%;
   bottom: 50%;
-  transform: translate(-50%, 42%);
-  width: 75px;
+  transform: translate(-50%, 44%);
+  width: 72px;
+  max-width: none;
   height: auto;
+  object-fit: contain;
   pointer-events: auto;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
   z-index: 2;
+}
+.scene-city .fortress-plot--resource .fortress-plot-sprite {
+  transform: translate(-50%, 46%);
+  width: 82px;
+}
+.scene-city .fortress-plot--grain .fortress-plot-sprite,
+.scene-city .fortress-plot--wood .fortress-plot-sprite {
+  width: 88px;
+}
+.scene-city .fortress-plot--stone .fortress-plot-sprite,
+.scene-city .fortress-plot--iron .fortress-plot-sprite,
+.scene-city .fortress-plot--silver .fortress-plot-sprite {
+  width: 78px;
+}
+.scene-city .fortress-plot--military .fortress-plot-sprite {
+  transform: translate(-50%, 43%);
+  width: 66px;
+}
+.scene-city .fortress-plot--base .fortress-plot-sprite {
+  transform: translate(-50%, 42%);
+  width: 70px;
+}
+.scene-city .fortress-plot--resource.is-empty {
+  width: 30px;
+  height: 24px;
+  opacity: 0.62;
+}
+.scene-city .fortress-plot--resource.is-empty small {
+  display: none;
+}
+.scene-city .fortress-plot--resource.is-empty b {
+  font-size: 12px;
 }
 /* el numero de nivel, encima del dibujo y abajo del todo */
 .fortress-plot.has-sprite b {
