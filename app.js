@@ -2,7 +2,7 @@ const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
-const CONSTRUCTION_LEVEL_MULTIPLIER = 3;
+const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
 const WORLD_COORD_MAX_X = 512;
 const WORLD_COORD_MAX_Y = 1024;
 const SERVER_EVENT_LIMIT = 80;
@@ -349,18 +349,18 @@ const fortressPlots = [
   { id: "base-astillero", zone: "base", label: "Solar naval", x: 62, y: 40 },
   { id: "base-muralla", zone: "base", label: "Muralla", x: 50, y: 57, buildingId: "muralla" },
 
-  { id: "military-1", zone: "military", label: "Solar militar", x: 17, y: 43, allowed: "Cuartel u hospital" },
-  { id: "military-2", zone: "military", label: "Solar militar", x: 83, y: 43, allowed: "Cuartel u hospital" },
-  { id: "military-3", zone: "military", label: "Solar militar", x: 17, y: 52, allowed: "Cuartel u hospital" },
-  { id: "military-4", zone: "military", label: "Solar militar", x: 83, y: 52, allowed: "Cuartel u hospital" },
-  { id: "military-5", zone: "military", label: "Solar militar", x: 21, y: 61, allowed: "Cuartel u hospital" },
-  { id: "military-6", zone: "military", label: "Solar militar", x: 79, y: 61, allowed: "Cuartel u hospital" },
-  { id: "military-7", zone: "military", label: "Solar militar", x: 31, y: 67, allowed: "Cuartel u hospital" },
-  { id: "military-8", zone: "military", label: "Solar militar", x: 40, y: 70, allowed: "Cuartel u hospital" },
-  { id: "military-9", zone: "military", label: "Solar militar", x: 50, y: 71, allowed: "Cuartel u hospital" },
-  { id: "military-10", zone: "military", label: "Solar militar", x: 60, y: 70, allowed: "Cuartel u hospital" },
-  { id: "military-11", zone: "military", label: "Solar militar", x: 69, y: 67, allowed: "Cuartel u hospital" },
-  { id: "military-12", zone: "military", label: "Solar militar", x: 50, y: 62, allowed: "Cuartel u hospital" },
+  { id: "military-1", zone: "military", label: "Solar militar", x: 20, y: 31, allowed: "Cuartel u hospital" },
+  { id: "military-2", zone: "military", label: "Solar militar", x: 34, y: 31, allowed: "Cuartel u hospital" },
+  { id: "military-3", zone: "military", label: "Solar militar", x: 78, y: 31, allowed: "Cuartel u hospital" },
+  { id: "military-4", zone: "military", label: "Solar militar", x: 20, y: 41, allowed: "Cuartel u hospital" },
+  { id: "military-5", zone: "military", label: "Solar militar", x: 34, y: 43, allowed: "Cuartel u hospital" },
+  { id: "military-6", zone: "military", label: "Solar militar", x: 78, y: 43, allowed: "Cuartel u hospital" },
+  { id: "military-7", zone: "military", label: "Solar militar", x: 18, y: 52, allowed: "Cuartel u hospital" },
+  { id: "military-8", zone: "military", label: "Solar militar", x: 82, y: 52, allowed: "Cuartel u hospital" },
+  { id: "military-9", zone: "military", label: "Solar militar", x: 24, y: 62, allowed: "Cuartel u hospital" },
+  { id: "military-10", zone: "military", label: "Solar militar", x: 76, y: 62, allowed: "Cuartel u hospital" },
+  { id: "military-11", zone: "military", label: "Solar militar", x: 36, y: 67, allowed: "Cuartel u hospital" },
+  { id: "military-12", zone: "military", label: "Solar militar", x: 64, y: 67, allowed: "Cuartel u hospital" },
 
   { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 15, y: 73 },
   { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 30, y: 74 },
@@ -2009,21 +2009,21 @@ function init() {
         max-width: none !important;
       }
       .scene-city .fortress-plot--resource .fortress-plot-sprite {
-        transform: translate(-50%, 39%) !important;
-        width: 70px !important;
+        transform: translate(-50%, 52%) !important;
+        width: 54px !important;
       }
       .scene-city .fortress-plot--grain .fortress-plot-sprite,
       .scene-city .fortress-plot--wood .fortress-plot-sprite {
-        width: 76px !important;
+        width: 58px !important;
       }
       .scene-city .fortress-plot--stone .fortress-plot-sprite,
       .scene-city .fortress-plot--iron .fortress-plot-sprite,
       .scene-city .fortress-plot--silver .fortress-plot-sprite {
-        width: 68px !important;
+        width: 56px !important;
       }
       .scene-city .fortress-plot--military .fortress-plot-sprite {
-        transform: translate(-50%, 39%) !important;
-        width: 54px !important;
+        transform: translate(-50%, 48%) !important;
+        width: 48px !important;
       }
       .scene-city .fortress-plot--base .fortress-plot-sprite {
         transform: translate(-50%, 40%) !important;
@@ -2172,7 +2172,17 @@ function normalizeQueue(type, queue) {
 
   if (type === "research" && !safeQueue.payload.researchId) return null;
   if ((type === "training" || type === "healing") && troopBundleCount(safeQueue.payload.troops || {}) <= 0 && !safeQueue.payload.toHeal) return null;
+  if (type === "construction") normalizeConstructionQueueDuration(safeQueue, building);
   return safeQueue;
+}
+
+function normalizeConstructionQueueDuration(queue, building) {
+  const now = Date.now();
+  const expected = constructionDurationForBuilding(building);
+  const remaining = Math.max(0, queue.finishAt - now);
+  if (remaining <= expected) return;
+  queue.startedAt = now;
+  queue.finishAt = now + expected;
 }
 
 function normalizeQueuePayload(type, payload, building) {
