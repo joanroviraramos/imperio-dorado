@@ -353,10 +353,10 @@ const fortressPlots = [
   { id: "military-4", zone: "military", label: "Solar militar", x: 78, y: 60 },
   { id: "military-5", zone: "military", label: "Solar militar", x: 33, y: 67, allowed: "Cuartel u hospital" },
   { id: "military-7", zone: "military", label: "Solar militar", x: 67, y: 67, allowed: "Cuartel u hospital" },
-  { id: "military-8", zone: "military", label: "Solar militar", x: 30, y: 46, allowed: "Cuartel u hospital" },
-  { id: "military-10", zone: "military", label: "Solar militar", x: 30, y: 66, allowed: "Cuartel u hospital" },
-  { id: "military-11", zone: "military", label: "Solar militar", x: 70, y: 46, allowed: "Cuartel u hospital" },
-  { id: "military-12", zone: "military", label: "Solar militar", x: 70, y: 57, allowed: "Cuartel u hospital" },
+  { id: "military-8", zone: "military", label: "Solar militar", x: 20, y: 48, allowed: "Cuartel u hospital" },
+  { id: "military-10", zone: "military", label: "Solar militar", x: 20, y: 56, allowed: "Cuartel u hospital" },
+  { id: "military-11", zone: "military", label: "Solar militar", x: 80, y: 48, allowed: "Cuartel u hospital" },
+  { id: "military-12", zone: "military", label: "Solar militar", x: 80, y: 56, allowed: "Cuartel u hospital" },
 
   { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 16, y: 68 },
   { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 38, y: 70 },
@@ -3689,7 +3689,7 @@ function renderFortressPlots() {
       const resourceClass = building?.resource ? ` fortress-plot--${building.resource}` : "";
       const buildingKind = building?.kind || "";
       const sprite = buildingMapSprite(building);
-      const spriteWidth = building?.kind === "resource" ? 58 : 75;
+      const spriteWidth = 75;
       const spriteStyle = `position:absolute;top:auto;right:auto;left:50%;bottom:50%;transform:translate(-50%,42%);width:${spriteWidth}px;max-width:none;height:auto;object-fit:contain;pointer-events:auto;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45));z-index:5;`;
       const plotExtra = sprite ? ";overflow:visible;background:transparent;border-color:transparent;box-shadow:none;" : "";
       const spriteHide = sprite ? " style=\"display:none\"" : "";
