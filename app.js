@@ -1,6 +1,8 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
 const BUILDING_MAX_LEVEL = 25;
+const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
+const CONSTRUCTION_LEVEL_MULTIPLIER = 3;
 const WORLD_COORD_MAX_X = 512;
 const WORLD_COORD_MAX_Y = 1024;
 const SERVER_EVENT_LIMIT = 80;
@@ -347,27 +349,29 @@ const fortressPlots = [
   { id: "base-astillero", zone: "base", label: "Solar naval", x: 62, y: 40 },
   { id: "base-muralla", zone: "base", label: "Muralla", x: 50, y: 57, buildingId: "muralla" },
 
-  { id: "military-1", zone: "military", label: "Solar militar", x: 22, y: 60 },
-  { id: "military-2", zone: "military", label: "Solar militar", x: 41, y: 60 },
-  { id: "military-3", zone: "military", label: "Solar militar", x: 59, y: 60 },
-  { id: "military-4", zone: "military", label: "Solar militar", x: 78, y: 60 },
-  { id: "military-5", zone: "military", label: "Solar militar", x: 33, y: 67, allowed: "Cuartel u hospital" },
-  { id: "military-7", zone: "military", label: "Solar militar", x: 67, y: 67, allowed: "Cuartel u hospital" },
-  { id: "military-8", zone: "military", label: "Solar militar", x: 20, y: 48, allowed: "Cuartel u hospital" },
-  { id: "military-10", zone: "military", label: "Solar militar", x: 20, y: 56, allowed: "Cuartel u hospital" },
-  { id: "military-11", zone: "military", label: "Solar militar", x: 80, y: 48, allowed: "Cuartel u hospital" },
-  { id: "military-12", zone: "military", label: "Solar militar", x: 80, y: 56, allowed: "Cuartel u hospital" },
+  { id: "military-1", zone: "military", label: "Solar militar", x: 17, y: 43, allowed: "Cuartel u hospital" },
+  { id: "military-2", zone: "military", label: "Solar militar", x: 83, y: 43, allowed: "Cuartel u hospital" },
+  { id: "military-3", zone: "military", label: "Solar militar", x: 17, y: 52, allowed: "Cuartel u hospital" },
+  { id: "military-4", zone: "military", label: "Solar militar", x: 83, y: 52, allowed: "Cuartel u hospital" },
+  { id: "military-5", zone: "military", label: "Solar militar", x: 21, y: 61, allowed: "Cuartel u hospital" },
+  { id: "military-6", zone: "military", label: "Solar militar", x: 79, y: 61, allowed: "Cuartel u hospital" },
+  { id: "military-7", zone: "military", label: "Solar militar", x: 31, y: 67, allowed: "Cuartel u hospital" },
+  { id: "military-8", zone: "military", label: "Solar militar", x: 40, y: 70, allowed: "Cuartel u hospital" },
+  { id: "military-9", zone: "military", label: "Solar militar", x: 50, y: 71, allowed: "Cuartel u hospital" },
+  { id: "military-10", zone: "military", label: "Solar militar", x: 60, y: 70, allowed: "Cuartel u hospital" },
+  { id: "military-11", zone: "military", label: "Solar militar", x: 69, y: 67, allowed: "Cuartel u hospital" },
+  { id: "military-12", zone: "military", label: "Solar militar", x: 50, y: 62, allowed: "Cuartel u hospital" },
 
-  { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 16, y: 68 },
-  { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 38, y: 70 },
-  { id: "resource-3", zone: "resource", label: "Parcela de recursos", x: 62, y: 70 },
-  { id: "resource-4", zone: "resource", label: "Parcela de recursos", x: 84, y: 68 },
-  { id: "resource-5", zone: "resource", label: "Parcela de recursos", x: 26, y: 80 },
-  { id: "resource-6", zone: "resource", label: "Parcela de recursos", x: 50, y: 81 },
-  { id: "resource-7", zone: "resource", label: "Parcela de recursos", x: 74, y: 80 },
-  { id: "resource-8", zone: "resource", label: "Parcela de recursos", x: 16, y: 90 },
-  { id: "resource-9", zone: "resource", label: "Parcela de recursos", x: 40, y: 91 },
-  { id: "resource-10", zone: "resource", label: "Parcela de recursos", x: 64, y: 91 }
+  { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 15, y: 73 },
+  { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 30, y: 74 },
+  { id: "resource-3", zone: "resource", label: "Parcela de recursos", x: 70, y: 74 },
+  { id: "resource-4", zone: "resource", label: "Parcela de recursos", x: 85, y: 73 },
+  { id: "resource-5", zone: "resource", label: "Parcela de recursos", x: 18, y: 82 },
+  { id: "resource-6", zone: "resource", label: "Parcela de recursos", x: 35, y: 84 },
+  { id: "resource-7", zone: "resource", label: "Parcela de recursos", x: 65, y: 84 },
+  { id: "resource-8", zone: "resource", label: "Parcela de recursos", x: 82, y: 82 },
+  { id: "resource-9", zone: "resource", label: "Parcela de recursos", x: 43, y: 91 },
+  { id: "resource-10", zone: "resource", label: "Parcela de recursos", x: 57, y: 91 }
 ];
 
 const initialFortressAssignments = Object.fromEntries(
@@ -2005,21 +2009,25 @@ function init() {
         max-width: none !important;
       }
       .scene-city .fortress-plot--resource .fortress-plot-sprite {
-        transform: translate(-50%, 46%) !important;
-        width: 82px !important;
+        transform: translate(-50%, 39%) !important;
+        width: 70px !important;
       }
       .scene-city .fortress-plot--grain .fortress-plot-sprite,
       .scene-city .fortress-plot--wood .fortress-plot-sprite {
-        width: 88px !important;
+        width: 76px !important;
       }
       .scene-city .fortress-plot--stone .fortress-plot-sprite,
       .scene-city .fortress-plot--iron .fortress-plot-sprite,
       .scene-city .fortress-plot--silver .fortress-plot-sprite {
-        width: 78px !important;
+        width: 68px !important;
       }
       .scene-city .fortress-plot--military .fortress-plot-sprite {
-        transform: translate(-50%, 43%) !important;
-        width: 66px !important;
+        transform: translate(-50%, 39%) !important;
+        width: 54px !important;
+      }
+      .scene-city .fortress-plot--base .fortress-plot-sprite {
+        transform: translate(-50%, 40%) !important;
+        width: 62px !important;
       }
       .building-hotspot.has-sprite {
         overflow: visible !important;
@@ -3520,11 +3528,21 @@ function completeQueue(type, queue) {
 }
 
 function queueDuration(type, building, amount = 0) {
-  if (type === "construction") return Math.round((12 + building.level * 5) * 1000 * durationFactor("construction"));
+  if (type === "construction") return constructionDurationForBuilding(building);
   if (type === "research") return Math.round((22 + building.level * 4) * 1000 * durationFactor("research"));
   if (type === "training") return Math.round((16 + Math.ceil(amount / 12)) * 1000 * durationFactor("training"));
   if (type === "healing") return Math.round((14 + Math.ceil(amount / 10)) * 1000 * durationFactor("healing"));
   return 20 * 1000;
+}
+
+function constructionDurationForBuilding(building) {
+  const level = clampBuildingLevel(building?.level || 1);
+  return Math.round(constructionDurationForLevel(level) * durationFactor("construction"));
+}
+
+function constructionDurationForLevel(level) {
+  const safeLevel = Math.min(BUILDING_MAX_LEVEL, Math.max(1, Math.floor(Number(level) || 1)));
+  return CONSTRUCTION_BASE_LEVEL_MS * Math.pow(CONSTRUCTION_LEVEL_MULTIPLIER, safeLevel - 1);
 }
 
 function durationFactor(type) {
@@ -3549,6 +3567,16 @@ function queueTypeName(type) {
 
 function formatDuration(ms) {
   const seconds = Math.ceil(ms / 1000);
+  const days = Math.floor(seconds / 86400);
+  if (days > 0) {
+    const hours = Math.floor((seconds % 86400) / 3600);
+    return `${days}d ${String(hours).padStart(2, "0")}h`;
+  }
+  const hours = Math.floor(seconds / 3600);
+  if (hours > 0) {
+    const minutesLeft = Math.floor((seconds % 3600) / 60);
+    return `${hours}h ${String(minutesLeft).padStart(2, "0")}m`;
+  }
   const minutes = Math.floor(seconds / 60);
   const rest = seconds % 60;
   if (minutes <= 0) return `${rest}s`;
