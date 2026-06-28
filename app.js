@@ -1,9 +1,35 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260628-g20";
+const DATA_VERSION = "20260628-g22";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
+const ALCAZAR_UPGRADE_REQUIREMENTS = {
+  2: [{ id: "muralla", level: 1 }],
+  3: [{ id: "almacen", level: 2 }, { resource: "grain", level: 2 }],
+  4: [{ id: "academia", level: 3 }, { id: "cuartel", level: 3 }],
+  5: [{ id: "muralla", level: 4 }, { resource: "stone", level: 4 }],
+  6: [{ id: "mercado", level: 5 }, { id: "hospital", level: 5 }],
+  7: [{ id: "cuartel", level: 6 }, { resource: "wood", level: 6 }],
+  8: [{ id: "academia", level: 7 }, { id: "muralla", level: 7 }],
+  9: [{ id: "almacen", level: 8 }, { id: "forja", level: 8 }],
+  10: [{ id: "muralla", level: 9 }, { id: "casa-alianza", level: 9 }],
+  11: [{ id: "academia", level: 10 }, { id: "hospital", level: 10 }],
+  12: [{ id: "cuartel", level: 11 }, { id: "salon-guerra", level: 11 }],
+  13: [{ id: "almacen", level: 12 }, { resource: "iron", level: 12 }],
+  14: [{ id: "muralla", level: 13 }, { id: "mercado", level: 13 }],
+  15: [{ id: "academia", level: 14 }, { id: "forja", level: 14 }],
+  16: [{ id: "cuartel", level: 15 }, { id: "hospital", level: 15 }],
+  17: [{ id: "almacen", level: 16 }, { id: "embajada", level: 16 }],
+  18: [{ id: "muralla", level: 17 }, { id: "salon-guerra", level: 17 }],
+  19: [{ id: "academia", level: 18 }, { resource: "grain", level: 18 }],
+  20: [{ id: "forja", level: 19 }, { id: "prision", level: 19 }],
+  21: [{ id: "muralla", level: 20 }, { id: "almacen", level: 20 }],
+  22: [{ id: "academia", level: 21 }, { id: "cuartel", level: 21 }],
+  23: [{ id: "hospital", level: 22 }, { id: "embajada", level: 22 }],
+  24: [{ id: "forja", level: 23 }, { id: "salon-guerra", level: 23 }],
+  25: [{ id: "muralla", level: 24 }, { id: "academia", level: 24 }, { id: "almacen", level: 24 }]
+};
 const WORLD_COORD_MAX_X = 512;
 const WORLD_COORD_MAX_Y = 1024;
 const SERVER_EVENT_LIMIT = 80;
@@ -1435,25 +1461,30 @@ const packs = [
     name: "Gesta Imperial",
     icon: "i-user",
     tier: "Imperial",
-    valueLabel: "Valor 60 EUR",
+    valueLabel: "Valor 115 EUR",
     difficulty: "hard",
     difficultyLabel: "Pregunta dificil",
-    text: "Premio imperial: mucho oro, energia, experiencia y piezas raras.",
-    reward: { silver: 26000, gold: 840, heroEnergy: 900, heroXp: 12800, buildBoost: 8 },
+    text: "Premio mayor: recursos masivos, oro, aceleradores largos y piezas de heroe.",
+    reward: { grain: 400000, wood: 400000, stone: 400000, iron: 320000, silver: 250000, gold: 3000, heroEnergy: 9000, heroXp: 125000, buildBoost: 30 },
     items: {
-      "card-silver-2600": 10,
-      "card-gold-120": 7,
-      "hero-energy-180": 5,
-      "hero-xp-1600": 8,
-      "speed-build-60": 8,
-      "speed-research-30": 6,
-      "speed-training-60": 4,
-      "frag-morrion": 3,
-      "frag-coraza": 3,
-      "frag-sword": 2,
-      "frag-morrion-fine": 2,
-      "frag-coraza-fine": 2,
-      "frag-sword-rare": 1
+      "card-grain-50000": 8,
+      "card-wood-50000": 8,
+      "card-stone-50000": 8,
+      "card-iron-50000": 6,
+      "card-silver-25000": 10,
+      "card-gold-1000": 3,
+      "hero-energy-1500": 6,
+      "hero-xp-25000": 5,
+      "speed-build-8h": 10,
+      "speed-research-8h": 8,
+      "speed-training-8h": 8,
+      "speed-build-24h": 3,
+      "frag-morrion-rare": 4,
+      "frag-coraza-rare": 4,
+      "frag-sword-rare": 4,
+      "frag-morrion-epic": 2,
+      "frag-coraza-epic": 2,
+      "frag-sword-epic": 2
     }
   },
   {
@@ -1461,25 +1492,29 @@ const packs = [
     name: "Armada del Atlantico",
     icon: "i-ship",
     tier: "Imperial",
-    valueLabel: "Valor 60 EUR",
+    valueLabel: "Valor 115 EUR",
     difficulty: "hard",
     difficultyLabel: "Pregunta dificil",
-    text: "Premio imperial de recursos masivos, oro, velocidad y piezas navales.",
-    reward: { wood: 98400, iron: 52000, silver: 16800, gold: 770, navalBoost: 8, troopBoost: 6 },
+    text: "Premio mayor de armada: recursos, oro, entrenamiento y piezas navales de calidad.",
+    reward: { grain: 300000, wood: 520000, stone: 260000, iron: 420000, silver: 220000, gold: 2800, navalBoost: 26, troopBoost: 22 },
     items: {
-      "card-wood-8200": 12,
-      "card-iron-5200": 10,
-      "card-silver-2100": 8,
-      "card-gold-110": 7,
-      "speed-naval-60": 8,
-      "speed-training-60": 6,
-      "speed-build-60": 4,
-      "speed-research-30": 4,
-      "frag-compass": 3,
-      "frag-cannon": 3,
-      "frag-compass-fine": 2,
-      "frag-cannon-fine": 2,
-      "frag-chart-rare": 1
+      "card-grain-50000": 6,
+      "card-wood-50000": 10,
+      "card-stone-50000": 5,
+      "card-iron-50000": 8,
+      "card-silver-25000": 9,
+      "card-gold-1000": 3,
+      "speed-naval-8h": 10,
+      "speed-training-8h": 10,
+      "speed-build-8h": 6,
+      "speed-research-8h": 6,
+      "speed-any-24h": 3,
+      "frag-compass-rare": 4,
+      "frag-cannon-rare": 4,
+      "frag-chart-rare": 4,
+      "frag-compass-epic": 2,
+      "frag-cannon-epic": 2,
+      "frag-chart-epic": 2
     }
   }
 ];
@@ -1542,19 +1577,33 @@ const inventoryCatalog = {
   "card-iron-5200": cardItem("Tarjeta de Hierro", "Epica", "i-sword", "Usar: +5.200 hierro.", { iron: 5200 }),
   "card-silver-2100": cardItem("Tarjeta de Plata", "Epica", "i-scroll", "Usar: +2.100 plata.", { silver: 2100 }),
   "card-gold-110": cardItem("Tarjeta de Oro", "Epica", "i-crown", "Usar: +110 oro.", { gold: 110 }),
+  "card-grain-50000": cardItem("Tarjeta de Trigo", "Legendaria", "i-crown", "Usar: +50.000 trigo.", { grain: 50000 }),
+  "card-wood-50000": cardItem("Tarjeta de Madera", "Legendaria", "i-hammer", "Usar: +50.000 madera.", { wood: 50000 }),
+  "card-stone-50000": cardItem("Tarjeta de Piedra", "Legendaria", "i-shield", "Usar: +50.000 piedra.", { stone: 50000 }),
+  "card-iron-50000": cardItem("Tarjeta de Hierro", "Legendaria", "i-sword", "Usar: +50.000 hierro.", { iron: 50000 }),
+  "card-silver-25000": cardItem("Tarjeta de Plata", "Legendaria", "i-scroll", "Usar: +25.000 plata.", { silver: 25000 }),
+  "card-gold-1000": cardItem("Tarjeta de Oro", "Legendaria", "i-crown", "Usar: +1.000 oro.", { gold: 1000 }),
   "speed-build-5": boostItem("Acelerador de Obra", "5 min", "i-hammer", "Reduce una cola corta de construccion.", { queue: "construction", seconds: 300 }),
   "speed-build-15": boostItem("Acelerador de Obra", "15 min", "i-hammer", "Reduce una cola de construccion activa.", { queue: "construction", seconds: 900 }),
   "speed-build-60": boostItem("Acelerador de Obra", "60 min", "i-hammer", "Acelerador largo para mejoras de edificios.", { queue: "construction", seconds: 3600 }),
+  "speed-build-8h": boostItem("Acelerador de Obra", "8 h", "i-hammer", "Acelerador mayor para mejoras largas.", { queue: "construction", seconds: 28800 }),
+  "speed-build-24h": boostItem("Acelerador de Obra", "24 h", "i-hammer", "Acelerador de dia completo para construccion.", { queue: "construction", seconds: 86400 }),
   "speed-research-5": boostItem("Acelerador de Ciencia", "5 min", "i-book", "Reduce una investigacion corta de Academia.", { queue: "research", seconds: 300 }),
   "speed-research-15": boostItem("Acelerador de Ciencia", "15 min", "i-book", "Reduce una investigacion de Academia.", { queue: "research", seconds: 900 }),
   "speed-research-30": boostItem("Acelerador de Ciencia", "30 min", "i-book", "Reduce una investigacion de Academia.", { queue: "research", seconds: 1800 }),
+  "speed-research-8h": boostItem("Acelerador de Ciencia", "8 h", "i-book", "Acelerador mayor para investigaciones largas.", { queue: "research", seconds: 28800 }),
   "speed-training-5": boostItem("Acelerador de Leva", "5 min", "i-sword", "Reduce una cola corta de entrenamiento.", { queue: "training", seconds: 300 }),
   "speed-training-15": boostItem("Acelerador de Leva", "15 min", "i-sword", "Reduce una cola de entrenamiento.", { queue: "training", seconds: 900 }),
   "speed-training-30": boostItem("Acelerador de Leva", "30 min", "i-sword", "Reduce una cola de entrenamiento.", { queue: "training", seconds: 1800 }),
   "speed-training-60": boostItem("Acelerador de Leva", "60 min", "i-sword", "Acelerador largo para tropas.", { queue: "training", seconds: 3600 }),
+  "speed-training-8h": boostItem("Acelerador de Leva", "8 h", "i-sword", "Acelerador mayor para grandes levas.", { queue: "training", seconds: 28800 }),
   "speed-naval-60": boostItem("Acelerador Naval", "60 min", "i-ship", "Reduce cualquier cola activa de expedicion o construccion naval.", { queue: "any", seconds: 3600 }),
+  "speed-naval-8h": boostItem("Acelerador Naval", "8 h", "i-ship", "Acelerador mayor para armada y colas activas.", { queue: "any", seconds: 28800 }),
+  "speed-any-24h": boostItem("Acelerador Imperial", "24 h", "i-crown", "Reduce cualquier cola activa un dia completo.", { queue: "any", seconds: 86400 }),
   "hero-energy-180": heroItem("Vino de Campana", "Heroe", "i-user", "Usar: +180 energia de heroe.", { heroEnergy: 180 }),
+  "hero-energy-1500": heroItem("Vino de Capitan General", "Heroe", "i-user", "Usar: +1.500 energia de heroe.", { heroEnergy: 1500 }),
   "hero-xp-1600": heroItem("Cronica de Gesta", "Heroe", "i-scroll", "Usar: +1.600 experiencia de heroe.", { heroXp: 1600 }),
+  "hero-xp-25000": heroItem("Cronica Imperial", "Heroe", "i-scroll", "Usar: +25.000 experiencia de heroe.", { heroXp: 25000 }),
   "frag-chart": equipmentItem("Fragmento de Carta Nautica", "Pieza", "i-map", "Pieza para equipo de exploracion del heroe."),
   "frag-sword": equipmentItem("Fragmento de Espada Toledana", "Pieza", "i-sword", "Pieza de arma para el heroe."),
   "frag-morrion": equipmentItem("Fragmento de Morrion Dorado", "Pieza", "i-user", "Pieza de casco para el heroe."),
@@ -1741,6 +1790,7 @@ const defaultState = {
     claimed: 0
   },
   buildingLevels: {},
+  alcazarRewardsClaimed: {},
   fortressAssignments: {},
   enemyResources: {},
   enemyTroops: {},
@@ -2073,6 +2123,7 @@ function mergeState(base, saved) {
     resources: { ...base.resources, ...(saved.resources || {}) },
     wisdom: { ...base.wisdom, ...(saved.wisdom || {}) },
     buildingLevels: { ...base.buildingLevels, ...(saved.buildingLevels || {}) },
+    alcazarRewardsClaimed: { ...base.alcazarRewardsClaimed, ...(saved.alcazarRewardsClaimed || {}) },
     fortressAssignments: { ...(saved.fortressAssignments || {}) },
     enemyResources: { ...base.enemyResources, ...(saved.enemyResources || {}) },
     enemyTroops: { ...base.enemyTroops, ...(saved.enemyTroops || {}) },
@@ -2421,6 +2472,7 @@ function serverEventSummary(type, detail = {}) {
   const labels = {
     "queue.start": "Cola iniciada",
     "queue.complete": "Cola completada",
+    "alcazar.reward": "Premio del Alcazar",
     "march.start": "Marcha enviada",
     "march.cancel": "Marcha cancelada",
     "march.resolve": "Marcha resuelta",
@@ -2607,6 +2659,100 @@ function nextBuildingLevel(building) {
   return Math.min(BUILDING_MAX_LEVEL, building.level + 1);
 }
 
+function buildingBaseId(building) {
+  return building?.templateId || building?.id || "";
+}
+
+function requirementLabel(requirement) {
+  if (requirement.resource) return `${resourceName(requirement.resource)} Nv. ${requirement.level}`;
+  const building = buildings.find((item) => item.id === requirement.id || item.templateId === requirement.id);
+  const name = building?.name?.replace(/\s+[IVX]+$/u, "").trim() || requirement.id;
+  return `${name} Nv. ${requirement.level}`;
+}
+
+function requirementCandidates(requirement) {
+  const visible = visibleCityBuildings();
+  if (requirement.resource) {
+    return visible.filter((building) => building.kind === "resource" && building.resource === requirement.resource);
+  }
+  return visible.filter((building) => buildingBaseId(building) === requirement.id || building.id === requirement.id);
+}
+
+function requirementProgress(requirement) {
+  const current = requirementCandidates(requirement).reduce((max, building) => Math.max(max, building.level || 0), 0);
+  return {
+    ...requirement,
+    label: requirementLabel(requirement),
+    current,
+    met: current >= requirement.level
+  };
+}
+
+function buildingUpgradeRequirements(building) {
+  if (!building || buildingIsMaxLevel(building)) return [];
+  const targetLevel = nextBuildingLevel(building);
+  const requirements = [];
+  const alcazar = buildings.find((item) => item.id === "alcazar");
+
+  if (building.id === "alcazar") {
+    requirements.push(...(ALCAZAR_UPGRADE_REQUIREMENTS[targetLevel] || []));
+  } else if (alcazar) {
+    requirements.push({
+      id: "alcazar",
+      level: targetLevel,
+      labelOverride: `Alcazar Real Nv. ${targetLevel}`
+    });
+  }
+
+  return requirements.map((requirement) => {
+    if (!requirement.labelOverride) return requirementProgress(requirement);
+    const current = requirementCandidates(requirement).reduce((max, item) => Math.max(max, item.level || 0), 0);
+    return {
+      ...requirement,
+      label: requirement.labelOverride,
+      current,
+      met: current >= requirement.level
+    };
+  });
+}
+
+function buildingUpgradeCheck(building) {
+  if (!building) return { ok: false, reason: "Edificio no encontrado.", requirements: [] };
+  if (buildingIsMaxLevel(building)) {
+    return { ok: false, reason: `${building.name} ya esta en el nivel maximo ${BUILDING_MAX_LEVEL}.`, requirements: [] };
+  }
+  const requirements = buildingUpgradeRequirements(building);
+  const missing = requirements.filter((requirement) => !requirement.met);
+  if (missing.length) {
+    return {
+      ok: false,
+      reason: `Faltan requisitos: ${missing.map((requirement) => `${requirement.label} (${requirement.current}/${requirement.level})`).join(", ")}.`,
+      requirements
+    };
+  }
+  return { ok: true, reason: "", requirements };
+}
+
+function renderUpgradeRequirements(building) {
+  const check = buildingUpgradeCheck(building);
+  if (!check.requirements.length) return "";
+  return `
+    <div class="upgrade-requirements">
+      <strong>Requisitos nivel ${nextBuildingLevel(building)}</strong>
+      <div>
+        ${check.requirements
+          .map((requirement) => `
+            <span class="${requirement.met ? "is-met" : "is-missing"}">
+              ${requirement.met ? "OK" : "Falta"} ${requirement.label}
+              <small>${requirement.current}/${requirement.level}</small>
+            </span>
+          `)
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
 function buildingLevelCost(building) {
   if (buildingIsMaxLevel(building)) return {};
   const baseCost = building.cost || {};
@@ -2777,6 +2923,7 @@ function renderQueueStrip() {
             ${
               speedItems.length
                 ? speedItems
+                    .slice(0, 2)
                     .map(
                       ({ id, item, quantity }) =>
                         `<button class="queue-speed" type="button" data-queue-speed="${id}" data-queue-type="${queue.type}">${speedLabel(item)} x${quantity}</button>`
@@ -3474,10 +3621,15 @@ function processQueueCompletions() {
 function completeQueue(type, queue) {
   const building = resolveVisibleBuilding(queue.buildingId) || buildings.find((item) => item.id === queue.buildingId);
   if (type === "construction" && building) {
-    building.level = clampBuildingLevel(queue.payload.level);
-    state.buildingLevels[building.id] = building.level;
-    state.power += 920 + building.level * 140;
-    addAllianceFeed("Construccion completada", `${building.name} sube a nivel ${building.level}.`);
+    const previousLevel = clampBuildingLevel(building.level || 1);
+    const completedLevel = clampBuildingLevel(queue.payload.level);
+    building.level = completedLevel;
+    state.buildingLevels[building.id] = completedLevel;
+    state.power += 920 + completedLevel * 140;
+    addAllianceFeed("Construccion completada", `${building.name} sube a nivel ${completedLevel}.`);
+    if (building.id === "alcazar" && completedLevel > previousLevel) {
+      grantAlcazarUpgradeReward(completedLevel);
+    }
   }
 
   if (type === "training") {
@@ -4487,6 +4639,7 @@ function openBuilding(id) {
   const costLabel = formatCost(cost);
   const stats = getBuildingStats(building);
   const levelCostLabel = buildingIsMaxLevel(building) ? "Nivel maximo" : costLabel || "Gratis";
+  const requirementsMarkup = renderUpgradeRequirements(building);
 
   sheetBody.innerHTML = `
     <div class="sheet-title">
@@ -4512,6 +4665,7 @@ function openBuilding(id) {
       <strong>${stats.guideTitle}</strong>
       <p>${stats.guideBody}</p>
     </div>
+    ${requirementsMarkup}
     <div class="action-row">
       ${getBuildingActionButtons(building)}
     </div>
@@ -4531,6 +4685,7 @@ function renderResourceBuildingSheet(building, message = "") {
   const fillRate = Math.max(0, Math.min(100, (reserve / Math.max(1, capacity)) * 100));
   const queue = activeQueueForBuilding(building.id);
   const cost = buildingLevelCost(building);
+  const requirementsMarkup = renderUpgradeRequirements(building);
 
   sheetBody.innerHTML = `
     <div class="sheet-title resource-sheet-title">
@@ -4568,6 +4723,8 @@ function renderResourceBuildingSheet(building, message = "") {
       <div class="resource-sheet-bar"><i style="--progress:${fillRate}%"></i></div>
       <small>${queue ? "Mejorando edificio" : "Produccion pasiva hasta el limite del almacen"}</small>
     </div>
+
+    ${requirementsMarkup}
 
     <div class="action-row resource-sheet-bottom">
       ${renderBuildingLevelButton(building)}
@@ -5377,9 +5534,11 @@ function getBuildingActionButtons(building) {
 
 function renderBuildingLevelButton(building) {
   const isMax = buildingIsMaxLevel(building);
+  const upgradeCheck = buildingUpgradeCheck(building);
+  const disabled = isMax || !upgradeCheck.ok;
   return `
-    <button class="primary-action" type="button" data-building-action="level:${building.id}" ${isMax ? "disabled" : ""}>
-      <svg><use href="#${building.icon}" /></svg>${isMax ? `Nivel ${BUILDING_MAX_LEVEL}` : "Subir nivel"}
+    <button class="primary-action" type="button" data-building-action="level:${building.id}" ${disabled ? "disabled" : ""} title="${upgradeCheck.reason || ""}">
+      <svg><use href="#${building.icon}" /></svg>${isMax ? `Nivel ${BUILDING_MAX_LEVEL}` : upgradeCheck.ok ? "Subir nivel" : "Bloqueado"}
     </button>
   `;
 }
@@ -5395,9 +5554,15 @@ function runBuildingAction(command) {
 
   if (action === "level") {
     const cost = buildingLevelCost(building);
+    const upgradeCheck = buildingUpgradeCheck(building);
 
     if (buildingIsMaxLevel(building)) {
       feedback.textContent = `${building.name} ya esta en el nivel maximo ${BUILDING_MAX_LEVEL}.`;
+      return;
+    }
+
+    if (!upgradeCheck.ok) {
+      feedback.textContent = upgradeCheck.reason;
       return;
     }
 
@@ -9407,8 +9572,93 @@ function equipmentItem(name, rarity, icon, description, meta = {}) {
 
 function addPackItems(pack) {
   const items = pack.items || rewardToItems(pack.reward || {});
+  addInventoryItems(items);
+}
+
+function addInventoryItems(items = {}) {
   Object.entries(items).forEach(([id, quantity]) => {
+    if (!inventoryCatalog[id]) return;
     state.inventory[id] = (state.inventory[id] || 0) + quantity;
+  });
+}
+
+function alcazarRewardItems(level) {
+  const safeLevel = clampBuildingLevel(level);
+  const tier = safeLevel >= 20 ? 3 : safeLevel >= 12 ? 2 : 1;
+  const resourceCards = Math.max(1, Math.ceil(safeLevel / 2));
+  const premiumCards = Math.max(1, Math.ceil(safeLevel / 4));
+  const speedCount = Math.max(1, Math.ceil(safeLevel / 5));
+  const heroCount = Math.max(1, Math.ceil(safeLevel / 8));
+
+  if (tier === 3) {
+    return {
+      "card-grain-50000": resourceCards,
+      "card-wood-50000": resourceCards,
+      "card-stone-50000": resourceCards,
+      "card-iron-50000": resourceCards,
+      "card-silver-25000": premiumCards,
+      "card-gold-1000": Math.max(1, Math.ceil(safeLevel / 10)),
+      "speed-build-24h": speedCount,
+      "speed-research-8h": speedCount,
+      "speed-training-8h": speedCount,
+      "hero-energy-1500": heroCount,
+      "hero-xp-25000": heroCount,
+      "frag-sword-epic": 1,
+      "frag-coraza-epic": 1,
+      "frag-morrion-epic": 1
+    };
+  }
+
+  if (tier === 2) {
+    return {
+      "card-grain-50000": resourceCards,
+      "card-wood-50000": resourceCards,
+      "card-stone-50000": resourceCards,
+      "card-iron-50000": Math.max(1, resourceCards - 1),
+      "card-silver-25000": premiumCards,
+      "card-gold-1000": 1,
+      "speed-build-8h": speedCount,
+      "speed-research-8h": Math.max(1, speedCount - 1),
+      "speed-training-8h": Math.max(1, speedCount - 1),
+      "hero-energy-1500": heroCount,
+      "hero-xp-25000": heroCount,
+      "frag-sword-rare": 1,
+      "frag-coraza-rare": 1,
+      "frag-morrion-rare": 1
+    };
+  }
+
+  return {
+    "card-grain-5200": resourceCards * 2,
+    "card-wood-8200": resourceCards,
+    "card-iron-5200": resourceCards,
+    "card-silver-2600": premiumCards,
+    "card-gold-120": Math.max(1, Math.ceil(safeLevel / 5)),
+    "speed-build-60": speedCount,
+    "speed-research-30": speedCount,
+    "speed-training-60": speedCount,
+    "hero-energy-180": heroCount * 2,
+    "hero-xp-1600": heroCount * 3,
+    "frag-sword-fine": 1,
+    "frag-coraza-fine": 1,
+    "frag-morrion-fine": 1
+  };
+}
+
+function grantAlcazarUpgradeReward(level) {
+  const safeLevel = clampBuildingLevel(level);
+  state.alcazarRewardsClaimed ||= {};
+  const key = String(safeLevel);
+  if (state.alcazarRewardsClaimed[key]) return;
+
+  const items = alcazarRewardItems(safeLevel);
+  addInventoryItems(items);
+  state.alcazarRewardsClaimed[key] = Date.now();
+  addAllianceFeed("Premio del Alcazar", `Nivel ${safeLevel}: paquete imperial anadido al inventario.`);
+  recordServerEvent("alcazar.reward", {
+    level: safeLevel,
+    itemCount: Object.values(items).reduce((sum, quantity) => sum + quantity, 0),
+    label: `Alcazar Real Nv. ${safeLevel}`
   });
 }
 
@@ -9479,6 +9729,10 @@ function compatibleSpeedItems(queueType) {
 
 function speedLabel(item) {
   const seconds = item.effect?.speed?.seconds || 0;
+  if (seconds >= 3600) {
+    const hours = Math.max(1, Math.round(seconds / 3600));
+    return `${hours}h`;
+  }
   const minutes = Math.max(1, Math.round(seconds / 60));
   return `${minutes}m`;
 }
