@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260628-g22";
+const DATA_VERSION = "20260628-g23";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -30,6 +30,16 @@ const ALCAZAR_UPGRADE_REQUIREMENTS = {
   24: [{ id: "forja", level: 23 }, { id: "salon-guerra", level: 23 }],
   25: [{ id: "muralla", level: 24 }, { id: "academia", level: 24 }, { id: "almacen", level: 24 }]
 };
+const KINGDOM_BALANCE_REQUIREMENTS = [
+  { resource: "grain", labelOverride: "Trigo base" },
+  { resource: "wood", labelOverride: "Madera base" },
+  { resource: "stone", labelOverride: "Piedra base" },
+  { resource: "iron", labelOverride: "Hierro base" },
+  { id: "almacen", labelOverride: "Almacen Real" },
+  { id: "muralla", labelOverride: "Muralla" },
+  { id: "cuartel", labelOverride: "Cuartel base" },
+  { id: "hospital", labelOverride: "Hospital base" }
+];
 const WORLD_COORD_MAX_X = 512;
 const WORLD_COORD_MAX_Y = 1024;
 const SERVER_EVENT_LIMIT = 80;
@@ -2664,6 +2674,9 @@ function buildingBaseId(building) {
 }
 
 function requirementLabel(requirement) {
+  if (requirement.labelOverride) {
+    return requirement.labelOverride.includes("Nv.") ? requirement.labelOverride : `${requirement.labelOverride} Nv. ${requirement.level}`;
+  }
   if (requirement.resource) return `${resourceName(requirement.resource)} Nv. ${requirement.level}`;
   const building = buildings.find((item) => item.id === requirement.id || item.templateId === requirement.id);
   const name = building?.name?.replace(/\s+[IVX]+$/u, "").trim() || requirement.id;
@@ -2688,6 +2701,35 @@ function requirementProgress(requirement) {
   };
 }
 
+function kingdomBalanceRequirements(targetLevel) {
+  const requiredLevel = targetLevel - 2;
+  if (requiredLevel < 2) return [];
+  return KINGDOM_BALANCE_REQUIREMENTS.map((requirement) => ({
+    ...requirement,
+    level: requiredLevel,
+    balanceRequirement: true
+  }));
+}
+
+function mergeUpgradeRequirements(requirements) {
+  const merged = new Map();
+  requirements.forEach((requirement) => {
+    const key = requirement.resource ? `resource:${requirement.resource}` : `building:${requirement.id}`;
+    const existing = merged.get(key);
+    if (!existing || requirement.level > existing.level) {
+      merged.set(key, { ...existing, ...requirement, level: requirement.level });
+      return;
+    }
+    merged.set(key, {
+      ...requirement,
+      ...existing,
+      level: existing.level,
+      balanceRequirement: existing.balanceRequirement || requirement.balanceRequirement
+    });
+  });
+  return [...merged.values()];
+}
+
 function buildingUpgradeRequirements(building) {
   if (!building || buildingIsMaxLevel(building)) return [];
   const targetLevel = nextBuildingLevel(building);
@@ -2704,16 +2746,9 @@ function buildingUpgradeRequirements(building) {
     });
   }
 
-  return requirements.map((requirement) => {
-    if (!requirement.labelOverride) return requirementProgress(requirement);
-    const current = requirementCandidates(requirement).reduce((max, item) => Math.max(max, item.level || 0), 0);
-    return {
-      ...requirement,
-      label: requirement.labelOverride,
-      current,
-      met: current >= requirement.level
-    };
-  });
+  requirements.push(...kingdomBalanceRequirements(targetLevel));
+
+  return mergeUpgradeRequirements(requirements).map(requirementProgress);
 }
 
 function buildingUpgradeCheck(building) {
