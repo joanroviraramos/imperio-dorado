@@ -6909,8 +6909,13 @@ svg {
   width: 76px;
 }
 .scene-city .fortress-plot--grain .fortress-plot-sprite {
-  transform: translate(-50%, 56%);
-  width: 110px;
+  inset: 50% auto auto 50%;
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
 }
 .scene-city .fortress-plot--stone .fortress-plot-sprite,
 .scene-city .fortress-plot--iron .fortress-plot-sprite,

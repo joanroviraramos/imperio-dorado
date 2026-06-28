@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260628-g18";
+const DATA_VERSION = "20260628-g19";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -1542,9 +1542,14 @@ const inventoryCatalog = {
   "card-iron-5200": cardItem("Tarjeta de Hierro", "Epica", "i-sword", "Usar: +5.200 hierro.", { iron: 5200 }),
   "card-silver-2100": cardItem("Tarjeta de Plata", "Epica", "i-scroll", "Usar: +2.100 plata.", { silver: 2100 }),
   "card-gold-110": cardItem("Tarjeta de Oro", "Epica", "i-crown", "Usar: +110 oro.", { gold: 110 }),
+  "speed-build-5": boostItem("Acelerador de Obra", "5 min", "i-hammer", "Reduce una cola corta de construccion.", { queue: "construction", seconds: 300 }),
   "speed-build-15": boostItem("Acelerador de Obra", "15 min", "i-hammer", "Reduce una cola de construccion activa.", { queue: "construction", seconds: 900 }),
   "speed-build-60": boostItem("Acelerador de Obra", "60 min", "i-hammer", "Acelerador largo para mejoras de edificios.", { queue: "construction", seconds: 3600 }),
+  "speed-research-5": boostItem("Acelerador de Ciencia", "5 min", "i-book", "Reduce una investigacion corta de Academia.", { queue: "research", seconds: 300 }),
+  "speed-research-15": boostItem("Acelerador de Ciencia", "15 min", "i-book", "Reduce una investigacion de Academia.", { queue: "research", seconds: 900 }),
   "speed-research-30": boostItem("Acelerador de Ciencia", "30 min", "i-book", "Reduce una investigacion de Academia.", { queue: "research", seconds: 1800 }),
+  "speed-training-5": boostItem("Acelerador de Leva", "5 min", "i-sword", "Reduce una cola corta de entrenamiento.", { queue: "training", seconds: 300 }),
+  "speed-training-15": boostItem("Acelerador de Leva", "15 min", "i-sword", "Reduce una cola de entrenamiento.", { queue: "training", seconds: 900 }),
   "speed-training-30": boostItem("Acelerador de Leva", "30 min", "i-sword", "Reduce una cola de entrenamiento.", { queue: "training", seconds: 1800 }),
   "speed-training-60": boostItem("Acelerador de Leva", "60 min", "i-sword", "Acelerador largo para tropas.", { queue: "training", seconds: 3600 }),
   "speed-naval-60": boostItem("Acelerador Naval", "60 min", "i-ship", "Reduce cualquier cola activa de expedicion o construccion naval.", { queue: "any", seconds: 3600 }),
@@ -1960,8 +1965,13 @@ function init() {
         width: 76px !important;
       }
       .scene-city .fortress-plot--grain .fortress-plot-sprite {
-        transform: translate(-50%, 56%) !important;
-        width: 110px !important;
+        inset: 50% auto auto 50% !important;
+        top: 50% !important;
+        bottom: auto !important;
+        transform: translate(-50%, -50%) !important;
+        width: 112px !important;
+        height: 112px !important;
+        object-fit: contain !important;
       }
       .scene-city .fortress-plot--stone .fortress-plot-sprite,
       .scene-city .fortress-plot--iron .fortress-plot-sprite,
@@ -2527,10 +2537,8 @@ function availableBuildingsForPlot(plot) {
 }
 
 function instanceNameForPlot(template, plot) {
-  const slotNumber = Number((plot.id.match(/(\d+)$/) || [])[1] || 1);
-  const roman = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"][slotNumber - 1] || `${slotNumber}`;
   const baseName = template.resource ? template.name.replace(/\s+[IVX]+$/u, "").trim() : template.name;
-  return ["resource", "military"].includes(plot.zone) ? `${baseName} ${roman}` : baseName;
+  return baseName;
 }
 
 function createPlotBuildingInstance(template, plot) {
@@ -2576,12 +2584,16 @@ function assignBuildingToPlot(plotId, buildingId) {
 }
 
 function activeResourceBuildings() {
+  return visiblePlotBuildings("resource");
+}
+
+function visiblePlotBuildings(kind = null) {
   const assignedIds = new Set(
     fortressPlots
       .map((plot) => plot.buildingId)
       .filter(Boolean)
   );
-  return buildings.filter((building) => building.kind === "resource" && assignedIds.has(building.id));
+  return buildings.filter((building) => assignedIds.has(building.id) && (!kind || building.kind === kind));
 }
 
 function clampBuildingLevel(level) {
@@ -3439,7 +3451,13 @@ function hasActiveQueue(type) {
 }
 
 function activeQueueForBuilding(buildingId) {
-  return Object.values(state.queues).find((queue) => queue && queue.buildingId === buildingId) || null;
+  const building = buildings.find((item) => item.id === buildingId);
+  return Object.values(state.queues).find((queue) =>
+    queue && (
+      queue.buildingId === buildingId ||
+      (building?.isPlotInstance && queue.buildingId === building.templateId)
+    )
+  ) || null;
 }
 
 function processQueueCompletions() {
@@ -3455,7 +3473,7 @@ function processQueueCompletions() {
 }
 
 function completeQueue(type, queue) {
-  const building = buildings.find((item) => item.id === queue.buildingId);
+  const building = resolveVisibleBuilding(queue.buildingId) || buildings.find((item) => item.id === queue.buildingId);
   if (type === "construction" && building) {
     building.level = clampBuildingLevel(queue.payload.level);
     state.buildingLevels[building.id] = building.level;
@@ -3517,6 +3535,34 @@ function assignedInstanceForTemplate(templateId) {
     building.templateId === templateId &&
     fortressPlots.some((plot) => plot.buildingId === building.id)
   );
+}
+
+function resolveVisibleBuildingId(id) {
+  const building = buildings.find((item) => item.id === id);
+  if (!building) return id;
+  if (building.isPlotInstance) return building.id;
+  if (isRepeatablePlotBuilding(building)) {
+    const instance = assignedInstanceForTemplate(building.id);
+    if (instance) return instance.id;
+  }
+  return building.id;
+}
+
+function resolveVisibleBuilding(id) {
+  return buildings.find((item) => item.id === resolveVisibleBuildingId(id)) || null;
+}
+
+function adoptTemplateConstructionQueue(building) {
+  const queue = state.queues.construction;
+  if (!building?.isPlotInstance || !queue || queue.buildingId !== building.templateId) return;
+  queue.buildingId = building.id;
+  queue.label = building.name;
+  queue.payload = {
+    ...(queue.payload || {}),
+    level: nextBuildingLevel(building),
+    plotId: building.plotId
+  };
+  normalizeConstructionQueueDuration(queue, building);
 }
 
 function constructionDurationForBuilding(building) {
@@ -4422,9 +4468,10 @@ function bindReports() {
 }
 
 function openBuilding(id) {
-  const building = buildings.find((item) => item.id === id);
+  const building = resolveVisibleBuilding(id);
   if (!building) return;
-  activeBuildingId = id;
+  adoptTemplateConstructionQueue(building);
+  activeBuildingId = building.id;
   activePlotId = null;
   activeSheetMode = "building";
   activeMapMarkerId = null;
@@ -5020,10 +5067,14 @@ function updateMarchPlannerSummary(planner) {
   const plan = readMarchPlan(marker);
   const totalSelected = plan ? Object.values(plan.troops).reduce((sum, value) => sum + value, 0) : 0;
   const load = plan ? troopBundleLoad(plan.troops) : 0;
+  const storageFree = marker.kind === "resource"
+    ? Math.max(0, resourceCapacity(marker.resource || "iron") - (state.resources[marker.resource || "iron"] || 0))
+    : load;
+  const visibleLoad = marker.kind === "resource" ? Math.min(load, resourceTileState(marker).remaining, storageFree) : load;
   const overLimit = totalSelected > maxMarchSize();
   summary.innerHTML = `
     <div class="${overLimit ? "is-over-limit" : ""}"><span>Tropas</span><strong>${formatNumber(totalSelected)} / ${formatNumber(maxMarchSize())}</strong></div>
-    <div><span>Carga</span><strong>${formatNumber(load)}</strong></div>
+    <div><span>${marker.kind === "resource" ? "Recolecta" : "Carga"}</span><strong>${formatNumber(visibleLoad)}</strong></div>
     <div><span>Ida</span><strong>${plan ? formatDuration(plan.durationMs) : "--"}</strong></div>
   `;
   if (preview) preview.innerHTML = renderMarchPreview(marker, plan);
@@ -5042,7 +5093,9 @@ function renderMarchPreview(marker, plan) {
   if (marker.kind === "resource") {
     const load = troopBundleLoad(plan.troops);
     const tile = resourceTileState(marker);
-    const collectable = Math.min(load, tile.remaining);
+    const resource = marker.resource || "iron";
+    const storageFree = Math.max(0, resourceCapacity(resource) - (state.resources[resource] || 0));
+    const collectable = Math.min(load, tile.remaining, storageFree);
     return `
       <div class="march-preview-head">
         <span>Recoleccion prevista${plan.withHero ? ` con ${heroDisplayName(plan.heroId)}` : ""}</span>
@@ -5051,9 +5104,9 @@ function renderMarchPreview(marker, plan) {
       <div class="planner-summary">
         <div><span>Ocupacion</span><strong>${formatDuration(plan.gatherDurationMs)}</strong></div>
         <div><span>Regreso</span><strong>${formatDuration(plan.returnDurationMs)}</strong></div>
-        <div><span>Carga</span><strong>${formatNumber(load)}</strong></div>
+        <div><span>Carga total</span><strong>${formatNumber(load)}</strong></div>
       </div>
-      <p>${tile.depleted ? `Casilla agotada. Rellena en ${formatDuration(tile.refillMs)}.` : `Quedarian ${formatNumber(Math.max(0, tile.remaining - collectable))} tras esta marcha.`}</p>
+      <p>${tile.depleted ? `Casilla agotada. Rellena en ${formatDuration(tile.refillMs)}.` : `Almacen libre: ${formatNumber(storageFree)}. Quedarian ${formatNumber(Math.max(0, tile.remaining - collectable))} tras esta marcha.`}</p>
     `;
   }
 
@@ -5215,7 +5268,7 @@ function getBuildingStats(building) {
     return {
       status: queueStatus || `${state.trainedTroops} soldados`,
       thirdLabel: "Leva",
-      thirdValue: `Nv. ${troopTierLimit()} Â· ${trainingBatch(building)} cola`,
+      thirdValue: `Nv. ${troopTierLimit()} Â· ${trainingCapacityForBuilding(building)} cola`,
       guideTitle: "Entrenar tropas",
       guideBody: `Elige tipo y cantidad de tropa. La Academia define el nivel entrenable, la velocidad y el tamano de la cola. Cola total de cuarteles: ${totalTrainingQueue()} tropas.`
     };
@@ -5341,7 +5394,7 @@ function renderBuildingLevelButton(building) {
 function runBuildingAction(command) {
   const feedback = document.querySelector("#sheetFeedback");
   const [action, id] = command.includes(":") ? command.split(":") : ["level", command];
-  const building = buildings.find((item) => item.id === id);
+  const building = resolveVisibleBuilding(id);
   if (!building) {
     feedback.textContent = "Informe listo. Este edificio tendra arbol propio en la siguiente version.";
     return;
@@ -5783,6 +5836,19 @@ function monsterXpReward(marker) {
 
 function monsterMaterialAmount(marker) {
   return marker.level >= 9 ? 3 : marker.level >= 5 ? 2 : 1;
+}
+
+function monsterSpeedReward(marker, hunt) {
+  const reward = {};
+  if (!hunt?.killed) {
+    if ((hunt?.damage || 0) > 0 && marker.level <= 4) reward["speed-build-5"] = 1;
+    return reward;
+  }
+  reward["speed-build-5"] = 1 + Math.floor(marker.level / 4);
+  if (marker.level >= 3) reward["speed-training-5"] = 1;
+  if (marker.level >= 5) reward["speed-build-15"] = 1;
+  if (marker.level >= 7) reward["speed-research-15"] = 1;
+  return reward;
 }
 
 function monsterDropQuality(marker) {
@@ -6401,12 +6467,12 @@ function forgeMissingText(recipe, fragmentHave, fragmentNeed, cost, quality = fo
 }
 
 function renderTrainingEditor(buildingId, message = "") {
-  const building = buildings.find((item) => item.id === buildingId);
+  const building = resolveVisibleBuilding(buildingId);
   if (!building) return;
-  activeBuildingId = buildingId;
+  activeBuildingId = building.id;
   activeSheetMode = "training";
   const activeQueue = state.queues.training;
-  const capacity = trainingBatch(building);
+  const capacity = trainingCapacityForBuilding(building);
   const unlockedTier = troopTierLimit();
 
   sheetBody.innerHTML = `
@@ -6495,10 +6561,10 @@ function updateTrainingCard(input) {
   const meta = card?.querySelector("[data-training-meta]");
   if (!card || !meta) return;
   const [buildingId, troopId] = card.dataset.trainCard.split(":");
-  const building = buildings.find((item) => item.id === buildingId);
+  const building = resolveVisibleBuilding(buildingId);
   const troop = troopCatalog.find((item) => item.id === troopId);
   if (!building || !troop) return;
-  const capacity = trainingBatch(building);
+  const capacity = trainingCapacityForBuilding(building);
   const requested = Math.floor(Number(input.value || 0));
   const amount = Math.min(capacity, Math.max(1, Number.isFinite(requested) ? requested : 1));
   input.value = amount;
@@ -6512,7 +6578,7 @@ function updateTrainingCard(input) {
 
 function startSelectedTraining(command) {
   const [buildingId, troopId] = command.split(":");
-  const building = buildings.find((item) => item.id === buildingId);
+  const building = resolveVisibleBuilding(buildingId);
   const troop = troopCatalog.find((item) => item.id === troopId);
   if (!building || !troop) return;
 
@@ -6528,7 +6594,7 @@ function startSelectedTraining(command) {
 
   const input = sheetBody.querySelector(`[data-train-amount="${troop.id}"]`);
   const requested = Math.floor(Number(input?.value || 0));
-  const amount = Math.min(trainingBatch(building), Math.max(1, Number.isFinite(requested) ? requested : 1));
+  const amount = Math.min(trainingCapacityForBuilding(building), Math.max(1, Number.isFinite(requested) ? requested : 1));
   const tier = troopTierLimit();
   const cost = troopTrainingCost(troop, amount, tier);
 
@@ -7940,13 +8006,16 @@ function resolveMarchReward(march) {
     const marker = markerById(march.markerId);
     const resource = marker.resource || "iron";
     const load = troopBundleLoad(march.troops);
-    const harvest = harvestResourceTile(marker, load);
+    const storageFree = Math.max(0, resourceCapacity(resource) - (state.resources[resource] || 0));
+    const harvest = harvestResourceTile(marker, Math.min(load, storageFree));
     return {
       resources: { [resource]: harvest.amount },
       tile: harvest,
       text: harvest.amount
         ? `+${formatNumber(harvest.amount)} ${resourceName(resource).toLowerCase()}${harvest.depleted ? ". Casilla agotada" : ""}`
-        : `Sin ${resourceName(resource).toLowerCase()} disponible. Casilla agotada`
+        : storageFree <= 0
+          ? `Sin espacio para ${resourceName(resource).toLowerCase()}. Mejora el Almacen Real`
+          : `Sin ${resourceName(resource).toLowerCase()} disponible. Casilla agotada`
     };
   }
 
@@ -7959,7 +8028,12 @@ function resolveMarchReward(march) {
     const xp = Math.round(monsterXpReward(marker) * rewardFactor);
     const materialId = forgeMaterialId(marker.material || "frag-sword", monsterDropQualityIndex(marker));
     const materialAmount = hunt.killed ? monsterMaterialAmount(marker) : 0;
-    const inventory = materialAmount ? { [materialId]: materialAmount } : {};
+    const speedRewards = monsterSpeedReward(marker, hunt);
+    const inventory = {
+      ...(materialAmount ? { [materialId]: materialAmount } : {}),
+      ...speedRewards
+    };
+    const inventoryText = formatInventoryBundle(inventory);
     return {
       resources: { silver },
       inventory,
@@ -7967,7 +8041,7 @@ function resolveMarchReward(march) {
       wounded: combat.wounded,
       combat,
       monster: hunt,
-      text: `${hunt.killed ? "Monstruo derrotado" : "Monstruo herido"}: ${formatNumber(hunt.damage)} dano, salud ${formatNumber(hunt.healthAfter)} / ${formatNumber(hunt.max)}. +${formatNumber(silver)} plata${materialAmount ? `, +${materialAmount} pieza` : ""}, +${formatNumber(xp)} XP`
+      text: `${hunt.killed ? "Monstruo derrotado" : "Monstruo herido"}: ${formatNumber(hunt.damage)} dano, salud ${formatNumber(hunt.healthAfter)} / ${formatNumber(hunt.max)}. +${formatNumber(silver)} plata${inventoryText ? `, ${inventoryText}` : ""}, +${formatNumber(xp)} XP`
     };
   }
 
@@ -8349,23 +8423,28 @@ function hospitalCapacity(building) {
 }
 
 function totalHospitalCapacity() {
-  return buildings.filter((building) => building.kind === "hospital").reduce((sum, building) => sum + hospitalCapacity(building), 0);
+  return visiblePlotBuildings("hospital").reduce((sum, building) => sum + hospitalCapacity(building), 0);
 }
 
 function trainingBatch(building) {
   return 36 + building.level * 12 + researchLevel("training-capacity") * 10;
 }
 
+function trainingCapacityForBuilding(building) {
+  if (building?.id === "astillero") return trainingBatch(building);
+  return Math.max(trainingBatch(building), totalTrainingQueue());
+}
+
 function totalTrainingQueue() {
-  return buildings.filter((building) => building.kind === "barracks").reduce((sum, building) => sum + trainingBatch(building), 0);
+  return visiblePlotBuildings("barracks").reduce((sum, building) => sum + trainingBatch(building), 0);
 }
 
 function barracksAttackBonus() {
-  return buildings.filter((building) => building.kind === "barracks").reduce((sum, building) => sum + building.level * 2, 0);
+  return visiblePlotBuildings("barracks").reduce((sum, building) => sum + building.level * 2, 0);
 }
 
 function hospitalDefenseBonus() {
-  return buildings.filter((building) => building.kind === "hospital").reduce((sum, building) => sum + building.level * 2, 0);
+  return visiblePlotBuildings("hospital").reduce((sum, building) => sum + building.level * 2, 0);
 }
 
 function wallBuildingDefenseBonus() {
