@@ -1,5 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
+const DATA_VERSION = "20260628-g17";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -349,18 +350,18 @@ const fortressPlots = [
   { id: "base-astillero", zone: "base", label: "Solar naval", x: 62, y: 40 },
   { id: "base-muralla", zone: "base", label: "Muralla", x: 50, y: 57, buildingId: "muralla" },
 
-  { id: "military-1", zone: "military", label: "Solar militar", x: 20, y: 31, allowed: "Cuartel u hospital" },
-  { id: "military-2", zone: "military", label: "Solar militar", x: 34, y: 31, allowed: "Cuartel u hospital" },
-  { id: "military-3", zone: "military", label: "Solar militar", x: 78, y: 31, allowed: "Cuartel u hospital" },
-  { id: "military-4", zone: "military", label: "Solar militar", x: 20, y: 41, allowed: "Cuartel u hospital" },
-  { id: "military-5", zone: "military", label: "Solar militar", x: 34, y: 43, allowed: "Cuartel u hospital" },
-  { id: "military-6", zone: "military", label: "Solar militar", x: 78, y: 43, allowed: "Cuartel u hospital" },
-  { id: "military-7", zone: "military", label: "Solar militar", x: 18, y: 52, allowed: "Cuartel u hospital" },
-  { id: "military-8", zone: "military", label: "Solar militar", x: 82, y: 52, allowed: "Cuartel u hospital" },
-  { id: "military-9", zone: "military", label: "Solar militar", x: 24, y: 62, allowed: "Cuartel u hospital" },
-  { id: "military-10", zone: "military", label: "Solar militar", x: 76, y: 62, allowed: "Cuartel u hospital" },
-  { id: "military-11", zone: "military", label: "Solar militar", x: 36, y: 67, allowed: "Cuartel u hospital" },
-  { id: "military-12", zone: "military", label: "Solar militar", x: 64, y: 67, allowed: "Cuartel u hospital" },
+  { id: "military-1", zone: "military", label: "Solar militar", x: 18, y: 39, allowed: "Cuartel u hospital" },
+  { id: "military-2", zone: "military", label: "Solar militar", x: 32, y: 39, allowed: "Cuartel u hospital" },
+  { id: "military-3", zone: "military", label: "Solar militar", x: 68, y: 39, allowed: "Cuartel u hospital" },
+  { id: "military-4", zone: "military", label: "Solar militar", x: 82, y: 39, allowed: "Cuartel u hospital" },
+  { id: "military-5", zone: "military", label: "Solar militar", x: 18, y: 49, allowed: "Cuartel u hospital" },
+  { id: "military-6", zone: "military", label: "Solar militar", x: 32, y: 49, allowed: "Cuartel u hospital" },
+  { id: "military-7", zone: "military", label: "Solar militar", x: 68, y: 49, allowed: "Cuartel u hospital" },
+  { id: "military-8", zone: "military", label: "Solar militar", x: 82, y: 49, allowed: "Cuartel u hospital" },
+  { id: "military-9", zone: "military", label: "Solar militar", x: 32, y: 59, allowed: "Cuartel u hospital" },
+  { id: "military-10", zone: "military", label: "Solar militar", x: 44, y: 61, allowed: "Cuartel u hospital" },
+  { id: "military-11", zone: "military", label: "Solar militar", x: 56, y: 61, allowed: "Cuartel u hospital" },
+  { id: "military-12", zone: "military", label: "Solar militar", x: 68, y: 59, allowed: "Cuartel u hospital" },
 
   { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 15, y: 73 },
   { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 30, y: 74 },
@@ -522,34 +523,6 @@ const mapMarkers = [
     body: "Monstruo acorazado. Su defensa es alta y recompensa piezas de armadura."
   },
   {
-    id: "monster-kraken",
-    name: "Kraken de Indias",
-    icon: "i-target",
-    sprite: "kraken",
-    kind: "monster",
-    x: 15,
-    y: 79,
-    level: 7,
-    range: "00:36",
-    material: "frag-chart",
-    reward: "Piezas epicas",
-    body: "Amenaza naval. Da materiales de navegacion y mas experiencia al heroe."
-  },
-  {
-    id: "monster-leviathan",
-    name: "Leviatan Dorado",
-    icon: "i-target",
-    sprite: "leviathan",
-    kind: "monster",
-    x: 63,
-    y: 83,
-    level: 9,
-    range: "00:44",
-    material: "frag-compass",
-    reward: "Piezas doradas",
-    body: "Monstruo de alto nivel. Pensado para heroe avanzado y equipo de caza."
-  },
-  {
     id: "monster-dragon",
     name: "Dragon Rojo",
     icon: "i-target",
@@ -677,8 +650,7 @@ function generateKingdomMarkers() {
       icon: "i-ship",
       start: 18
     }),
-    ...generateResourceTiles(),
-    ...generateMonsterTiles()
+    ...generateResourceTiles()
   ];
 }
 
@@ -743,37 +715,7 @@ function generateResourceTiles() {
 }
 
 function generateMonsterTiles() {
-  const monsters = [
-    ["Jabali de Sierra", "boar", "frag-morrion"],
-    ["Grifo del Estrecho", "griffin", "frag-sword"],
-    ["Basilisco de Hierro", "basilisk", "frag-coraza"],
-    ["Kraken de Indias", "kraken", "frag-chart"],
-    ["Leviatan Dorado", "leviathan", "frag-compass"],
-    ["Draco Sombrio", "dragon", "frag-cannon"]
-  ];
-  const points = [
-    [7, 22], [16, 11], [33, 29], [48, 21], [69, 10], [88, 28],
-    [11, 38], [25, 48], [37, 35], [55, 45], [71, 50], [94, 40],
-    [9, 74], [28, 78], [43, 91], [66, 78], [81, 92], [95, 75]
-  ];
-  return points.map(([x, y], index) => {
-    const [baseName, sprite, material] = monsters[index % monsters.length];
-    const level = 1 + ((index * 2 + Math.floor(x)) % 12);
-    return {
-      id: `monster-reino-${index + 1}`,
-      name: `${baseName} ${romanSuffix(index)}`,
-      icon: "i-target",
-      sprite,
-      kind: "monster",
-      x,
-      y,
-      level,
-      range: kingdomRangeLabel(x, y),
-      material,
-      reward: monsterThreatLabel({ level }),
-      body: `Monstruo de reino Nv. ${level}. Cuanto mayor sea el nivel, mejor color de pieza y mas experiencia.`
-    };
-  });
+  return [];
 }
 
 function romanSuffix(index) {
@@ -1777,6 +1719,7 @@ const allianceProjectCatalog = [
 ];
 
 const defaultState = {
+  dataVersion: DATA_VERSION,
   selectedHeroId: "alonso",
   heroes: createDefaultHeroes(),
   resources: {
@@ -2010,11 +1953,11 @@ function init() {
       }
       .scene-city .fortress-plot--resource .fortress-plot-sprite {
         transform: translate(-50%, 52%) !important;
-        width: 54px !important;
+        width: 64px !important;
       }
       .scene-city .fortress-plot--grain .fortress-plot-sprite,
       .scene-city .fortress-plot--wood .fortress-plot-sprite {
-        width: 58px !important;
+        width: 76px !important;
       }
       .scene-city .fortress-plot--stone .fortress-plot-sprite,
       .scene-city .fortress-plot--iron .fortress-plot-sprite,
@@ -2022,8 +1965,8 @@ function init() {
         width: 56px !important;
       }
       .scene-city .fortress-plot--military .fortress-plot-sprite {
-        transform: translate(-50%, 48%) !important;
-        width: 48px !important;
+        transform: translate(-50%, 50%) !important;
+        width: 44px !important;
       }
       .scene-city .fortress-plot--base .fortress-plot-sprite {
         transform: translate(-50%, 40%) !important;
@@ -2048,6 +1991,8 @@ function init() {
   }
   applySavedBuildingLevels();
   restoreFortressAssignments();
+  state.queues = normalizeQueues(defaultState.queues, state.queues);
+  state.dataVersion = DATA_VERSION;
   normalizeWoundedState(true);
   applyOfflineProduction();
   processHeroEnergy();
@@ -2157,13 +2102,16 @@ function normalizeQueues(baseQueues, savedQueues = {}) {
 function normalizeQueue(type, queue) {
   if (!queue || typeof queue !== "object" || queue.type !== type) return null;
   if (!Number.isFinite(queue.startedAt) || !Number.isFinite(queue.finishAt) || queue.finishAt <= queue.startedAt) return null;
-  const building = buildings.find((item) => item.id === queue.buildingId);
+  let building = buildings.find((item) => item.id === queue.buildingId);
+  if (isRepeatablePlotBuilding(building) && !building.isPlotInstance) {
+    building = assignedInstanceForTemplate(building.id) || building;
+  }
   if (!building) return null;
 
   const safeQueue = {
     type,
     buildingId: building.id,
-    label: String(queue.label || building.name),
+    label: String(building.name || queue.label),
     startedAt: Math.max(0, Math.floor(queue.startedAt)),
     finishAt: Math.max(0, Math.floor(queue.finishAt)),
     helpApplied: Math.max(0, Math.floor(queue.helpApplied || 0)),
@@ -2187,7 +2135,7 @@ function normalizeConstructionQueueDuration(queue, building) {
 
 function normalizeQueuePayload(type, payload, building) {
   if (type === "construction") {
-    return { level: clampBuildingLevel(payload.level || nextBuildingLevel(building)) };
+    return { level: nextBuildingLevel(building) };
   }
 
   if (type === "research") {
@@ -2503,10 +2451,20 @@ function restoreFortressAssignments() {
 
     const assignmentId = typeof assignment === "string" ? assignment : assignment?.buildingId;
     const templateId = typeof assignment === "string" ? assignment : assignment?.templateId;
-    if (plot.zone === "military" && typeof assignment === "string") {
-      const template = buildings.find((item) => item.id === templateId);
+    if (["resource", "military"].includes(plot.zone)) {
+      const existing = buildings.find((item) => item.id === assignmentId && item.isPlotInstance);
+      if (existing) {
+        plot.buildingId = existing.id;
+        return;
+      }
+      const template = buildings.find((item) => item.id === templateId || item.id === assignmentId);
       if (!template) return;
+      const savedLevel = state.buildingLevels?.[`${template.id}--${plot.id}`];
       const instance = createPlotBuildingInstance(template, plot);
+      if (Number.isFinite(savedLevel)) {
+        instance.level = clampBuildingLevel(savedLevel);
+        state.buildingLevels[instance.id] = instance.level;
+      }
       plot.buildingId = instance.id;
       state.fortressAssignments[plot.id] = {
         buildingId: instance.id,
@@ -3545,6 +3503,18 @@ function queueDuration(type, building, amount = 0) {
   return 20 * 1000;
 }
 
+function isRepeatablePlotBuilding(building) {
+  return Boolean(building && (building.kind === "resource" || building.kind === "barracks" || building.kind === "hospital"));
+}
+
+function assignedInstanceForTemplate(templateId) {
+  return buildings.find((building) =>
+    building.isPlotInstance &&
+    building.templateId === templateId &&
+    fortressPlots.some((plot) => plot.buildingId === building.id)
+  );
+}
+
 function constructionDurationForBuilding(building) {
   const level = clampBuildingLevel(building?.level || 1);
   return Math.round(constructionDurationForLevel(level) * durationFactor("construction"));
@@ -3694,7 +3664,7 @@ function buildingMapSprite(building) {
   if (!building) return null;
   if (building.resource === "grain") {
     const lv = building.level || 1;
-    if (lv <= 10) return "./assets/granja-mapa-1-10.png";
+    if (lv <= 10) return "./assets/granja-mapa-1-10-v2.png";
     if (lv <= 20) return "./assets/granja-mapa-11-20.png";
     return "./assets/granja-mapa-21-25.png";
   }
