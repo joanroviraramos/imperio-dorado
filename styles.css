@@ -6901,26 +6901,25 @@ svg {
   z-index: 2;
 }
 .scene-city .fortress-plot--resource .fortress-plot-sprite {
-  transform: translate(-50%, 52%);
-  width: 64px;
-}
-.scene-city .fortress-plot--grain .fortress-plot-sprite,
-.scene-city .fortress-plot--wood .fortress-plot-sprite {
-  width: 76px;
-}
-.scene-city .fortress-plot--grain .fortress-plot-sprite {
   inset: 50% auto auto 50%;
   top: 50%;
   bottom: auto;
   transform: translate(-50%, -50%);
-  width: 112px;
-  height: 112px;
+  width: 78px;
+  height: 54px;
   object-fit: contain;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.4));
+}
+.scene-city .fortress-plot--grain .fortress-plot-sprite,
+.scene-city .fortress-plot--wood .fortress-plot-sprite {
+  width: 88px;
+  height: 62px;
 }
 .scene-city .fortress-plot--stone .fortress-plot-sprite,
 .scene-city .fortress-plot--iron .fortress-plot-sprite,
 .scene-city .fortress-plot--silver .fortress-plot-sprite {
-  width: 56px;
+  width: 82px;
+  height: 58px;
 }
 .scene-city .fortress-plot--military .fortress-plot-sprite {
   transform: translate(-50%, 50%);

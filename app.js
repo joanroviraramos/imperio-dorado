@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260628-g19";
+const DATA_VERSION = "20260628-g20";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -1957,26 +1957,25 @@ function init() {
         max-width: none !important;
       }
       .scene-city .fortress-plot--resource .fortress-plot-sprite {
-        transform: translate(-50%, 52%) !important;
-        width: 64px !important;
-      }
-      .scene-city .fortress-plot--grain .fortress-plot-sprite,
-      .scene-city .fortress-plot--wood .fortress-plot-sprite {
-        width: 76px !important;
-      }
-      .scene-city .fortress-plot--grain .fortress-plot-sprite {
         inset: 50% auto auto 50% !important;
         top: 50% !important;
         bottom: auto !important;
         transform: translate(-50%, -50%) !important;
-        width: 112px !important;
-        height: 112px !important;
+        width: 78px !important;
+        height: 54px !important;
         object-fit: contain !important;
+        filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.4)) !important;
+      }
+      .scene-city .fortress-plot--grain .fortress-plot-sprite,
+      .scene-city .fortress-plot--wood .fortress-plot-sprite {
+        width: 88px !important;
+        height: 62px !important;
       }
       .scene-city .fortress-plot--stone .fortress-plot-sprite,
       .scene-city .fortress-plot--iron .fortress-plot-sprite,
       .scene-city .fortress-plot--silver .fortress-plot-sprite {
-        width: 56px !important;
+        width: 82px !important;
+        height: 58px !important;
       }
       .scene-city .fortress-plot--military .fortress-plot-sprite {
         transform: translate(-50%, 50%) !important;
@@ -3713,28 +3712,16 @@ function renderFortressZones() {
 function buildingMapSprite(building) {
   if (!building) return null;
   if (building.resource === "grain") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/granja-mapa-1-10-v2.png";
-    if (lv <= 20) return "./assets/granja-mapa-11-20.png";
-    return "./assets/granja-mapa-21-25.png";
+    return "./assets/recurso-trigo-parcela.png";
   }
   if (building.resource === "wood") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/aserradero-mapa-1-10.png";
-    if (lv <= 20) return "./assets/aserradero-mapa-11-20.png";
-    return "./assets/aserradero-mapa-21-25.png";
+    return "./assets/recurso-madera-parcela.png";
   }
   if (building.resource === "stone") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/cantera-mapa-1-10.png";
-    if (lv <= 20) return "./assets/cantera-mapa-11-20.png";
-    return "./assets/cantera-mapa-21-25.png";
+    return "./assets/recurso-piedra-parcela.png";
   }
   if (building.resource === "iron") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/mina-hierro-mapa-1-10.png";
-    if (lv <= 20) return "./assets/mina-hierro-mapa-11-20.png";
-    return "./assets/mina-hierro-mapa-21-25.png";
+    return "./assets/recurso-hierro-parcela.png";
   }
   if (building.kind === "barracks") {
     const lv = building.level || 1;
@@ -3765,6 +3752,12 @@ function buildingMapSprite(building) {
     if (lv <= 10) return "./assets/forja-mapa-1-10.png";
     if (lv <= 20) return "./assets/forja-mapa-11-20.png";
     return "./assets/forja-mapa-21-25.png";
+  }
+  if (building.id === "prision") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/prision-mapa-1-10.png";
+    if (lv <= 20) return "./assets/prision-mapa-11-20.png";
+    return "./assets/prision-mapa-21-25.png";
   }
   if (building.id === "academia") {
     const lv = building.level || 1;
