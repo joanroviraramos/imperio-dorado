@@ -6908,6 +6908,10 @@ svg {
 .scene-city .fortress-plot--wood .fortress-plot-sprite {
   width: 76px;
 }
+.scene-city .fortress-plot--grain .fortress-plot-sprite {
+  transform: translate(-50%, 56%);
+  width: 110px;
+}
 .scene-city .fortress-plot--stone .fortress-plot-sprite,
 .scene-city .fortress-plot--iron .fortress-plot-sprite,
 .scene-city .fortress-plot--silver .fortress-plot-sprite {

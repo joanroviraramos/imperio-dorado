@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260628-g17";
+const DATA_VERSION = "20260628-g18";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -350,29 +350,29 @@ const fortressPlots = [
   { id: "base-astillero", zone: "base", label: "Solar naval", x: 62, y: 40 },
   { id: "base-muralla", zone: "base", label: "Muralla", x: 50, y: 57, buildingId: "muralla" },
 
-  { id: "military-1", zone: "military", label: "Solar militar", x: 18, y: 39, allowed: "Cuartel u hospital" },
-  { id: "military-2", zone: "military", label: "Solar militar", x: 32, y: 39, allowed: "Cuartel u hospital" },
-  { id: "military-3", zone: "military", label: "Solar militar", x: 68, y: 39, allowed: "Cuartel u hospital" },
-  { id: "military-4", zone: "military", label: "Solar militar", x: 82, y: 39, allowed: "Cuartel u hospital" },
-  { id: "military-5", zone: "military", label: "Solar militar", x: 18, y: 49, allowed: "Cuartel u hospital" },
-  { id: "military-6", zone: "military", label: "Solar militar", x: 32, y: 49, allowed: "Cuartel u hospital" },
-  { id: "military-7", zone: "military", label: "Solar militar", x: 68, y: 49, allowed: "Cuartel u hospital" },
-  { id: "military-8", zone: "military", label: "Solar militar", x: 82, y: 49, allowed: "Cuartel u hospital" },
-  { id: "military-9", zone: "military", label: "Solar militar", x: 32, y: 59, allowed: "Cuartel u hospital" },
-  { id: "military-10", zone: "military", label: "Solar militar", x: 44, y: 61, allowed: "Cuartel u hospital" },
-  { id: "military-11", zone: "military", label: "Solar militar", x: 56, y: 61, allowed: "Cuartel u hospital" },
-  { id: "military-12", zone: "military", label: "Solar militar", x: 68, y: 59, allowed: "Cuartel u hospital" },
+  { id: "military-1", zone: "military", label: "Solar militar", x: 14, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-2", zone: "military", label: "Solar militar", x: 30, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-3", zone: "military", label: "Solar militar", x: 70, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-4", zone: "military", label: "Solar militar", x: 86, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-5", zone: "military", label: "Solar militar", x: 20, y: 55, allowed: "Cuartel u hospital" },
+  { id: "military-6", zone: "military", label: "Solar militar", x: 36, y: 55, allowed: "Cuartel u hospital" },
+  { id: "military-7", zone: "military", label: "Solar militar", x: 64, y: 55, allowed: "Cuartel u hospital" },
+  { id: "military-8", zone: "military", label: "Solar militar", x: 80, y: 55, allowed: "Cuartel u hospital" },
+  { id: "military-9", zone: "military", label: "Solar militar", x: 24, y: 64, allowed: "Cuartel u hospital" },
+  { id: "military-10", zone: "military", label: "Solar militar", x: 40, y: 64, allowed: "Cuartel u hospital" },
+  { id: "military-11", zone: "military", label: "Solar militar", x: 60, y: 64, allowed: "Cuartel u hospital" },
+  { id: "military-12", zone: "military", label: "Solar militar", x: 76, y: 64, allowed: "Cuartel u hospital" },
 
   { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 15, y: 73 },
   { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 30, y: 74 },
   { id: "resource-3", zone: "resource", label: "Parcela de recursos", x: 70, y: 74 },
   { id: "resource-4", zone: "resource", label: "Parcela de recursos", x: 85, y: 73 },
-  { id: "resource-5", zone: "resource", label: "Parcela de recursos", x: 18, y: 82 },
-  { id: "resource-6", zone: "resource", label: "Parcela de recursos", x: 35, y: 84 },
-  { id: "resource-7", zone: "resource", label: "Parcela de recursos", x: 65, y: 84 },
-  { id: "resource-8", zone: "resource", label: "Parcela de recursos", x: 82, y: 82 },
-  { id: "resource-9", zone: "resource", label: "Parcela de recursos", x: 43, y: 91 },
-  { id: "resource-10", zone: "resource", label: "Parcela de recursos", x: 57, y: 91 }
+  { id: "resource-5", zone: "resource", label: "Parcela de recursos", x: 18, y: 81 },
+  { id: "resource-6", zone: "resource", label: "Parcela de recursos", x: 35, y: 83 },
+  { id: "resource-7", zone: "resource", label: "Parcela de recursos", x: 65, y: 83 },
+  { id: "resource-8", zone: "resource", label: "Parcela de recursos", x: 82, y: 81 },
+  { id: "resource-9", zone: "resource", label: "Parcela de recursos", x: 42, y: 88 },
+  { id: "resource-10", zone: "resource", label: "Parcela de recursos", x: 58, y: 88 }
 ];
 
 const initialFortressAssignments = Object.fromEntries(
@@ -1958,6 +1958,10 @@ function init() {
       .scene-city .fortress-plot--grain .fortress-plot-sprite,
       .scene-city .fortress-plot--wood .fortress-plot-sprite {
         width: 76px !important;
+      }
+      .scene-city .fortress-plot--grain .fortress-plot-sprite {
+        transform: translate(-50%, 56%) !important;
+        width: 110px !important;
       }
       .scene-city .fortress-plot--stone .fortress-plot-sprite,
       .scene-city .fortress-plot--iron .fortress-plot-sprite,
