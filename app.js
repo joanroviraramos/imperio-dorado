@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260628-g23";
+const DATA_VERSION = "20260629-g24";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -1888,7 +1888,16 @@ const defaultState = {
     kingdom: [
       { author: "Reino", text: "El Virrey anuncia tregua en el centro del mapa.", at: Date.now() - 1000 * 60 * 12 },
       { author: "Mercader", text: "Campos de trigo nivel 6 libres al este.", at: Date.now() - 1000 * 60 * 5 }
-    ]
+    ],
+    private: {
+      isabel: [
+        { author: "Isabel", text: "Cuando puedas revisamos el siguiente objetivo de la alianza.", at: Date.now() - 1000 * 60 * 18 },
+        { author: "Tu imperio", text: "Perfecto, guardo tropas para el rally.", at: Date.now() - 1000 * 60 * 15 }
+      ],
+      sancho: [
+        { author: "Sancho", text: "Te envio coordenadas si veo plata libre.", at: Date.now() - 1000 * 60 * 22 }
+      ]
+    }
   },
   allianceFeed: [
     {
@@ -1917,6 +1926,8 @@ let currentChallenge = null;
 let inventoryFilter = "all";
 let academyBranchId = "combat";
 let chatChannel = "alliance";
+let chatPrivateTarget = "isabel";
+let chatPanelOpen = false;
 let activeSheetMode = null;
 let activeMapMarkerId = null;
 let activeWorldMarchId = null;
@@ -1977,10 +1988,18 @@ const rallyList = document.querySelector("#rallyList");
 const allianceSummary = document.querySelector("#allianceSummary");
 const allianceMembers = document.querySelector("#allianceMembers");
 const allianceFeed = document.querySelector("#allianceFeed");
+const chatDock = document.querySelector("#chatDock");
+const chatDockChannel = document.querySelector("#chatDockChannel");
+const chatDockText = document.querySelector("#chatDockText");
+const chatPanel = document.querySelector("#chatPanel");
+const chatClose = document.querySelector("#chatClose");
+const chatPanelTitle = document.querySelector("#chatPanelTitle");
 const chatTabs = document.querySelector("#chatTabs");
+const chatPrivateList = document.querySelector("#chatPrivateList");
 const chatLog = document.querySelector("#chatLog");
 const chatCompose = document.querySelector("#chatCompose");
 const chatInput = document.querySelector("#chatInput");
+const chatSubmit = document.querySelector("#chatCompose button[type='submit']");
 
 init();
 
@@ -2392,9 +2411,19 @@ function compactPercentages(percentages = {}) {
 }
 
 function mergeChatMessages(base, saved = {}) {
+  const privateBase = base.private && typeof base.private === "object" ? base.private : {};
+  const privateSaved = saved?.private && typeof saved.private === "object" && !Array.isArray(saved.private)
+    ? saved.private
+    : {};
+  const privateMessages = { ...privateBase };
+  Object.entries(privateSaved).forEach(([contactId, messages]) => {
+    if (!Array.isArray(messages)) return;
+    privateMessages[String(contactId)] = messages.slice(-40);
+  });
   return {
     alliance: Array.isArray(saved?.alliance) ? saved.alliance : base.alliance,
-    kingdom: Array.isArray(saved?.kingdom) ? saved.kingdom : base.kingdom
+    kingdom: Array.isArray(saved?.kingdom) ? saved.kingdom : base.kingdom,
+    private: privateMessages
   };
 }
 
@@ -7240,10 +7269,10 @@ function runMarkerAction(markerId) {
 function shareMarkerToChat(markerId, channel = "alliance") {
   const marker = markerById(markerId);
   if (!marker) return;
-  const targetChannel = channel === "kingdom" ? "kingdom" : "alliance";
+  const targetChannel = normalizeChatChannel(channel);
   const message = `Objetivo ${marker.name} ${markerCoordLabel(marker)} ${markerSectorLabel(marker)} - ${marchKindName(marker.kind)} Nv.${marker.level || 0}`;
-  addChatMessage(targetChannel, message, "Tu imperio", { markerId: marker.id, coord: markerWorldCoord(marker) });
-  addAllianceFeed("Coordenadas compartidas", `${marker.name} enviado al chat de ${targetChannel === "kingdom" ? "reino" : "alianza"}.`);
+  addChatMessage(targetChannel, message, "Tu imperio", { markerId: marker.id, coord: markerWorldCoord(marker), privateTarget: chatPrivateTarget });
+  addAllianceFeed("Coordenadas compartidas", `${marker.name} enviado al chat de ${chatChannelName(targetChannel).toLowerCase()}.`);
   renderAllianceFeed();
   saveState();
 }
@@ -10371,17 +10400,59 @@ function locateAllianceMember(memberId) {
 }
 
 function bindAlliance() {
+  if (chatDock) {
+    chatDock.addEventListener("click", () => {
+      chatPanelOpen = !chatPanelOpen;
+      renderAllianceChat();
+    });
+  }
+
+  if (chatClose) {
+    chatClose.addEventListener("click", () => {
+      chatPanelOpen = false;
+      renderAllianceChat();
+    });
+  }
+
   if (chatTabs) {
     chatTabs.addEventListener("click", (event) => {
       const button = event.target.closest("[data-chat-channel]");
       if (!button) return;
-      chatChannel = button.dataset.chatChannel === "kingdom" ? "kingdom" : "alliance";
+      chatChannel = normalizeChatChannel(button.dataset.chatChannel);
+      chatPanelOpen = true;
+      renderAllianceChat();
+    });
+  }
+
+  if (chatPrivateList) {
+    chatPrivateList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-private-chat]");
+      if (!button) return;
+      chatPrivateTarget = button.dataset.privateChat;
+      chatChannel = "private";
+      chatPanelOpen = true;
       renderAllianceChat();
     });
   }
 
   if (chatCompose) {
     chatCompose.addEventListener("submit", (event) => {
+      event.preventDefault();
+      sendChatMessage();
+    });
+  }
+
+  if (chatSubmit) {
+    chatSubmit.addEventListener("click", (event) => {
+      event.preventDefault();
+      sendChatMessage();
+    });
+  }
+
+  if (chatPanel) {
+    chatPanel.addEventListener("click", (event) => {
+      const sendButton = event.target.closest("#chatCompose button[type='submit']");
+      if (!sendButton) return;
       event.preventDefault();
       sendChatMessage();
     });
@@ -10900,16 +10971,19 @@ function sendChatMessage() {
   if (!chatInput) return;
   const text = chatInput.value.trim().replace(/\s+/g, " ");
   if (!text) return;
-  const channel = chatChannel === "kingdom" ? "kingdom" : "alliance";
-  addChatMessage(channel, text);
+  const channel = normalizeChatChannel(chatChannel);
+  addChatMessage(channel, text, "Tu imperio", channel === "private" ? { privateTarget: chatPrivateTarget } : {});
   chatInput.value = "";
+  chatPanelOpen = true;
 }
 
 function addChatMessage(channel, text, author = "Tu imperio", meta = {}) {
   const clean = String(text || "").trim().replace(/\s+/g, " ");
   if (!clean) return false;
   if (!state.chatMessages) state.chatMessages = structuredClone(defaultState.chatMessages);
-  const targetChannel = channel === "kingdom" ? "kingdom" : "alliance";
+  if (!state.chatMessages.private || typeof state.chatMessages.private !== "object") state.chatMessages.private = {};
+  const targetChannel = normalizeChatChannel(channel);
+  const privateTarget = targetChannel === "private" ? normalizePrivateChatTarget(meta.privateTarget || chatPrivateTarget) : null;
   const marker = meta.markerId ? mapMarkers.find((item) => item.id === meta.markerId) : null;
   const report = meta.reportId ? (state.reports || []).find((item) => item.id === meta.reportId) : null;
   const coord = meta.coord && Number.isFinite(meta.coord.x) && Number.isFinite(meta.coord.y)
@@ -10917,19 +10991,28 @@ function addChatMessage(channel, text, author = "Tu imperio", meta = {}) {
     : marker
       ? markerWorldCoord(marker)
       : null;
-  state.chatMessages[targetChannel] = [
-    ...(state.chatMessages[targetChannel] || []),
-    {
-      author,
-      text: clean.slice(0, 140),
-      at: Date.now(),
-      markerId: marker?.id || null,
-      reportId: report?.id || null,
-      coord
-    }
-  ].slice(-40);
+  const message = {
+    author,
+    text: clean.slice(0, 140),
+    at: Date.now(),
+    markerId: marker?.id || null,
+    reportId: report?.id || null,
+    coord
+  };
+  if (targetChannel === "private") {
+    state.chatMessages.private[privateTarget] = [
+      ...(state.chatMessages.private[privateTarget] || []),
+      message
+    ].slice(-40);
+  } else {
+    state.chatMessages[targetChannel] = [
+      ...(state.chatMessages[targetChannel] || []),
+      message
+    ].slice(-40);
+  }
   recordServerEvent("chat.send", {
     channel: targetChannel,
+    privateTarget,
     author,
     text: clean.slice(0, 140),
     markerId: marker?.id || null,
@@ -10941,13 +11024,111 @@ function addChatMessage(channel, text, author = "Tu imperio", meta = {}) {
   return true;
 }
 
+function normalizeChatChannel(channel) {
+  return ["kingdom", "alliance", "private"].includes(channel) ? channel : "alliance";
+}
+
+function chatChannelName(channel = chatChannel) {
+  const normalized = normalizeChatChannel(channel);
+  if (normalized === "kingdom") return "Reino";
+  if (normalized === "private") return "Privado";
+  return "Alianza";
+}
+
+function privateChatContacts() {
+  const members = allianceMemberList()
+    .filter((member) => member.id !== "player")
+    .slice(0, 6);
+  const fallback = [
+    { id: "isabel", name: "Isabel de Rojas", rank: "R5", status: "online" },
+    { id: "sancho", name: "Sancho de Medina", rank: "R4", status: "online" }
+  ];
+  return members.length ? members : fallback;
+}
+
+function normalizePrivateChatTarget(target) {
+  const contacts = privateChatContacts();
+  const found = contacts.find((contact) => contact.id === target);
+  return found?.id || contacts[0]?.id || "isabel";
+}
+
+function currentChatMessages() {
+  const channel = normalizeChatChannel(chatChannel);
+  if (channel === "private") {
+    chatPrivateTarget = normalizePrivateChatTarget(chatPrivateTarget);
+    return state.chatMessages?.private?.[chatPrivateTarget] || [];
+  }
+  return state.chatMessages?.[channel] || [];
+}
+
+function latestChatMessage() {
+  const allMessages = [
+    ...(state.chatMessages?.alliance || []).map((message) => ({ ...message, channel: "alliance" })),
+    ...(state.chatMessages?.kingdom || []).map((message) => ({ ...message, channel: "kingdom" }))
+  ];
+  Object.entries(state.chatMessages?.private || {}).forEach(([target, messages]) => {
+    if (!Array.isArray(messages)) return;
+    messages.forEach((message) => allMessages.push({ ...message, channel: "private", privateTarget: target }));
+  });
+  return allMessages.sort((a, b) => (b.at || 0) - (a.at || 0))[0] || null;
+}
+
+function renderChatDock() {
+  const latest = latestChatMessage();
+  const channel = latest?.channel || chatChannel;
+  if (chatDock) {
+    chatDock.classList.toggle("is-open", chatPanelOpen);
+    chatDock.setAttribute("aria-expanded", chatPanelOpen ? "true" : "false");
+  }
+  if (chatDockChannel) chatDockChannel.textContent = `[${chatChannelName(channel)}]`;
+  if (chatDockText) {
+    chatDockText.textContent = latest
+      ? `${latest.author}: ${latest.text}`.slice(0, 72)
+      : "Sin mensajes todavia.";
+  }
+}
+
+function renderPrivateChatList() {
+  if (!chatPrivateList) return;
+  const channel = normalizeChatChannel(chatChannel);
+  chatPrivateTarget = normalizePrivateChatTarget(chatPrivateTarget);
+  chatPrivateList.hidden = channel !== "private";
+  if (channel !== "private") {
+    chatPrivateList.innerHTML = "";
+    return;
+  }
+  chatPrivateList.innerHTML = privateChatContacts()
+    .map((contact) => {
+      const unread = (state.chatMessages?.private?.[contact.id] || []).filter((message) => message.author !== "Tu imperio").length;
+      return `
+        <button class="${contact.id === chatPrivateTarget ? "is-active" : ""}" type="button" data-private-chat="${contact.id}">
+          <span>${escapeHtml(contact.rank || "R1")}</span>
+          <strong>${escapeHtml(contact.name)}</strong>
+          <small>${escapeHtml(contact.status === "online" ? "conectado" : contact.status === "away" ? "ausente" : "offline")}${unread ? ` · ${unread}` : ""}</small>
+        </button>
+      `;
+    })
+    .join("");
+}
+
 function renderAllianceChat() {
+  renderChatDock();
+  if (chatPanel) {
+    chatPanel.classList.toggle("is-open", chatPanelOpen);
+    chatPanel.setAttribute("aria-hidden", chatPanelOpen ? "false" : "true");
+  }
   if (!chatTabs || !chatLog) return;
-  const channel = chatChannel === "kingdom" ? "kingdom" : "alliance";
+  const channel = normalizeChatChannel(chatChannel);
+  if (chatPanelTitle) {
+    chatPanelTitle.textContent = channel === "private"
+      ? privateChatContacts().find((contact) => contact.id === normalizePrivateChatTarget(chatPrivateTarget))?.name || "Privado"
+      : chatChannelName(channel);
+  }
   chatTabs.querySelectorAll("[data-chat-channel]").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.chatChannel === channel);
   });
-  const messages = state.chatMessages?.[channel] || [];
+  renderPrivateChatList();
+  const messages = currentChatMessages();
   chatLog.innerHTML = messages.length
     ? messages
         .slice(-24)
@@ -11062,19 +11243,20 @@ function openReportTarget(reportId) {
 function shareReportToChat(reportId, channel = "alliance") {
   const report = (state.reports || []).find((item) => item.id === reportId);
   if (!report) return;
-  const targetChannel = channel === "kingdom" ? "kingdom" : "alliance";
+  const targetChannel = normalizeChatChannel(channel);
   const marker = reportTargetMarker(report);
   const reportType = report.kind === "scout" ? "Espionaje" : report.isRally ? "Rally" : "Informe";
   const message = `${reportType} ${marchKindName(report.kind)} ${report.targetName}: ${report.summary}`;
   addChatMessage(targetChannel, message, "Tu imperio", {
     reportId: report.id,
     markerId: marker?.id || null,
-    coord: marker ? markerWorldCoord(marker) : report.coord || null
+    coord: marker ? markerWorldCoord(marker) : report.coord || null,
+    privateTarget: chatPrivateTarget
   });
-  addAllianceFeed("Informe compartido", `${report.targetName} enviado al chat de ${targetChannel === "kingdom" ? "reino" : "alianza"}.`);
+  addAllianceFeed("Informe compartido", `${report.targetName} enviado al chat de ${chatChannelName(targetChannel).toLowerCase()}.`);
   renderAllianceFeed();
   const feedback = document.querySelector("#sheetFeedback");
-  if (feedback) feedback.textContent = `Informe compartido en ${targetChannel === "kingdom" ? "Reino" : "Alianza"}.`;
+  if (feedback) feedback.textContent = `Informe compartido en ${chatChannelName(targetChannel)}.`;
   saveState();
 }
 

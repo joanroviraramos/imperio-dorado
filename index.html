@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260628-g23" />
-    <link rel="stylesheet" href="./hero.css?v=20260628-g23" />
+    <link rel="stylesheet" href="./styles.css?v=20260629-g24" />
+    <link rel="stylesheet" href="./hero.css?v=20260629-g24" />
   </head>
   <body>
     <svg class="icon-defs" aria-hidden="true">
@@ -56,6 +56,10 @@
       <symbol id="i-target" viewBox="0 0 24 24">
         <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
         <path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10ZM12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+      </symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24">
+        <path d="M4 5h16v11H8l-4 4V5Z" />
+        <path d="M8 9h8M8 13h5" />
       </symbol>
       <symbol id="i-close" viewBox="0 0 24 24">
         <path d="m6 6 12 12M18 6 6 18" />
@@ -251,20 +255,6 @@
           </div>
           <div class="alliance-summary" id="allianceSummary"></div>
           <div class="alliance-members" id="allianceMembers"></div>
-          <div class="alliance-chat">
-            <div class="chat-tabs" id="chatTabs" aria-label="Canales de chat">
-              <button class="is-active" type="button" data-chat-channel="alliance">Alianza</button>
-              <button type="button" data-chat-channel="kingdom">Reino</button>
-            </div>
-            <div class="chat-log" id="chatLog" aria-live="polite"></div>
-            <form class="chat-compose" id="chatCompose">
-              <input id="chatInput" maxlength="140" autocomplete="off" placeholder="Mensaje" />
-              <button class="primary-action" type="submit">
-                <svg><use href="#i-scroll" /></svg>
-                Enviar
-              </button>
-            </form>
-          </div>
           <div class="rally-list" id="rallyList"></div>
           <div class="alliance-feed" id="allianceFeed"></div>
         </div>
@@ -273,6 +263,38 @@
       <aside class="detail-sheet" id="detailSheet" aria-live="polite">
         <div class="sheet-handle"></div>
         <div class="sheet-body" id="sheetBody"></div>
+      </aside>
+
+      <button class="chat-dock" id="chatDock" type="button" aria-controls="chatPanel" aria-expanded="false">
+        <svg><use href="#i-chat" /></svg>
+        <span id="chatDockChannel">Alianza</span>
+        <strong id="chatDockText">Abre el chat de la Orden</strong>
+      </button>
+
+      <aside class="alliance-chat chat-panel" id="chatPanel" aria-label="Chat" aria-hidden="true">
+        <div class="chat-panel-head">
+          <div>
+            <p>Chat</p>
+            <h2 id="chatPanelTitle">Alianza</h2>
+          </div>
+          <button type="button" id="chatClose" aria-label="Cerrar chat">
+            <svg><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <div class="chat-tabs" id="chatTabs" aria-label="Canales de chat">
+          <button class="is-active" type="button" data-chat-channel="kingdom">Reino</button>
+          <button type="button" data-chat-channel="alliance">Alianza</button>
+          <button type="button" data-chat-channel="private">Privado</button>
+        </div>
+        <div class="chat-private-list" id="chatPrivateList" aria-label="Chats privados"></div>
+        <div class="chat-log" id="chatLog" aria-live="polite"></div>
+        <form class="chat-compose" id="chatCompose">
+          <input id="chatInput" maxlength="140" autocomplete="off" placeholder="Mensaje" />
+          <button class="primary-action" type="submit">
+            <svg><use href="#i-scroll" /></svg>
+            Enviar
+          </button>
+        </form>
       </aside>
 
       <nav class="bottom-nav" aria-label="Navegacion principal">
@@ -307,6 +329,6 @@
       </nav>
     </main>
 
-    <script src="./app.js?v=20260628-g23"></script>
+    <script src="./app.js?v=20260629-g24"></script>
   </body>
 </html>
