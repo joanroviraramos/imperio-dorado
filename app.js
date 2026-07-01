@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260629-g24";
+const DATA_VERSION = "20260701-g25";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -3980,6 +3980,30 @@ function buildingMapSprite(building) {
     if (lv <= 10) return "./assets/academia-mapa-1-10.png";
     if (lv <= 20) return "./assets/academia-mapa-11-20.png";
     return "./assets/academia-mapa-21-25.png";
+  }
+  if (building.id === "salon-guerra") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/salon-guerra-mapa-1-10.png";
+    if (lv <= 20) return "./assets/salon-guerra-mapa-11-20.png";
+    return "./assets/salon-guerra-mapa-21-25.png";
+  }
+  if (building.id === "sabios") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/sabios-mapa-1-10.png";
+    if (lv <= 20) return "./assets/sabios-mapa-11-20.png";
+    return "./assets/sabios-mapa-21-25.png";
+  }
+  if (building.id === "casa-alianza") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/casa-alianza-mapa-1-10.png";
+    if (lv <= 20) return "./assets/casa-alianza-mapa-11-20.png";
+    return "./assets/casa-alianza-mapa-21-25.png";
+  }
+  if (building.id === "astillero") {
+    const lv = building.level || 1;
+    if (lv <= 10) return "./assets/astillero-mapa-1-10.png";
+    if (lv <= 20) return "./assets/astillero-mapa-11-20.png";
+    return "./assets/astillero-mapa-21-25.png";
   }
   return null;
 }
