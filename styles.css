@@ -7158,6 +7158,9 @@ svg {
   transform: translate(-50%, 50%);
   width: 44px;
 }
+.scene-city .fortress-plot--military[data-building-kind="barracks"] .fortress-plot-sprite {
+  width: 48px;
+}
 .scene-city .fortress-plot--base .fortress-plot-sprite {
   transform: translate(-50%, 40%);
   width: 62px;
