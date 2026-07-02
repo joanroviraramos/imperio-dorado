@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260701-g25";
+const DATA_VERSION = "20260702-g26";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -2016,6 +2016,7 @@ function init() {
         box-shadow: none !important;
         opacity: 1 !important;
         border: none !important;
+        clip-path: none !important;
       }
       .fortress-plot.has-sprite b,
       .fortress-plot.has-sprite small {
@@ -2036,25 +2037,34 @@ function init() {
         max-width: none !important;
       }
       .scene-city .fortress-plot--resource .fortress-plot-sprite {
-        inset: 50% auto auto 50% !important;
-        top: 50% !important;
-        bottom: auto !important;
-        transform: translate(-50%, -50%) !important;
-        width: 78px !important;
-        height: 54px !important;
+        inset: auto auto 50% 50% !important;
+        top: auto !important;
+        bottom: 50% !important;
+        transform: translate(-50%, 46%) !important;
+        width: 64px !important;
+        height: auto !important;
         object-fit: contain !important;
         filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.4)) !important;
       }
+      .scene-city .fortress-plot--resource.has-sprite {
+        width: 37px !important;
+        height: 28px !important;
+        overflow: visible !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        clip-path: none !important;
+      }
       .scene-city .fortress-plot--grain .fortress-plot-sprite,
       .scene-city .fortress-plot--wood .fortress-plot-sprite {
-        width: 88px !important;
-        height: 62px !important;
+        width: 64px !important;
+        height: auto !important;
       }
       .scene-city .fortress-plot--stone .fortress-plot-sprite,
       .scene-city .fortress-plot--iron .fortress-plot-sprite,
       .scene-city .fortress-plot--silver .fortress-plot-sprite {
-        width: 82px !important;
-        height: 58px !important;
+        width: 64px !important;
+        height: auto !important;
       }
       .scene-city .fortress-plot--military .fortress-plot-sprite {
         transform: translate(-50%, 50%) !important;
@@ -3925,86 +3935,30 @@ function renderFortressZones() {
     .join("");
 }
 
+function mapSpriteByLevel(prefix, level) {
+  const numericLevel = Number(level) || 1;
+  const range = numericLevel <= 10 ? "1-10" : numericLevel <= 20 ? "11-20" : "21-25";
+  return `./assets/${prefix}-mapa-${range}.png`;
+}
+
 function buildingMapSprite(building) {
   if (!building) return null;
-  if (building.resource === "grain") {
-    return "./assets/recurso-trigo-parcela.png";
-  }
-  if (building.resource === "wood") {
-    return "./assets/recurso-madera-parcela.png";
-  }
-  if (building.resource === "stone") {
-    return "./assets/recurso-piedra-parcela.png";
-  }
-  if (building.resource === "iron") {
-    return "./assets/recurso-hierro-parcela.png";
-  }
-  if (building.kind === "barracks") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/cuartel-mapa-1-10.png";
-    if (lv <= 20) return "./assets/cuartel-mapa-11-20.png";
-    return "./assets/cuartel-mapa-21-25.png";
-  }
-  if (building.kind === "hospital") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/hospital-mapa-1-10.png";
-    if (lv <= 20) return "./assets/hospital-mapa-11-20.png";
-    return "./assets/hospital-mapa-21-25.png";
-  }
-  if (building.id === "mercado") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/mercado-mapa-1-10.png";
-    if (lv <= 20) return "./assets/mercado-mapa-11-20.png";
-    return "./assets/mercado-mapa-21-25.png";
-  }
-  if (building.id === "embajada") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/embajada-mapa-1-10.png";
-    if (lv <= 20) return "./assets/embajada-mapa-11-20.png";
-    return "./assets/embajada-mapa-21-25.png";
-  }
-  if (building.id === "forja") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/forja-mapa-1-10.png";
-    if (lv <= 20) return "./assets/forja-mapa-11-20.png";
-    return "./assets/forja-mapa-21-25.png";
-  }
-  if (building.id === "prision") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/prision-mapa-1-10.png";
-    if (lv <= 20) return "./assets/prision-mapa-11-20.png";
-    return "./assets/prision-mapa-21-25.png";
-  }
-  if (building.id === "academia") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/academia-mapa-1-10.png";
-    if (lv <= 20) return "./assets/academia-mapa-11-20.png";
-    return "./assets/academia-mapa-21-25.png";
-  }
-  if (building.id === "salon-guerra") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/salon-guerra-mapa-1-10.png";
-    if (lv <= 20) return "./assets/salon-guerra-mapa-11-20.png";
-    return "./assets/salon-guerra-mapa-21-25.png";
-  }
-  if (building.id === "sabios") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/sabios-mapa-1-10.png";
-    if (lv <= 20) return "./assets/sabios-mapa-11-20.png";
-    return "./assets/sabios-mapa-21-25.png";
-  }
-  if (building.id === "casa-alianza") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/casa-alianza-mapa-1-10.png";
-    if (lv <= 20) return "./assets/casa-alianza-mapa-11-20.png";
-    return "./assets/casa-alianza-mapa-21-25.png";
-  }
-  if (building.id === "astillero") {
-    const lv = building.level || 1;
-    if (lv <= 10) return "./assets/astillero-mapa-1-10.png";
-    if (lv <= 20) return "./assets/astillero-mapa-11-20.png";
-    return "./assets/astillero-mapa-21-25.png";
-  }
+  if (building.resource === "grain") return mapSpriteByLevel("granja", building.level);
+  if (building.resource === "wood") return mapSpriteByLevel("aserradero", building.level);
+  if (building.resource === "stone") return mapSpriteByLevel("cantera", building.level);
+  if (building.resource === "iron") return mapSpriteByLevel("mina-hierro", building.level);
+  if (building.kind === "storage" || building.id === "almacen") return mapSpriteByLevel("almacen", building.level);
+  if (building.kind === "barracks") return mapSpriteByLevel("cuartel", building.level);
+  if (building.kind === "hospital") return mapSpriteByLevel("hospital", building.level);
+  if (building.id === "mercado") return mapSpriteByLevel("mercado", building.level);
+  if (building.id === "embajada") return mapSpriteByLevel("embajada", building.level);
+  if (building.id === "forja") return mapSpriteByLevel("forja", building.level);
+  if (building.id === "prision") return mapSpriteByLevel("prision", building.level);
+  if (building.id === "academia") return mapSpriteByLevel("academia", building.level);
+  if (building.id === "salon-guerra") return mapSpriteByLevel("salon-guerra", building.level);
+  if (building.id === "sabios") return mapSpriteByLevel("sabios", building.level);
+  if (building.id === "casa-alianza") return mapSpriteByLevel("casa-alianza", building.level);
+  if (building.id === "astillero") return mapSpriteByLevel("astillero", building.level);
   return null;
 }
 
