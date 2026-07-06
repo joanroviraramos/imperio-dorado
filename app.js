@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g27";
+const DATA_VERSION = "20260702-g29";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -63,7 +63,7 @@ const resources = [
 const buildings = [
   {
     id: "alcazar",
-    name: "Alcazar Real",
+    name: "Alcázar Real",
     icon: "i-crown",
     x: 52,
     y: 27,
@@ -373,7 +373,7 @@ const buildings = [
 ];
 
 const fortressPlots = [
-  { id: "base-alcazar", zone: "base", label: "Alcazar", x: 50, y: 13, buildingId: "alcazar" },
+  { id: "base-alcazar", zone: "base", label: "Alcázar", x: 50, y: 13, buildingId: "alcazar" },
   { id: "base-academia", zone: "base", label: "Academia", x: 62, y: 31, buildingId: "academia" },
   { id: "base-forja", zone: "base", label: "Solar de forja", x: 72, y: 32 },
   { id: "base-mercado", zone: "base", label: "Solar de mercado", x: 31, y: 32 },
@@ -2068,10 +2068,10 @@ function init() {
       }
       .scene-city .fortress-plot--military .fortress-plot-sprite {
         transform: translate(-50%, 50%) !important;
-        width: 44px !important;
+        width: 50px !important;
       }
       .scene-city .fortress-plot--military[data-building-kind="barracks"] .fortress-plot-sprite {
-        width: 48px !important;
+        width: 52px !important;
       }
       .scene-city .fortress-plot--base .fortress-plot-sprite {
         transform: translate(-50%, 40%) !important;
@@ -2524,7 +2524,7 @@ function serverEventSummary(type, detail = {}) {
   const labels = {
     "queue.start": "Cola iniciada",
     "queue.complete": "Cola completada",
-    "alcazar.reward": "Premio del Alcazar",
+    "alcazar.reward": "Premio del Alcázar",
     "march.start": "Marcha enviada",
     "march.cancel": "Marcha cancelada",
     "march.resolve": "Marcha resuelta",
@@ -2784,7 +2784,7 @@ function buildingUpgradeRequirements(building) {
     requirements.push({
       id: "alcazar",
       level: targetLevel,
-      labelOverride: `Alcazar Real Nv. ${targetLevel}`
+      labelOverride: `Alcázar Real Nv. ${targetLevel}`
     });
   }
 
@@ -3705,7 +3705,7 @@ function completeQueue(type, queue) {
     state.power += 920 + completedLevel * 140;
     addAllianceFeed("Construccion completada", `${building.name} sube a nivel ${completedLevel}.`);
     if (building.id === "alcazar" && completedLevel > previousLevel) {
-      grantAlcazarUpgradeReward(completedLevel);
+      grantAlcázarUpgradeReward(completedLevel);
     }
   }
 
@@ -9690,7 +9690,7 @@ function alcazarRewardItems(level) {
   };
 }
 
-function grantAlcazarUpgradeReward(level) {
+function grantAlcázarUpgradeReward(level) {
   const safeLevel = clampBuildingLevel(level);
   state.alcazarRewardsClaimed ||= {};
   const key = String(safeLevel);
@@ -9699,11 +9699,11 @@ function grantAlcazarUpgradeReward(level) {
   const items = alcazarRewardItems(safeLevel);
   addInventoryItems(items);
   state.alcazarRewardsClaimed[key] = Date.now();
-  addAllianceFeed("Premio del Alcazar", `Nivel ${safeLevel}: paquete imperial anadido al inventario.`);
+  addAllianceFeed("Premio del Alcázar", `Nivel ${safeLevel}: paquete imperial anadido al inventario.`);
   recordServerEvent("alcazar.reward", {
     level: safeLevel,
     itemCount: Object.values(items).reduce((sum, quantity) => sum + quantity, 0),
-    label: `Alcazar Real Nv. ${safeLevel}`
+    label: `Alcázar Real Nv. ${safeLevel}`
   });
 }
 
@@ -11712,3 +11712,99 @@ function renderAllianceFeed() {
     )
     .join("");
 }
+
+/* core-building-art-overlay-20260702 */
+(() => {
+  const installedFlag = "__imperioCoreBuildingArtOverlay";
+  if (window[installedFlag]) return;
+  window[installedFlag] = true;
+
+  const sceneSelectors = [
+    ".scene-city",
+    ".city-scene",
+    ".fortress-scene",
+    ".fortaleza-scene",
+    "[data-view='city']"
+  ];
+
+  const candidateSelectors = [
+    "button",
+    "[role='button']",
+    ".fortress-plot",
+    ".building-marker",
+    ".city-building",
+    ".map-marker"
+  ].join(",");
+
+  const ignoredContainers = ".bottom-nav, .chat-dock, .chat-strip, .resource-bar, .topbar, .nav, .modal, .sheet";
+
+  function normalize(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function elementLabel(el) {
+    const data = el.dataset || {};
+    return normalize([
+      el.getAttribute("aria-label"),
+      el.getAttribute("title"),
+      data.building,
+      data.buildingId,
+      data.kind,
+      data.type,
+      data.id,
+      el.textContent
+    ].filter(Boolean).join(" "));
+  }
+
+  function detectKind(label) {
+    if (/\bmuralla\b|\bwall\b/.test(label)) return "muralla";
+    if (/\balcazar\b|\balcazar real\b|\bfortaleza real\b|\bcastillo real\b/.test(label)) return "alcazar";
+    return null;
+  }
+
+  function detectLevel(el, label) {
+    const data = el.dataset || {};
+    const raw = data.level || data.nivel || label;
+    const explicit = String(raw || "").match(/(?:nivel|level|nv\.?|lvl\.?)?\s*([1-9]|1\d|2[0-5])\b/i);
+    if (explicit) return Math.max(1, Math.min(25, Number(explicit[1])));
+    const compact = String(el.textContent || "").match(/\b([1-9]|1\d|2[0-5])\b/);
+    return compact ? Math.max(1, Math.min(25, Number(compact[1]))) : 1;
+  }
+
+  function artUrl(kind, level) {
+    const tier = level >= 17 ? "03" : level >= 9 ? "02" : "01";
+    const prefix = kind === "alcazar" ? "fortress" : "wall";
+    return `assets/buildings/fortress-levels/${prefix}-level-${tier}.png`;
+  }
+
+  function decorateCoreBuildings() {
+    const scene = sceneSelectors.map((selector) => document.querySelector(selector)).find(Boolean);
+    if (!scene) return;
+
+    scene.querySelectorAll(candidateSelectors).forEach((el) => {
+      if (el.closest(ignoredContainers)) return;
+      const label = elementLabel(el);
+      const kind = detectKind(label);
+      if (!kind) return;
+
+      const level = detectLevel(el, label);
+      el.classList.add("core-building-art-holder", `core-building-art-holder--${kind}`);
+      el.style.setProperty("--core-building-art-url", `url("${artUrl(kind, level)}")`);
+
+      if (!el.querySelector(":scope > .core-building-art")) {
+        const art = document.createElement("span");
+        art.className = "core-building-art";
+        art.setAttribute("aria-hidden", "true");
+        el.prepend(art);
+      }
+    });
+  }
+
+  decorateCoreBuildings();
+  window.addEventListener("load", decorateCoreBuildings, { passive: true });
+  document.addEventListener("click", () => window.setTimeout(decorateCoreBuildings, 40), true);
+  window.setInterval(decorateCoreBuildings, 600);
+})();

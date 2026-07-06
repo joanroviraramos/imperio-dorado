@@ -175,9 +175,9 @@ svg {
 .power-button {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 40px;
-  padding: 0 12px;
+  gap: 5px;
+  min-height: 34px;
+  padding: 0 9px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(35, 25, 18, 0.72);
@@ -185,11 +185,13 @@ svg {
 }
 
 .power-button svg {
+  width: 18px;
+  height: 18px;
   color: var(--gold);
 }
 
 .power-button span {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
 }
 
@@ -4936,15 +4938,16 @@ svg {
 .chat-dock {
   position: absolute;
   z-index: 61;
-  right: 10px;
-  bottom: calc(88px + env(safe-area-inset-bottom));
-  left: 10px;
+  right: auto;
+  bottom: calc(78px + env(safe-area-inset-bottom));
+  left: 12px;
   display: grid;
-  grid-template-columns: 24px auto minmax(0, 1fr);
+  grid-template-columns: 18px auto minmax(0, 1fr);
   align-items: center;
-  gap: 7px;
-  min-height: 34px;
-  padding: 5px 10px;
+  gap: 5px;
+  width: min(320px, calc(100% - 104px));
+  min-height: 28px;
+  padding: 4px 8px;
   border: 1px solid rgba(255, 215, 122, 0.32);
   border-radius: 8px;
   background:
@@ -4956,14 +4959,14 @@ svg {
 }
 
 .chat-dock svg {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
   color: var(--gold-bright);
 }
 
 .chat-dock span {
   color: #72c9ff;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 1000;
   text-transform: uppercase;
   white-space: nowrap;
@@ -4972,7 +4975,7 @@ svg {
 .chat-dock strong {
   overflow: hidden;
   color: #fff4d7;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 850;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -6855,8 +6858,8 @@ svg {
 }
 
 .scene-city .fortress-plot--military.is-occupied {
-  width: 44px;
-  height: 34px;
+  width: 46px;
+  height: 36px;
   border-color: rgba(238, 182, 112, 0.48) !important;
   border-radius: 5px;
   background:
@@ -7156,10 +7159,10 @@ svg {
 }
 .scene-city .fortress-plot--military .fortress-plot-sprite {
   transform: translate(-50%, 50%);
-  width: 44px;
+  width: 50px;
 }
 .scene-city .fortress-plot--military[data-building-kind="barracks"] .fortress-plot-sprite {
-  width: 48px;
+  width: 52px;
 }
 .scene-city .fortress-plot--base .fortress-plot-sprite {
   transform: translate(-50%, 40%);
@@ -7182,4 +7185,68 @@ svg {
 }
 .fortress-plot.has-sprite small {
   display: none;
+}
+
+/* core-building-art-overlay-20260702 */
+.scene-city .core-building-art-holder,
+.city-scene .core-building-art-holder,
+.fortress-scene .core-building-art-holder,
+.fortaleza-scene .core-building-art-holder {
+  overflow: visible !important;
+  isolation: isolate;
+}
+
+.scene-city .core-building-art-holder .core-building-art,
+.city-scene .core-building-art-holder .core-building-art,
+.fortress-scene .core-building-art-holder .core-building-art,
+.fortaleza-scene .core-building-art-holder .core-building-art {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: block;
+  pointer-events: none;
+  background-image: var(--core-building-art-url);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.45));
+  z-index: 2;
+}
+
+.scene-city .core-building-art-holder--alcazar .core-building-art,
+.city-scene .core-building-art-holder--alcazar .core-building-art,
+.fortress-scene .core-building-art-holder--alcazar .core-building-art,
+.fortaleza-scene .core-building-art-holder--alcazar .core-building-art {
+  width: 76px;
+  height: 72px;
+  transform: translate(-50%, -61%);
+}
+
+.scene-city .core-building-art-holder--muralla .core-building-art,
+.city-scene .core-building-art-holder--muralla .core-building-art,
+.fortress-scene .core-building-art-holder--muralla .core-building-art,
+.fortaleza-scene .core-building-art-holder--muralla .core-building-art {
+  width: 72px;
+  height: 58px;
+  transform: translate(-50%, -57%);
+}
+
+.scene-city .core-building-art-holder > svg,
+.city-scene .core-building-art-holder > svg,
+.fortress-scene .core-building-art-holder > svg,
+.fortaleza-scene .core-building-art-holder > svg,
+.scene-city .core-building-art-holder > .lucide,
+.city-scene .core-building-art-holder > .lucide,
+.fortress-scene .core-building-art-holder > .lucide,
+.fortaleza-scene .core-building-art-holder > .lucide {
+  opacity: 0 !important;
+}
+
+.scene-city .core-building-art-holder [class*="level"],
+.city-scene .core-building-art-holder [class*="level"],
+.fortress-scene .core-building-art-holder [class*="level"],
+.fortaleza-scene .core-building-art-holder [class*="level"] {
+  position: relative;
+  z-index: 4;
+  opacity: 1 !important;
 }
