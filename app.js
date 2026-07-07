@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g31";
+const DATA_VERSION = "20260702-g32";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -1938,7 +1938,7 @@ let worldFilter = "all";
 let worldZoom = 1;
 let worldHasCentered = false;
 let worldPinch = null;
-let heroPanelTab = "progress";
+let heroPanelTab = "perfil";
 
 const WORLD_MIN_ZOOM = 0.28;
 const WORLD_MAX_ZOOM = 1.8;
@@ -9839,6 +9839,14 @@ function bindHeroEquipment() {
     });
   }
 
+  if (heroDetailPanel) {
+    heroDetailPanel.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-select-loadout]");
+      if (!button) return;
+      selectEquipmentLoadout(button.dataset.selectLoadout);
+    });
+  }
+
   heroPanelTabs?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-hero-panel]");
     if (!button) return;
@@ -9974,6 +9982,7 @@ function heroEffectMessage(item, before, heroId = state.selectedHeroId) {
 
 function renderHeroEquipment() {
   processHeroEnergy();
+  if (!["perfil", "conjuntos", "equipo"].includes(heroPanelTab)) heroPanelTab = "perfil";
   const hero = heroById();
   const data = heroState(hero.id);
   const info = heroLevelInfo(hero.id);
@@ -10039,16 +10048,20 @@ function renderHeroEquipment() {
     });
   }
 
-  if (heroProgress) heroProgress.hidden = heroPanelTab !== "progress";
-  if (heroRosterEl) heroRosterEl.hidden = heroPanelTab !== "heroes";
+  document.querySelectorAll(".hero-view [data-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.panel !== heroPanelTab;
+  });
+
+  if (heroProgress) heroProgress.hidden = false;
+  if (heroRosterEl) heroRosterEl.hidden = false;
 
   if (heroDetailPanel) {
-    heroDetailPanel.hidden = heroPanelTab !== "sets";
+    heroDetailPanel.hidden = false;
     heroDetailPanel.innerHTML = `
       ${renderEquipmentLoadoutButtons()}
       <div class="equipment-set-note">
         <strong>${equipmentSetStatus().rule?.name || "Conjunto"}</strong>
-        <span>${equipmentSetBonusText()}</span>
+        <span>${equipmentSetBonusText()}. Pulsa un conjunto para equiparlo como perfil activo.</span>
       </div>
       ${renderLoadoutBonusBreakdown()}
     `;
@@ -10071,12 +10084,13 @@ function renderHeroEquipment() {
       const quality = forgeQualities[qualityIndex];
       const activeInProfile = equipmentActiveInLoadout(recipe);
       const primaryBonus = formatEquipmentPrimaryBonus(recipe, level, qualityIndex);
+      const activeText = activeInProfile ? " - equipado" : "";
       return `
         <button class="${activeInProfile ? "is-active-loadout" : ""}" type="button" data-open-forge="${recipe.id}" style="${level ? `--item-color:${quality.color}` : ""}" aria-label="${recipe.slot}">
           <svg><use href="#${recipe.icon}" /></svg>
           <span>
-            <strong>${recipe.slot}</strong>
-            <small>${level ? `Nv. ${level} ${quality.label}${primaryBonus ? ` - ${primaryBonus}` : ""}${activeInProfile ? " - activo" : ""}` : "Sin forjar"}</small>
+            <strong>${recipe.slot}: ${recipe.name}</strong>
+            <small>${level ? `Nv. ${level} ${quality.label}${primaryBonus ? ` - ${primaryBonus}` : ""}${activeText}` : "Sin forjar - abrir Forja"}</small>
           </span>
         </button>
       `;
