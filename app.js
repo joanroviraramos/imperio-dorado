@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g30";
+const DATA_VERSION = "20260702-g31";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -1031,7 +1031,7 @@ const researchBranches = [
         requires: [{ id: "march-speed", level: 2 }],
         cost: { silver: 320, wood: 220, gold: 2 },
         timeMs: 16500,
-        effect: "Reduce coste de espionaje y mejora informes"
+        effect: "Reduce coste de espionaje"
       },
       {
         id: "bonus-march-slot",
@@ -1117,7 +1117,7 @@ const researchBranches = [
         requires: [{ id: "garrison-defense", level: 3 }],
         cost: { grain: 760, silver: 260, stone: 360 },
         timeMs: 19500,
-        effect: "Reduce heridos al defender y en combates largos"
+        effect: "+3% defensa de ciudad por nivel"
       },
       {
         id: "hospital-capacity",
@@ -2232,7 +2232,7 @@ function normalizeQueue(type, queue) {
 
 function normalizeConstructionQueueDuration(queue, building) {
   const now = Date.now();
-  const expected = constructionDurationForBuilding(building);
+  const expected = constructionDurationForBuilding(building, queue.payload?.level);
   const remaining = Math.max(0, queue.finishAt - now);
   if (remaining <= expected) return;
   queue.startedAt = now;
@@ -3793,8 +3793,8 @@ function adoptTemplateConstructionQueue(building) {
   normalizeConstructionQueueDuration(queue, building);
 }
 
-function constructionDurationForBuilding(building) {
-  const level = clampBuildingLevel(building?.level || 1);
+function constructionDurationForBuilding(building, targetLevel = nextBuildingLevel(building)) {
+  const level = clampBuildingLevel(targetLevel || building?.level || 1);
   return Math.round(constructionDurationForLevel(level) * durationFactor("construction"));
 }
 
