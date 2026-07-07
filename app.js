@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g37";
+const DATA_VERSION = "20260702-g38";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -373,42 +373,42 @@ const buildings = [
 ];
 
 const fortressPlots = [
-  { id: "base-alcazar", zone: "base", label: "Alcázar", x: 50, y: 10, buildingId: "alcazar" },
-  { id: "base-academia", zone: "base", label: "Academia", x: 60, y: 29, buildingId: "academia" },
-  { id: "base-forja", zone: "base", label: "Solar de forja", x: 73, y: 32 },
-  { id: "base-mercado", zone: "base", label: "Solar de mercado", x: 27, y: 34 },
-  { id: "base-embajada", zone: "base", label: "Solar de embajada", x: 40, y: 31 },
-  { id: "base-prision", zone: "base", label: "Solar de prision", x: 84, y: 36 },
-  { id: "base-alianza", zone: "base", label: "Solar de alianza", x: 19, y: 46 },
-  { id: "base-salon-guerra", zone: "base", label: "Solar de guerra", x: 50, y: 42 },
-  { id: "base-sabios", zone: "base", label: "Solar de sabios", x: 34, y: 45 },
-  { id: "base-almacen", zone: "base", label: "Solar de almacen", x: 81, y: 46 },
-  { id: "base-astillero", zone: "base", label: "Solar naval", x: 65, y: 45 },
-  { id: "base-muralla", zone: "base", label: "Muralla", x: 50, y: 59, buildingId: "muralla" },
+  { id: "base-alcazar", zone: "base", label: "Alcázar", x: 50, y: 13, buildingId: "alcazar" },
+  { id: "base-academia", zone: "base", label: "Academia", x: 61, y: 30, buildingId: "academia" },
+  { id: "base-forja", zone: "base", label: "Solar de forja", x: 74, y: 32 },
+  { id: "base-mercado", zone: "base", label: "Solar de mercado", x: 29, y: 33 },
+  { id: "base-embajada", zone: "base", label: "Solar de embajada", x: 42, y: 31 },
+  { id: "base-prision", zone: "base", label: "Solar de prision", x: 84, y: 34 },
+  { id: "base-alianza", zone: "base", label: "Solar de alianza", x: 23, y: 42 },
+  { id: "base-salon-guerra", zone: "base", label: "Solar de guerra", x: 51, y: 39 },
+  { id: "base-sabios", zone: "base", label: "Solar de sabios", x: 36, y: 42 },
+  { id: "base-almacen", zone: "base", label: "Solar de almacen", x: 78, y: 42 },
+  { id: "base-astillero", zone: "base", label: "Solar naval", x: 64, y: 42 },
+  { id: "base-muralla", zone: "base", label: "Muralla", x: 50, y: 57, buildingId: "muralla" },
 
-  { id: "military-1", zone: "military", label: "Solar militar", x: 11, y: 52, allowed: "Cuartel u hospital" },
-  { id: "military-2", zone: "military", label: "Solar militar", x: 27, y: 53, allowed: "Cuartel u hospital" },
-  { id: "military-3", zone: "military", label: "Solar militar", x: 73, y: 53, allowed: "Cuartel u hospital" },
-  { id: "military-4", zone: "military", label: "Solar militar", x: 89, y: 52, allowed: "Cuartel u hospital" },
-  { id: "military-5", zone: "military", label: "Solar militar", x: 17, y: 63, allowed: "Cuartel u hospital" },
-  { id: "military-6", zone: "military", label: "Solar militar", x: 36, y: 65, allowed: "Cuartel u hospital" },
-  { id: "military-7", zone: "military", label: "Solar militar", x: 64, y: 65, allowed: "Cuartel u hospital" },
-  { id: "military-8", zone: "military", label: "Solar militar", x: 83, y: 63, allowed: "Cuartel u hospital" },
-  { id: "military-9", zone: "military", label: "Solar militar", x: 24, y: 74, allowed: "Cuartel u hospital" },
-  { id: "military-10", zone: "military", label: "Solar militar", x: 42, y: 77, allowed: "Cuartel u hospital" },
-  { id: "military-11", zone: "military", label: "Solar militar", x: 58, y: 77, allowed: "Cuartel u hospital" },
-  { id: "military-12", zone: "military", label: "Solar militar", x: 76, y: 74, allowed: "Cuartel u hospital" },
+  { id: "military-1", zone: "military", label: "Solar militar", x: 14, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-2", zone: "military", label: "Solar militar", x: 30, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-3", zone: "military", label: "Solar militar", x: 70, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-4", zone: "military", label: "Solar militar", x: 86, y: 46, allowed: "Cuartel u hospital" },
+  { id: "military-5", zone: "military", label: "Solar militar", x: 20, y: 55, allowed: "Cuartel u hospital" },
+  { id: "military-6", zone: "military", label: "Solar militar", x: 36, y: 55, allowed: "Cuartel u hospital" },
+  { id: "military-7", zone: "military", label: "Solar militar", x: 64, y: 55, allowed: "Cuartel u hospital" },
+  { id: "military-8", zone: "military", label: "Solar militar", x: 80, y: 55, allowed: "Cuartel u hospital" },
+  { id: "military-9", zone: "military", label: "Solar militar", x: 24, y: 64, allowed: "Cuartel u hospital" },
+  { id: "military-10", zone: "military", label: "Solar militar", x: 40, y: 64, allowed: "Cuartel u hospital" },
+  { id: "military-11", zone: "military", label: "Solar militar", x: 60, y: 64, allowed: "Cuartel u hospital" },
+  { id: "military-12", zone: "military", label: "Solar militar", x: 76, y: 64, allowed: "Cuartel u hospital" },
 
-  { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 10, y: 75 },
-  { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 28, y: 82 },
-  { id: "resource-3", zone: "resource", label: "Parcela de recursos", x: 72, y: 82 },
-  { id: "resource-4", zone: "resource", label: "Parcela de recursos", x: 90, y: 75 },
-  { id: "resource-5", zone: "resource", label: "Parcela de recursos", x: 15, y: 89 },
-  { id: "resource-6", zone: "resource", label: "Parcela de recursos", x: 34, y: 93 },
-  { id: "resource-7", zone: "resource", label: "Parcela de recursos", x: 66, y: 93 },
-  { id: "resource-8", zone: "resource", label: "Parcela de recursos", x: 85, y: 89 },
-  { id: "resource-9", zone: "resource", label: "Parcela de recursos", x: 44, y: 86 },
-  { id: "resource-10", zone: "resource", label: "Parcela de recursos", x: 56, y: 86 }
+  { id: "resource-1", zone: "resource", label: "Parcela de recursos", x: 15, y: 73 },
+  { id: "resource-2", zone: "resource", label: "Parcela de recursos", x: 30, y: 74 },
+  { id: "resource-3", zone: "resource", label: "Parcela de recursos", x: 70, y: 74 },
+  { id: "resource-4", zone: "resource", label: "Parcela de recursos", x: 85, y: 73 },
+  { id: "resource-5", zone: "resource", label: "Parcela de recursos", x: 18, y: 81 },
+  { id: "resource-6", zone: "resource", label: "Parcela de recursos", x: 35, y: 83 },
+  { id: "resource-7", zone: "resource", label: "Parcela de recursos", x: 65, y: 83 },
+  { id: "resource-8", zone: "resource", label: "Parcela de recursos", x: 82, y: 81 },
+  { id: "resource-9", zone: "resource", label: "Parcela de recursos", x: 42, y: 88 },
+  { id: "resource-10", zone: "resource", label: "Parcela de recursos", x: 58, y: 88 }
 ];
 
 const initialFortressAssignments = Object.fromEntries(
@@ -2128,7 +2128,7 @@ function init() {
         left: 50% !important;
         bottom: 50% !important;
         transform: translate(-50%, 44%) !important;
-        width: 68px !important;
+        width: 72px !important;
         height: auto !important;
         object-fit: contain !important;
         max-width: none !important;
@@ -2138,14 +2138,14 @@ function init() {
         top: auto !important;
         bottom: 50% !important;
         transform: translate(-50%, 46%) !important;
-        width: 56px !important;
+        width: 64px !important;
         height: auto !important;
         object-fit: contain !important;
         filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.4)) !important;
       }
       .scene-city .fortress-plot--resource.has-sprite {
-        width: 32px !important;
-        height: 25px !important;
+        width: 37px !important;
+        height: 28px !important;
         overflow: visible !important;
         background: transparent !important;
         border: none !important;
@@ -2154,25 +2154,25 @@ function init() {
       }
       .scene-city .fortress-plot--grain .fortress-plot-sprite,
       .scene-city .fortress-plot--wood .fortress-plot-sprite {
-        width: 56px !important;
+        width: 64px !important;
         height: auto !important;
       }
       .scene-city .fortress-plot--stone .fortress-plot-sprite,
       .scene-city .fortress-plot--iron .fortress-plot-sprite,
       .scene-city .fortress-plot--silver .fortress-plot-sprite {
-        width: 54px !important;
+        width: 64px !important;
         height: auto !important;
       }
       .scene-city .fortress-plot--military .fortress-plot-sprite {
         transform: translate(-50%, 50%) !important;
-        width: 46px !important;
+        width: 50px !important;
       }
       .scene-city .fortress-plot--military[data-building-kind="barracks"] .fortress-plot-sprite {
-        width: 48px !important;
+        width: 52px !important;
       }
       .scene-city .fortress-plot--base .fortress-plot-sprite {
         transform: translate(-50%, 40%) !important;
-        width: 58px !important;
+        width: 62px !important;
       }
       .building-hotspot.has-sprite {
         overflow: visible !important;
@@ -3987,12 +3987,12 @@ function renderBuildings() {
       .map((building) => {
         const position = buildingPosition(building);
         const sprite = buildingMapSprite(building);
-        const hotspotSpriteStyle = "position:absolute;top:auto;right:auto;left:50%;bottom:50%;transform:translate(-50%,42%);width:64px;max-width:none;height:auto;object-fit:contain;pointer-events:auto;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45));z-index:5;";
+        const hotspotSpriteStyle = "position:absolute;top:auto;right:auto;left:50%;bottom:50%;transform:translate(-50%,42%);width:70px;max-width:none;height:auto;object-fit:contain;pointer-events:auto;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45));z-index:5;";
         const hotspotExtra = sprite ? ";background:transparent;border:0;box-shadow:none;overflow:visible;" : "";
         return `
           <button
             class="building-hotspot ${sprite ? "has-sprite " : ""}${activeBuildingId === building.id ? "is-building-active" : ""}"
-            style="left:${position.x}%; top:${position.y}%; z-index:${Math.round((position.y || 0) + 20)}${hotspotExtra}"
+            style="left:${position.x}%; top:${position.y}%${hotspotExtra}"
             type="button"
             data-building="${building.id}"
             data-kind="${building.kind || building.role.toLowerCase()}"
@@ -4087,7 +4087,7 @@ function renderFortressPlots() {
       return `
         <button
           class="fortress-plot fortress-plot--${plot.zone}${resourceClass} ${occupied ? "is-occupied" : "is-empty"} ${activePlotId === plot.id ? "is-plot-active" : ""}${sprite ? " has-sprite" : ""}"
-          style="left:${plot.x}%; top:${plot.y}%; z-index:${Math.round(plot.y || 0)}${plotExtra}"
+          style="left:${plot.x}%; top:${plot.y}%${plotExtra}"
           type="button"
           data-plot="${plot.id}"
           data-zone="${plot.zone}"
