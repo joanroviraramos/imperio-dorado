@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g34";
+const DATA_VERSION = "20260702-g35";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -1687,6 +1687,40 @@ const forgeRecipes = [
   }
 ];
 
+function createStarterHeroEquipment() {
+  return {
+    "espada-toledana": { id: "espada-toledana", level: 2, qualityIndex: 1 },
+    "morrion-dorado": { id: "morrion-dorado", level: 1, qualityIndex: 0 },
+    "carta-nautica": { id: "carta-nautica", level: 1, qualityIndex: 0 }
+  };
+}
+
+function sanitizeHeroEquipment(equipment = {}) {
+  if (!equipment || typeof equipment !== "object") return {};
+  return Object.fromEntries(
+    Object.entries(equipment)
+      .map(([id, item]) => {
+        const recipe = forgeRecipes.find((entry) => entry.id === id);
+        if (!recipe) return null;
+        const level = Math.min(MAX_EQUIPMENT_LEVEL, Math.max(0, Math.floor(Number(item?.level) || 0)));
+        if (!level) return null;
+        const qualityIndex = Math.min(forgeQualities.length - 1, Math.max(0, Math.floor(Number(item?.qualityIndex) || 0)));
+        return [recipe.id, { id: recipe.id, level, qualityIndex }];
+      })
+      .filter(Boolean)
+  );
+}
+
+function hasForgedEquipment(equipment = {}) {
+  return Object.values(equipment || {}).some((item) => Math.max(0, Number(item?.level) || 0) > 0);
+}
+
+function mergeHeroEquipment(base = {}, saved = {}) {
+  const cleanSaved = sanitizeHeroEquipment(saved);
+  if (hasForgedEquipment(cleanSaved)) return cleanSaved;
+  return structuredClone(base);
+}
+
 const equipmentLoadouts = [
   { id: "attack", name: "Ataque", icon: "i-sword", keys: ["attack", "monster", "marchSize"] },
   { id: "defense", name: "Defensa", icon: "i-shield", keys: ["defense"] },
@@ -1813,7 +1847,7 @@ const defaultState = {
   resourceTiles: {},
   monsterStates: {},
   inventory: {},
-  heroEquipment: {},
+  heroEquipment: createStarterHeroEquipment(),
   activeEquipmentLoadout: "attack",
   allianceTreasury: {
     grain: 6000,
@@ -1986,6 +2020,7 @@ const heroSubtitle = document.querySelector(".hero-copy p");
 const heroRosterEl = document.querySelector("#heroRoster");
 const heroProgress = document.querySelector("#heroProgress");
 const heroPanelTabs = document.querySelector("#heroPanelTabs");
+const heroView = document.querySelector("#screen-hero .hero-view");
 const heroDetailPanel = document.querySelector("#heroDetailPanel");
 const heroStatRow = document.querySelector(".hero-view .stat-row");
 const heroEquipmentGrid = document.querySelector(".equipment-grid");
@@ -2178,7 +2213,7 @@ function mergeState(base, saved) {
     resourceTiles: normalizeResourceTiles(saved.resourceTiles || base.resourceTiles),
     monsterStates: normalizeMonsterStates(saved.monsterStates || base.monsterStates),
     inventory: { ...base.inventory, ...(saved.inventory || {}) },
-    heroEquipment: { ...base.heroEquipment, ...(saved.heroEquipment || {}) },
+    heroEquipment: mergeHeroEquipment(base.heroEquipment, saved.heroEquipment),
     allianceTreasury: { ...base.allianceTreasury, ...(saved.allianceTreasury || {}) },
     allianceHonor: Math.max(0, Math.floor(saved.allianceHonor || base.allianceHonor || 0)),
     allianceConvoys: Array.isArray(saved.allianceConvoys) ? saved.allianceConvoys.slice(0, 20) : base.allianceConvoys,
@@ -9269,6 +9304,90 @@ function formatEquipmentPrimaryBonus(recipe, level, qualityIndex = 0) {
   return key === "marchSize" ? `+${formatNumber(total)} ${label}` : `+${formatNumber(total)}% ${label}`;
 }
 
+function equipmentPowerScore() {
+  return forgeRecipes.reduce((sum, recipe) => {
+    const level = equipmentLevel(recipe.id);
+    if (!level) return sum;
+    const qualityIndex = equipmentQualityIndex(recipe.id);
+    const bonusWeight = Object.values(recipe.bonus || {}).reduce((total, value) => total + value, 0);
+    return sum + Math.round(level * equipmentQualityMultiplier(qualityIndex) * (120 + bonusWeight * 18));
+  }, 0);
+}
+
+function renderHeroGearSlot(recipe) {
+  const level = equipmentLevel(recipe.id);
+  const qualityIndex = equipmentQualityIndex(recipe.id);
+  const quality = forgeQualities[qualityIndex] || forgeQualities[0];
+  const activeInProfile = equipmentActiveInLoadout(recipe);
+  const primaryBonus = formatEquipmentPrimaryBonus(recipe, level, qualityIndex);
+  const dots = forgeQualities
+    .map((_quality, index) => `<i class="${level && index <= qualityIndex ? "is-on" : ""}"></i>`)
+    .join("");
+
+  return `
+    <button class="gear-slot ${level ? "is-forged" : "is-empty"} ${activeInProfile ? "is-active-loadout" : ""}" type="button" data-open-forge="${recipe.id}" style="--q:${level ? quality.color : "#5a4a2a"}" aria-label="${recipe.slot}: ${recipe.name}">
+      <span class="gear-slot-level">${level ? `+${level}` : "+"}</span>
+      <span class="gear-slot-icon"><svg><use href="#${recipe.icon}" /></svg></span>
+      <span class="gear-slot-copy">
+        <strong>${recipe.slot}</strong>
+        <small>${level ? recipe.name : "Sin forjar"}</small>
+      </span>
+      <span class="gear-slot-bonus">${level ? primaryBonus : "Tocar para forjar"}</span>
+      <span class="gear-quality-dots" aria-hidden="true">${dots}</span>
+    </button>
+  `;
+}
+
+function renderHeroEquipmentStage(hero) {
+  const leftIds = new Set(["espada-toledana", "coraza-indias", "carta-nautica"]);
+  const leftSlots = forgeRecipes.filter((recipe) => leftIds.has(recipe.id)).map(renderHeroGearSlot).join("");
+  const rightSlots = forgeRecipes.filter((recipe) => !leftIds.has(recipe.id)).map(renderHeroGearSlot).join("");
+  const forgedCount = forgeRecipes.filter((recipe) => equipmentLevel(recipe.id) > 0).length;
+  const activeLoadout = equipmentLoadoutById();
+  const setStatus = equipmentSetStatus(activeLoadout.id);
+  const score = equipmentPowerScore();
+  const loadoutStats = activeLoadout.keys
+    .map((key) => {
+      const total = equipmentBonusForLoadout(key, activeLoadout.id);
+      return `
+        <div>
+          <span>${equipmentBonusKeyLabel(key)}</span>
+          <strong>${formatLoadoutBonusValue(key, total)}</strong>
+        </div>
+      `;
+    })
+    .join("");
+
+  return `
+    <div class="gear-stage">
+      <div class="gear-stage-head">
+        <span>Equipo activo</span>
+        <strong>${activeLoadout.name}</strong>
+        <em>${forgedCount}/${forgeRecipes.length} forjadas</em>
+      </div>
+      <div class="gear-layout">
+        <div class="gear-column gear-column-left">${leftSlots}</div>
+        <div class="gear-avatar">
+          <div class="gear-avatar-frame">
+            <img src="${hero.portrait}" alt="" loading="lazy" />
+          </div>
+          <div class="gear-score">
+            <span>Poder equipo</span>
+            <strong>${formatNumber(score)}</strong>
+          </div>
+          <div class="gear-set-chip">
+            <span>${setStatus.rule?.name || "Conjunto"}</span>
+            <b>${equipmentSetBonusText(activeLoadout.id)}</b>
+          </div>
+        </div>
+        <div class="gear-column gear-column-right">${rightSlots}</div>
+      </div>
+      <div class="gear-stat-strip">${loadoutStats}</div>
+      <p class="gear-tip">Toca una pieza para abrir su forja. Cambia el perfil en Conjuntos para ver ataque, defensa, investigacion o recoleccion.</p>
+    </div>
+  `;
+}
+
 function formatTroopBundle(troops) {
   return Object.entries(troops)
     .map(([id, amount]) => {
@@ -9993,6 +10112,7 @@ function heroEffectMessage(item, before, heroId = state.selectedHeroId) {
 function renderHeroEquipment() {
   processHeroEnergy();
   if (!["perfil", "conjuntos", "equipo"].includes(heroPanelTab)) heroPanelTab = "perfil";
+  if (heroView) heroView.dataset.heroPanel = heroPanelTab;
   const hero = heroById();
   const data = heroState(hero.id);
   const info = heroLevelInfo(hero.id);
@@ -10087,25 +10207,7 @@ function renderHeroEquipment() {
   }
 
   if (!heroEquipmentGrid) return;
-  heroEquipmentGrid.innerHTML = forgeRecipes
-    .map((recipe) => {
-      const level = equipmentLevel(recipe.id);
-      const qualityIndex = equipmentQualityIndex(recipe.id);
-      const quality = forgeQualities[qualityIndex];
-      const activeInProfile = equipmentActiveInLoadout(recipe);
-      const primaryBonus = formatEquipmentPrimaryBonus(recipe, level, qualityIndex);
-      const activeText = activeInProfile ? " - equipado" : "";
-      return `
-        <button class="h2-slot ${activeInProfile ? "is-active-loadout" : ""}" type="button" data-open-forge="${recipe.id}" style="${level ? `--q:${quality.color}` : ""}" aria-label="${recipe.slot}: ${recipe.name}">
-          <span class="h2-si"><svg><use href="#${recipe.icon}" /></svg></span>
-          <span class="h2-sb">
-            <strong>${recipe.slot}</strong>
-            <small>${level ? `${recipe.name} Nv. ${level} ${quality.label}${primaryBonus ? ` - ${primaryBonus}` : ""}${activeText}` : `${recipe.name} - sin forjar`}</small>
-          </span>
-        </button>
-      `;
-    })
-    .join("");
+  heroEquipmentGrid.innerHTML = renderHeroEquipmentStage(hero);
 }
 
 function renderInventory(message = "") {
