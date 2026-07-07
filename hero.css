@@ -135,10 +135,38 @@
 #screen-hero .h2-lab,
 #screen-hero .h2-bar{ pointer-events:none; }
 
+#screen-hero .h2-hero-role{
+  display:grid; gap:8px; padding:10px;
+  border:1px solid rgba(201,162,75,.28); border-radius:12px;
+  background:linear-gradient(180deg,rgba(201,162,75,.12),rgba(0,0,0,.22));
+}
+#screen-hero .h2-role-head{ display:grid; gap:2px; }
+#screen-hero .h2-role-head span{
+  color:#a99873; font-size:9px; font-weight:900; letter-spacing:.12em; text-transform:uppercase;
+}
+#screen-hero .h2-role-head strong{
+  color:var(--gold-bright); font-family:var(--disp); font-size:16px; line-height:1.05;
+}
+#screen-hero .h2-role-head small{ color:#c9b98f; font-size:11px; line-height:1.3; }
+#screen-hero .h2-trait-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+#screen-hero .h2-trait-grid div{
+  min-width:0; padding:8px 6px; border:1px solid rgba(201,162,75,.2); border-radius:10px;
+  background:rgba(0,0,0,.24); text-align:center;
+}
+#screen-hero .h2-trait-grid span{
+  display:block; overflow:hidden; color:#a99873; font-size:8px; font-weight:900;
+  text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap;
+}
+#screen-hero .h2-trait-grid b{ display:block; color:var(--gold-bright); font-size:14px; font-weight:900; }
+
 #screen-hero .h2-role-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:6px 0 12px; }
 #screen-hero .h2-role-grid div{ background:rgba(0,0,0,.3); border:1px solid rgba(201,162,75,.25); border-radius:10px; padding:9px 4px; text-align:center; }
 #screen-hero .h2-role-grid span{ display:block; font-size:9px; color:#a99873; letter-spacing:.04em; text-transform:uppercase; }
 #screen-hero .h2-role-grid b{ font-size:15px; color:var(--gold-bright); font-variant-numeric:tabular-nums; }
+#screen-hero .h2-role-grid small{
+  display:block; overflow:hidden; color:#817252; font-size:7px; font-weight:900;
+  text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap;
+}
 #screen-hero .h2-note{ font-size:11px; color:#8c7c5c; line-height:1.4; font-style:italic; }
 
 /* fila roja de stats */

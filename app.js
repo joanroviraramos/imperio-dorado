@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g35";
+const DATA_VERSION = "20260702-g36";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -1765,6 +1765,10 @@ const heroRoster = [
     id: "alonso",
     name: "Don Alonso de Acuna",
     title: "Capitan General",
+    role: "Maestro de guerra",
+    roleShort: "Ataque",
+    roleBody: "Especialista en ataques contra jugadores y marchas grandes.",
+    bonuses: { attack: 35, marchSize: 140 },
     initials: "AA",
     portrait: "./assets/hero-don-alonso.png"
   },
@@ -1772,6 +1776,10 @@ const heroRoster = [
     id: "diego",
     name: "Don Diego de Vargas",
     title: "Maestre de Campo",
+    role: "Cazador de monstruos",
+    roleShort: "Caza",
+    roleBody: "Hace mas dano a monstruos, reduce energia de caza y mejora botin.",
+    bonuses: { monster: 60, monsterEnergySave: 30, monsterLoot: 30 },
     initials: "DV",
     portrait: "./assets/hero-don-diego.png"
   },
@@ -1779,6 +1787,10 @@ const heroRoster = [
     id: "hernan",
     name: "Don Hernan de Leiva",
     title: "Adelantado Real",
+    role: "Arquitecto sabio",
+    roleShort: "Obra y ciencia",
+    roleBody: "Acelera construccion e investigacion cuando gobierna la plaza.",
+    bonuses: { construction: 35, research: 35 },
     initials: "HL",
     portrait: "./assets/hero-don-hernan.png"
   },
@@ -1786,10 +1798,55 @@ const heroRoster = [
     id: "rodrigo",
     name: "Don Rodrigo de Sarmiento",
     title: "Cartografo Mayor",
+    role: "Intendente del reino",
+    roleShort: "Produccion",
+    roleBody: "Mejora produccion, recoleccion y carga para economia sostenida.",
+    bonuses: { production: 40, gathering: 35, load: 25 },
     initials: "RS",
     portrait: "./assets/hero-don-rodrigo.png"
   }
 ];
+
+const heroTraitLabels = {
+  attack: "Ataque",
+  monster: "Monstruos",
+  monsterEnergySave: "Energia caza",
+  monsterLoot: "Botin monstruos",
+  construction: "Construccion",
+  research: "Investigacion",
+  production: "Produccion",
+  gathering: "Recoleccion",
+  load: "Carga",
+  marchSize: "Marcha"
+};
+
+function heroTraitBonus(key, heroId = state?.selectedHeroId) {
+  if (!heroId) return 0;
+  const hero = heroById(heroId);
+  return Math.max(0, Math.round(Number(hero?.bonuses?.[key] || 0)));
+}
+
+function formatHeroTraitBonus(key, value = heroTraitBonus(key)) {
+  if (key === "marchSize") return `+${formatNumber(value)}`;
+  if (key === "monsterEnergySave") return `-${formatNumber(value)}%`;
+  return `+${formatNumber(value)}%`;
+}
+
+function heroTraitSummary(hero = heroById(), limit = 3) {
+  return Object.entries(hero.bonuses || {})
+    .slice(0, limit)
+    .map(([key, value]) => `${heroTraitLabels[key] || key} ${formatHeroTraitBonus(key, value)}`)
+    .join(" / ");
+}
+
+function heroTotalRoleBonus(key, heroId = state.selectedHeroId) {
+  return heroTraitBonus(key, heroId) + heroEquipmentBonus(key);
+}
+
+function heroMonsterEnergyCost(heroId = state.selectedHeroId) {
+  const save = Math.min(70, heroTraitBonus("monsterEnergySave", heroId));
+  return Math.max(5, Math.round(HERO_MONSTER_ENERGY_COST * (1 - save / 100)));
+}
 
 const allianceProjectCatalog = [
   {
@@ -3851,7 +3908,11 @@ function durationFactor(type) {
     healing: researchLevel("healing-speed")
   };
   const gearBonus = type === "research" ? heroEquipmentBonus("research") * 0.01 : 0;
-  return Math.max(0.45, 1 - (levels[type] || 0) * 0.05 - gearBonus);
+  const heroBonus = {
+    construction: heroTraitBonus("construction"),
+    research: heroTraitBonus("research")
+  }[type] || 0;
+  return Math.max(0.35, 1 - (levels[type] || 0) * 0.05 - gearBonus - heroBonus * 0.01);
 }
 
 function queueTypeName(type) {
@@ -5094,15 +5155,17 @@ function renderMarchPlanner(marker, quick) {
 
   const totalSelected = Object.values(defaultTroops).reduce((sum, value) => sum + value, 0);
   const duration = totalSelected ? marchDuration(marker, defaultTroops, defaultHero) : null;
-  const load = troopBundleLoad(defaultTroops);
-  const overLimit = totalSelected > maxMarchSize();
+  const limitHeroId = defaultHero ? defaultHeroId : null;
+  const load = troopBundleLoad(defaultTroops, limitHeroId);
+  const marchLimit = maxMarchSize(limitHeroId);
+  const overLimit = totalSelected > marchLimit;
 
   return `
     <div class="march-planner" data-march-target="${marker.id}">
       <div class="planner-head">
         <div>
           <strong>Preparar marcha</strong>
-          <span>${state.marches.length}/${marchSlots()} slots Â· max. ${formatNumber(maxMarchSize())} tropas</span>
+        <span>${state.marches.length}/${marchSlots()} slots Â· max. ${formatNumber(marchLimit)} tropas</span>
         </div>
         ${renderMarchHeroToggle(marker, defaultHero)}
       </div>
@@ -5135,7 +5198,7 @@ function renderMarchPlanner(marker, quick) {
           .join("")}
       </div>
       <div class="planner-summary" data-planner-summary>
-        <div class="${overLimit ? "is-over-limit" : ""}"><span>Tropas</span><strong>${formatNumber(totalSelected)} / ${formatNumber(maxMarchSize())}</strong></div>
+        <div class="${overLimit ? "is-over-limit" : ""}"><span>Tropas</span><strong>${formatNumber(totalSelected)} / ${formatNumber(marchLimit)}</strong></div>
         <div><span>Carga</span><strong>${formatNumber(load)}</strong></div>
         <div><span>Ida</span><strong>${duration ? formatDuration(duration) : "--"}</strong></div>
       </div>
@@ -5224,14 +5287,16 @@ function fillMaxMarchPlanner(markerId) {
   const planner = sheetBody.querySelector(`[data-march-target="${markerId}"]`);
   if (!marker || !planner) return;
 
-  const troops = maxMarchTroops(marker);
+  const selectedHeroInput = planner.querySelector("[data-march-hero-id]:checked");
+  const heroId = selectedHeroInput?.value || defaultHeroForMarch(marker);
+  const heroInput = planner.querySelector("[data-march-hero]");
+  const withHero = marker.kind === "monster" || Boolean(heroInput?.checked);
+  const troops = maxMarchTroops(marker, withHero ? heroId : null);
   troopCatalog.forEach((troop) => {
     const input = planner.querySelector(`[data-march-troop="${troop.id}"]`);
     if (input) input.value = troops[troop.id] || 0;
   });
 
-  const heroInput = planner.querySelector("[data-march-hero]");
-  const heroId = defaultHeroForMarch(marker);
   if (heroInput && !heroInput.disabled && marker.kind === "monster") heroInput.checked = Boolean(heroId);
   setMarchPlannerHero(planner, heroId);
   updateMarchPlannerSummary(planner);
@@ -5267,17 +5332,18 @@ function renderMarchHeroPicker(marker, selectedId) {
           const busy = heroIsMarching(hero.id);
           const energy = Math.floor(heroState(hero.id).energy || 0);
           const energyMax = heroEnergyMax(hero.id);
-          const noEnergy = marker.kind === "monster" && energy < HERO_MONSTER_ENERGY_COST;
+          const energyCost = heroMonsterEnergyCost(hero.id);
+          const noEnergy = marker.kind === "monster" && energy < energyCost;
           const unavailable = busy || noEnergy;
           const checked = hero.id === selectedId && !unavailable;
-          const status = busy ? "Ocupado" : noEnergy ? `Energia ${energy}/${HERO_MONSTER_ENERGY_COST}` : `${energy}/${energyMax} energia`;
+          const status = busy ? "Ocupado" : noEnergy ? `Energia ${energy}/${energyCost}` : `${energy}/${energyMax} energia`;
           return `
             <label class="march-hero-option ${unavailable ? "is-disabled" : ""}">
               <input type="radio" name="march-hero-${marker.id}" value="${hero.id}" data-march-hero-id ${checked ? "checked" : ""} ${unavailable ? "disabled" : ""} />
               <img src="${hero.portrait}" alt="" loading="lazy" />
               <span>
                 <strong>${hero.name.replace(/^Don /, "")}</strong>
-                <small>${status}</small>
+                <small>${hero.roleShort} - ${status}</small>
               </span>
             </label>
           `;
@@ -5301,14 +5367,16 @@ function updateMarchPlannerSummary(planner) {
   if (!marker || !summary) return;
   const plan = readMarchPlan(marker);
   const totalSelected = plan ? Object.values(plan.troops).reduce((sum, value) => sum + value, 0) : 0;
-  const load = plan ? troopBundleLoad(plan.troops) : 0;
+  const limitHeroId = plan?.withHero ? plan.heroId : null;
+  const load = plan ? troopBundleLoad(plan.troops, limitHeroId) : 0;
   const storageFree = marker.kind === "resource"
     ? Math.max(0, resourceCapacity(marker.resource || "iron") - (state.resources[marker.resource || "iron"] || 0))
     : load;
   const visibleLoad = marker.kind === "resource" ? Math.min(load, resourceTileState(marker).remaining, storageFree) : load;
-  const overLimit = totalSelected > maxMarchSize();
+  const marchLimit = maxMarchSize(limitHeroId);
+  const overLimit = totalSelected > marchLimit;
   summary.innerHTML = `
-    <div class="${overLimit ? "is-over-limit" : ""}"><span>Tropas</span><strong>${formatNumber(totalSelected)} / ${formatNumber(maxMarchSize())}</strong></div>
+    <div class="${overLimit ? "is-over-limit" : ""}"><span>Tropas</span><strong>${formatNumber(totalSelected)} / ${formatNumber(marchLimit)}</strong></div>
     <div><span>${marker.kind === "resource" ? "Recolecta" : "Carga"}</span><strong>${formatNumber(visibleLoad)}</strong></div>
     <div><span>Ida</span><strong>${plan ? formatDuration(plan.durationMs) : "--"}</strong></div>
   `;
@@ -5326,7 +5394,7 @@ function renderMarchPreview(marker, plan) {
   }
 
   if (marker.kind === "resource") {
-    const load = troopBundleLoad(plan.troops);
+    const load = troopBundleLoad(plan.troops, plan.withHero ? plan.heroId : null);
     const tile = resourceTileState(marker);
     const resource = marker.resource || "iron";
     const storageFree = Math.max(0, resourceCapacity(resource) - (state.resources[resource] || 0));
@@ -5365,7 +5433,7 @@ function renderMarchPreview(marker, plan) {
 
 function renderRaidPreview(marker, plan) {
   const exposed = enemyLootableResources(marker, enemyResourceStock(marker));
-  const capacity = troopBundleLoad(plan.troops);
+  const capacity = troopBundleLoad(plan.troops, plan.withHero ? plan.heroId : null);
   const loadable = capResourceBundleByLoad(exposed, capacity);
   return `
     <p>Botin expuesto: ${formatResourceBundle(exposed) || "sin recursos"}. Tu carga puede traer: ${formatResourceBundle(loadable) || "0"}.</p>
@@ -5452,7 +5520,7 @@ function openWorldMarch(id) {
     <div class="world-meta">
       <div><span>Tipo</span><strong>${marchKindName(march.kind)}</strong></div>
       <div><span>Heroe</span><strong>${march.withHero ? heroDisplayName(march.heroId).replace(/^Don /, "") : "No"}</strong></div>
-      <div><span>Carga</span><strong>${formatNumber(troopBundleLoad(combineTroopBundles(march.troops, march.alliedTroops)))}</strong></div>
+      <div><span>Carga</span><strong>${formatNumber(troopBundleLoad(combineTroopBundles(march.troops, march.alliedTroops), march.withHero ? march.heroId : null))}</strong></div>
     </div>
     <div class="action-row">
       <button class="primary-action" type="button" data-center-march="${march.id}">
@@ -5894,12 +5962,12 @@ function renderMarkerIntel(marker) {
     const quality = monsterDropQuality(marker);
     const base = forgeMaterialBases[marker.material || "frag-sword"];
     const materialAmount = monsterMaterialAmount(marker);
-    const silver = monsterSilverReward(marker);
-    const xp = monsterXpReward(marker);
+    const heroId = defaultHeroForMarch(marker);
+    const silver = monsterSilverReward(marker, heroId || state.selectedHeroId);
+    const xp = monsterXpReward(marker, heroId || state.selectedHeroId);
     const hunt = monsterState(marker);
     const healthPct = hunt.max ? Math.round((hunt.health / hunt.max) * 100) : 0;
     const unlocked = marker.level <= monsterTierLimit();
-    const heroId = defaultHeroForMarch(marker);
     const heroText = heroId
       ? `${heroDisplayName(heroId).replace(/^Don /, "")} listo`
       : "Sin heroe con energia";
@@ -5914,7 +5982,7 @@ function renderMarkerIntel(marker) {
         </div>
         <div class="monster-intel-grid">
           <div><span>Salud</span><strong>${formatNumber(hunt.health)} / ${formatNumber(hunt.max)}</strong></div>
-          <div><span>Energia</span><strong>${HERO_MONSTER_ENERGY_COST}</strong></div>
+          <div><span>Energia</span><strong>${heroId ? heroMonsterEnergyCost(heroId) : HERO_MONSTER_ENERGY_COST}</strong></div>
           <div><span>Plata</span><strong>${formatNumber(silver)}</strong></div>
           <div><span>XP heroe</span><strong>${formatNumber(xp)}</strong></div>
           <div><span>Piezas</span><strong>${materialAmount} ${quality.label}</strong></div>
@@ -6069,12 +6137,12 @@ function applyMonsterDamage(marker, combat) {
   };
 }
 
-function monsterSilverReward(marker) {
-  return Math.round((260 + marker.level * 95) * (1 + monsterRewardBonus() / 100));
+function monsterSilverReward(marker, heroId = state.selectedHeroId) {
+  return Math.round((260 + marker.level * 95) * (1 + monsterRewardBonus(heroId) / 100));
 }
 
-function monsterXpReward(marker) {
-  return Math.round((180 + marker.level * 70) * (1 + researchLevel("hero-xp-boost") * 0.06));
+function monsterXpReward(marker, heroId = state.selectedHeroId) {
+  return Math.round((180 + marker.level * 70) * (1 + researchLevel("hero-xp-boost") * 0.06 + heroTraitBonus("monsterLoot", heroId) * 0.01));
 }
 
 function monsterMaterialAmount(marker) {
@@ -7103,7 +7171,9 @@ function renderDoctrineEditor(message = "") {
         .map((doctrine) => {
           const preset = normalizedMarchPreset(doctrine.id);
           const totalPercent = doctrinePercentTotal(preset.percentages);
-          const previewTroops = doctrineTroopsFromPercentages(doctrine.id, preset.percentages, state.troops);
+          const previewHeroId = preset.withHero ? state.selectedHeroId : null;
+          const previewTroops = doctrineTroopsFromPercentages(doctrine.id, preset.percentages, state.troops, previewHeroId);
+          const previewLimit = maxMarchSize(previewHeroId);
           return `
             <section class="doctrine-card" data-doctrine-kind="${doctrine.id}">
               <div class="planner-head">
@@ -7132,7 +7202,7 @@ function renderDoctrineEditor(message = "") {
                   .join("")}
               </div>
               <div class="doctrine-preview ${totalPercent > 100 ? "is-over-limit" : ""}" data-doctrine-preview>
-                <span>Total ${totalPercent}% - ${formatNumber(troopBundleCount(previewTroops))}/${formatNumber(maxMarchSize())} tropas</span>
+                <span>Total ${totalPercent}% - ${formatNumber(troopBundleCount(previewTroops))}/${formatNumber(previewLimit)} tropas</span>
                 <strong>${formatTroopBundle(previewTroops) || "Sin tropas asignadas"}</strong>
               </div>
               <div class="doctrine-tools">
@@ -7214,10 +7284,13 @@ function updateDoctrineCardPreview(card) {
   const kind = card.dataset.doctrineKind;
   const percentages = doctrinePercentagesFromCard(card);
   const total = doctrinePercentTotal(percentages);
-  const troops = doctrineTroopsFromPercentages(kind, percentages, state.troops);
+  const withHero = kind === "monster" || Boolean(card.querySelector("[data-doctrine-hero]")?.checked);
+  const heroId = withHero ? state.selectedHeroId : null;
+  const troops = doctrineTroopsFromPercentages(kind, percentages, state.troops, heroId);
+  const capacity = maxMarchSize(heroId);
   preview.classList.toggle("is-over-limit", total > 100);
   preview.innerHTML = `
-    <span>Total ${total}% - ${formatNumber(troopBundleCount(troops))}/${formatNumber(maxMarchSize())} tropas</span>
+    <span>Total ${total}% - ${formatNumber(troopBundleCount(troops))}/${formatNumber(capacity)} tropas</span>
     <strong>${formatTroopBundle(troops) || "Sin tropas asignadas"}</strong>
   `;
 }
@@ -7573,7 +7646,7 @@ function resolveEnemyRaidReward(marker, march, combat) {
   const exposed = enemyLootableResources(marker, stock);
   const successFactor = Math.min(1, (combat.victory ? 1 : 0.35) * (march.isRally ? 1.15 : 1));
   const eligible = scaleResourceBundle(exposed, successFactor);
-  const capacity = troopBundleLoad(combineTroopBundles(march.troops, march.alliedTroops));
+  const capacity = troopBundleLoad(combineTroopBundles(march.troops, march.alliedTroops), march.withHero ? march.heroId : null);
   const resources = capResourceBundleByLoad(eligible, capacity);
   const stockAfter = applyEnemyRaid(marker, resources);
 
@@ -7645,8 +7718,9 @@ function createRallyFromMarker(markerId) {
   }
 
   const troopCount = troopBundleCount(plan.troops);
-  if (troopCount > maxMarchSize()) {
-    feedback.textContent = `Tu investigacion permite ${formatNumber(maxMarchSize())} tropas propias por marcha.`;
+  const marchLimit = maxMarchSize(plan.withHero ? plan.heroId : null);
+  if (troopCount > marchLimit) {
+    feedback.textContent = `Tu heroe, investigacion y equipo permiten ${formatNumber(marchLimit)} tropas propias por marcha.`;
     return;
   }
 
@@ -7879,8 +7953,8 @@ function startMarch(marker, plan = null) {
     return { ok: false, message: `${heroDisplayName(plan.heroId)} ya esta en otra marcha.` };
   }
 
-  if (marker.kind === "monster" && plan.withHero && (heroState(plan.heroId).energy || 0) < HERO_MONSTER_ENERGY_COST) {
-    return { ok: false, message: `${heroDisplayName(plan.heroId)} necesita ${HERO_MONSTER_ENERGY_COST} de energia para cazar.` };
+  if (marker.kind === "monster" && plan.withHero && (heroState(plan.heroId).energy || 0) < heroMonsterEnergyCost(plan.heroId)) {
+    return { ok: false, message: `${heroDisplayName(plan.heroId)} necesita ${heroMonsterEnergyCost(plan.heroId)} de energia para cazar.` };
   }
 
   if (!plan || !hasTroopsAvailable(plan.troops)) {
@@ -7888,13 +7962,15 @@ function startMarch(marker, plan = null) {
   }
 
   const troopCount = troopBundleCount(plan.troops);
-  if (troopCount > maxMarchSize()) {
-    return { ok: false, message: `Tu investigacion permite ${formatNumber(maxMarchSize())} tropas por marcha.` };
+  const marchLimit = maxMarchSize(plan.withHero ? plan.heroId : null);
+  if (troopCount > marchLimit) {
+    return { ok: false, message: `${plan.withHero ? "Tu heroe, investigacion y equipo" : "Tu investigacion y equipo"} permiten ${formatNumber(marchLimit)} tropas por marcha.` };
   }
 
   if (marker.kind === "monster" && plan.withHero) {
     const hero = heroState(plan.heroId);
-    hero.energy = Math.max(0, (hero.energy || 0) - HERO_MONSTER_ENERGY_COST);
+    const energyCost = heroMonsterEnergyCost(plan.heroId);
+    hero.energy = Math.max(0, (hero.energy || 0) - energyCost);
     hero.lastEnergyAt = Date.now();
   }
 
@@ -7913,6 +7989,7 @@ function startMarch(marker, plan = null) {
     troops: plan.troops,
     withHero: plan.withHero,
     heroId: plan.heroId,
+    heroEnergyCost: marker.kind === "monster" && plan.withHero ? heroMonsterEnergyCost(plan.heroId) : 0,
     reward: null,
     reportCreated: false
   };
@@ -7943,7 +8020,7 @@ function cancelMarchById(id) {
   state.marches = state.marches.filter((item) => item.id !== id);
   if (march.kind === "monster" && march.withHero && march.phase === "outbound") {
     const hero = heroState(march.heroId);
-    hero.energy = (hero.energy || 0) + HERO_MONSTER_ENERGY_COST;
+    hero.energy = (hero.energy || 0) + (march.heroEnergyCost || heroMonsterEnergyCost(march.heroId));
     hero.lastEnergyAt = Date.now();
   }
 
@@ -7967,13 +8044,12 @@ function cancelMarchById(id) {
 
 function buildQuickMarch(marker, presetKind = marker.kind) {
   const preset = normalizedMarchPreset(presetKind);
-  const troops = doctrineTroopsFromPercentages(presetKind, preset.percentages);
+  const heroId = defaultHeroForMarch(marker);
+  const withHero = Boolean((preset?.withHero || marker.kind === "monster") && heroId);
+  const troops = doctrineTroopsFromPercentages(presetKind, preset.percentages, null, withHero ? heroId : null);
 
   const troopCount = Object.values(troops).reduce((sum, value) => sum + value, 0);
   if (!troopCount) return null;
-
-  const heroId = defaultHeroForMarch(marker);
-  const withHero = Boolean((preset?.withHero || marker.kind === "monster") && heroId);
   return {
     ...createMarchPlan(marker, troops, withHero, heroId),
     presetKind
@@ -7983,16 +8059,18 @@ function buildQuickMarch(marker, presetKind = marker.kind) {
 function normalizedMarchPreset(kind) {
   const fallback = defaultState.marchPresets[kind] || defaultState.marchPresets.enemy;
   const saved = state.marchPresets?.[kind] || fallback;
-  const percentages = sanitizeDoctrinePercentages(saved.percentages || fixedTroopsToPercentages(saved.troops || {}, maxMarchSize()));
+  const percentages = sanitizeDoctrinePercentages(
+    saved.percentages || fixedTroopsToPercentages(saved.troops || {}, maxMarchSize(saved.withHero ? state.selectedHeroId : null))
+  );
   return {
     percentages,
     withHero: kind === "monster" || Boolean(saved.withHero)
   };
 }
 
-function doctrineTroopsFromPercentages(kind, percentages = {}, availableOverride = null) {
+function doctrineTroopsFromPercentages(kind, percentages = {}, availableOverride = null, heroId = null) {
   const available = availableOverride || availableTroops();
-  const capacity = maxMarchSize();
+  const capacity = maxMarchSize(heroId);
   const targetCapacity = Math.max(0, Math.min(capacity, Math.round((capacity * Math.min(100, doctrinePercentTotal(percentages))) / 100)));
   const troops = {};
   let remaining = targetCapacity;
@@ -8024,10 +8102,10 @@ function doctrinePercentTotal(percentages = {}) {
   return Object.values(percentages || {}).reduce((sum, value) => sum + Math.max(0, Math.round(value || 0)), 0);
 }
 
-function maxMarchTroops(marker) {
+function maxMarchTroops(marker, heroId = null) {
   const available = availableTroops();
   const troops = {};
-  let remaining = maxMarchSize();
+  let remaining = maxMarchSize(heroId);
 
   maxMarchPriority(marker).forEach((id) => {
     if (remaining <= 0) return;
@@ -8082,7 +8160,7 @@ function createMarchPlan(marker, troops, withHero = false, heroId = null) {
     heroId: resolvedHeroId,
     durationMs: marchDuration(marker, troops, useHero),
     returnDurationMs: marchReturnDuration(marker, troops, useHero),
-    gatherDurationMs: marker.kind === "resource" ? gatheringDuration(troops) : 0
+    gatherDurationMs: marker.kind === "resource" ? gatheringDuration(troops, useHero ? resolvedHeroId : null) : 0
   };
 }
 
@@ -8110,9 +8188,9 @@ function marchReturnDuration(marker, troops, withHero = false) {
   return Math.max(7000, Math.round(marchDuration(marker, troops, withHero) * 0.75));
 }
 
-function gatheringDuration(troops) {
-  const speedFactor = Math.max(0.35, 1 - researchLevel("gathering-speed") * 0.06 - heroEquipmentBonus("gathering") * 0.01);
-  return Math.max(9000, Math.min(45000, Math.round((8000 + troopBundleLoad(troops) * 6) * speedFactor)));
+function gatheringDuration(troops, heroId = state.selectedHeroId) {
+  const speedFactor = Math.max(0.30, 1 - researchLevel("gathering-speed") * 0.06 - heroEquipmentBonus("gathering") * 0.01 - heroTraitBonus("gathering", heroId) * 0.01);
+  return Math.max(9000, Math.min(45000, Math.round((8000 + troopBundleLoad(troops, heroId) * 6) * speedFactor)));
 }
 
 function markerById(id) {
@@ -8169,7 +8247,7 @@ function heroIsMarching(heroId = state.selectedHeroId) {
 function heroAvailableForMarch(heroId, marker) {
   const hero = heroById(heroId);
   if (heroIsMarching(hero.id)) return false;
-  if (marker?.kind === "monster" && (heroState(hero.id).energy || 0) < HERO_MONSTER_ENERGY_COST) return false;
+  if (marker?.kind === "monster" && (heroState(hero.id).energy || 0) < heroMonsterEnergyCost(hero.id)) return false;
   return true;
 }
 
@@ -8215,7 +8293,7 @@ function processMarches() {
       if (march.kind === "resource") {
         march.phase = "gathering";
         march.startedAt = now;
-        march.arriveAt = now + (march.gatherDurationMs || gatheringDuration(march.troops || {}));
+        march.arriveAt = now + (march.gatherDurationMs || gatheringDuration(march.troops || {}, march.withHero ? march.heroId : null));
         addAllianceFeed("Recoleccion iniciada", `${march.targetName}: tropas ocupando la casilla.`);
         changed = true;
         return true;
@@ -8253,7 +8331,7 @@ function resolveMarchReward(march) {
   if (march.kind === "resource") {
     const marker = markerById(march.markerId);
     const resource = marker.resource || "iron";
-    const load = troopBundleLoad(march.troops);
+    const load = troopBundleLoad(march.troops, march.withHero ? march.heroId : null);
     const storageFree = Math.max(0, resourceCapacity(resource) - (state.resources[resource] || 0));
     const harvest = harvestResourceTile(marker, Math.min(load, storageFree));
     return {
@@ -8272,8 +8350,8 @@ function resolveMarchReward(march) {
     const combat = resolveCombat(march, marker);
     const hunt = applyMonsterDamage(marker, combat);
     const rewardFactor = hunt.killed ? 1 : Math.min(0.35, Math.max(0.08, hunt.damage / Math.max(1, hunt.max) * 0.45));
-    const silver = Math.round(monsterSilverReward(marker) * rewardFactor);
-    const xp = Math.round(monsterXpReward(marker) * rewardFactor);
+    const silver = Math.round(monsterSilverReward(marker, march.heroId || state.selectedHeroId) * rewardFactor);
+    const xp = Math.round(monsterXpReward(marker, march.heroId || state.selectedHeroId) * rewardFactor);
     const materialId = forgeMaterialId(marker.material || "frag-sword", monsterDropQualityIndex(marker));
     const materialAmount = hunt.killed ? monsterMaterialAmount(marker) : 0;
     const speedRewards = monsterSpeedReward(marker, hunt);
@@ -8922,7 +9000,7 @@ function resourceProductionBonus(resource) {
     stone: researchLevel("stone-yield") * 3,
     iron: researchLevel("iron-yield") * 3
   };
-  return researchLevel("resource-production") * 5 + (specific[resource] || 0);
+  return researchLevel("resource-production") * 5 + (specific[resource] || 0) + heroTraitBonus("production");
 }
 
 function resourceCapacity(resource) {
@@ -8989,12 +9067,12 @@ function combineTroopBundles(...bundles) {
   return compactTroops(combined);
 }
 
-function troopBundleLoad(troops) {
+function troopBundleLoad(troops, heroId = state.selectedHeroId) {
   const base = Object.entries(troops).reduce((sum, [id, amount]) => {
     const troop = troopCatalog.find((item) => item.id === id);
     return sum + (troop?.load || 0) * amount;
   }, 0);
-  return Math.round(base * (1 + researchLevel("troop-load") * 0.05));
+  return Math.round(base * (1 + researchLevel("troop-load") * 0.05 + heroTraitBonus("load", heroId) * 0.01));
 }
 
 function troopBundleCount(troops) {
@@ -9021,8 +9099,8 @@ function marchSlots() {
   return Math.min(6, 1 + Math.floor((alcazar?.level || 1) / 4) + researchLevel("bonus-march-slot"));
 }
 
-function maxMarchSize() {
-  return 220 + researchLevel("march-size") * 80 + heroEquipmentBonus("marchSize");
+function maxMarchSize(heroId = state.selectedHeroId) {
+  return 220 + researchLevel("march-size") * 80 + heroEquipmentBonus("marchSize") + heroTraitBonus("marchSize", heroId);
 }
 
 function monsterTierLimit() {
@@ -9054,11 +9132,11 @@ function nextTroopTierText() {
 }
 
 function heroMonsterAttackBonus(heroId = state.selectedHeroId) {
-  return researchLevel("hero-monster-attack") * 8 + heroEquipmentBonus("monster") + heroLevelMonsterBonus(heroId);
+  return researchLevel("hero-monster-attack") * 8 + heroEquipmentBonus("monster") + heroLevelMonsterBonus(heroId) + heroTraitBonus("monster", heroId);
 }
 
-function monsterRewardBonus() {
-  return researchLevel("monster-loot") * 6;
+function monsterRewardBonus(heroId = state.selectedHeroId) {
+  return researchLevel("monster-loot") * 6 + heroTraitBonus("monsterLoot", heroId);
 }
 
 function heroEquipmentBonus(key) {
@@ -10090,7 +10168,7 @@ function heroLevelAttackBonus(heroId = state.selectedHeroId) {
 }
 
 function heroCommandAttackBonus(heroId = state.selectedHeroId) {
-  return 5 + researchLevel("hero-command") * 3 + heroLevelAttackBonus(heroId);
+  return 5 + researchLevel("hero-command") * 3 + heroLevelAttackBonus(heroId) + heroTraitBonus("attack", heroId);
 }
 
 function heroLevelMonsterBonus(heroId = state.selectedHeroId) {
@@ -10107,6 +10185,29 @@ function heroEffectMessage(item, before, heroId = state.selectedHeroId) {
   if (after.level > before.level) parts.push(`${heroDisplayName(heroId)} sube a nivel ${after.level}`);
 
   return parts.length ? `${item.name}: ${parts.join(" - ")}.` : `${item.name} aplicado.`;
+}
+
+function renderHeroTraitPanel(hero) {
+  const traits = Object.entries(hero.bonuses || {});
+  return `
+    <div class="h2-hero-role">
+      <div class="h2-role-head">
+        <span>Especialidad</span>
+        <strong>${hero.role}</strong>
+        <small>${hero.roleBody}</small>
+      </div>
+      <div class="h2-trait-grid">
+        ${traits
+          .map(([key, value]) => `
+            <div>
+              <span>${heroTraitLabels[key] || key}</span>
+              <b>${formatHeroTraitBonus(key, value)}</b>
+            </div>
+          `)
+          .join("")}
+      </div>
+    </div>
+  `;
 }
 
 function renderHeroEquipment() {
@@ -10127,7 +10228,7 @@ function renderHeroEquipment() {
   if (heroEyebrow) heroEyebrow.textContent = hero.title;
   if (heroName) heroName.textContent = hero.name;
   if (heroSubtitle) {
-    heroSubtitle.textContent = `Nivel ${info.level} - ${heroRankName(info.level)} - Energia de caza`;
+    heroSubtitle.textContent = `${hero.roleShort} - Nivel ${info.level} - ${heroRankName(info.level)}`;
   }
 
   if (heroRosterEl) {
@@ -10144,7 +10245,7 @@ function renderHeroEquipment() {
             </span>
             <span>
               <strong>${item.name}</strong>
-              <span>Nv. ${itemInfo.level} - ${formatNumber(Math.floor(itemState.energy || 0))}/${formatNumber(heroEnergyMax(item.id))}${busy ? " - ocupado" : ""}</span>
+              <span>${item.roleShort} - Nv. ${itemInfo.level} - ${formatNumber(Math.floor(itemState.energy || 0))}/${formatNumber(heroEnergyMax(item.id))}${busy ? " - ocupado" : ""}</span>
             </span>
           </button>
         `;
@@ -10162,13 +10263,14 @@ function renderHeroEquipment() {
         <div class="h2-lab"><span>Proximo nivel</span><b>${formatNumber(info.currentXp)} / ${formatNumber(info.nextXp)} XP</b></div>
         <b class="h2-bar"><i style="width:${info.progress}%"></i></b>
       </div>
+      ${renderHeroTraitPanel(hero)}
       <div class="h2-role-grid">
-        <div><span>Ataque</span><b>+${formatNumber(heroEquipmentBonus("attack"))}%</b></div>
-        <div><span>Defensa</span><b>+${formatNumber(heroEquipmentBonus("defense"))}%</b></div>
-        <div><span>Invest.</span><b>+${formatNumber(heroEquipmentBonus("research"))}%</b></div>
-        <div><span>Recolect.</span><b>+${formatNumber(heroEquipmentBonus("gathering"))}%</b></div>
+        <div><span>Ataque</span><b>+${formatNumber(heroTotalRoleBonus("attack", hero.id))}%</b><small>base + equipo</small></div>
+        <div><span>Monstruos</span><b>+${formatNumber(heroTotalRoleBonus("monster", hero.id))}%</b><small>base + equipo</small></div>
+        <div><span>Invest.</span><b>+${formatNumber(heroTotalRoleBonus("research", hero.id))}%</b><small>base + equipo</small></div>
+        <div><span>Recolect.</span><b>+${formatNumber(heroTotalRoleBonus("gathering", hero.id))}%</b><small>base + equipo</small></div>
       </div>
-      <p class="h2-note">El heroe sube con caza, cronicas y paquetes. El equipo define si destaca en ataque, defensa, investigacion o recoleccion.</p>
+      <p class="h2-note">El bonus base del heroe se suma al equipo. Cambiar de heroe cambia combate, caza, tiempos o economia.</p>
     `;
   }
 
@@ -11473,6 +11575,8 @@ function buildBetaSnapshot() {
     return {
       id: hero.id,
       name: hero.name,
+      role: hero.role,
+      bonuses: cloneForSnapshot(hero.bonuses || {}),
       level: info.level,
       xp: Math.floor(data.xp || 0),
       energy: Math.floor(data.energy || 0),
