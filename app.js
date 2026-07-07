@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g32";
+const DATA_VERSION = "20260702-g34";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -1401,15 +1401,16 @@ const packs = [
     valueLabel: "Valor 5 EUR",
     difficulty: "easy",
     difficultyLabel: "Pregunta sencilla",
-    text: "Recursos rapidos para seguir construyendo.",
-    reward: { grain: 1800, wood: 1700, stone: 1500, iron: 900, silver: 260, gold: 12 },
+    text: "Recursos rapidos y una cronica de heroe para seguir creciendo.",
+    reward: { grain: 1800, wood: 1700, stone: 1500, iron: 900, silver: 260, gold: 12, heroXp: 1600 },
     items: {
       "card-grain-1800": 1,
       "card-wood-1700": 1,
       "card-stone-1500": 1,
       "card-iron-900": 1,
       "card-silver-260": 1,
-      "card-gold-12": 1
+      "card-gold-12": 1,
+      "hero-xp-1600": 1
     }
   },
   {
@@ -1420,13 +1421,14 @@ const packs = [
     valueLabel: "Valor 5 EUR",
     difficulty: "easy",
     difficultyLabel: "Pregunta sencilla",
-    text: "Madera, piedra y un pequeno impulso de obra.",
-    reward: { wood: 2200, stone: 2400, silver: 320, buildBoost: 1 },
+    text: "Madera, piedra, un pequeno impulso de obra y cronica de heroe.",
+    reward: { wood: 2200, stone: 2400, silver: 320, buildBoost: 1, heroXp: 1600 },
     items: {
       "card-wood-2200": 1,
       "card-stone-2400": 1,
       "card-silver-320": 1,
-      "speed-build-15": 1
+      "speed-build-15": 1,
+      "hero-xp-1600": 1
     }
   },
   {
@@ -1437,14 +1439,15 @@ const packs = [
     valueLabel: "Valor 15 EUR",
     difficulty: "medium",
     difficultyLabel: "Pregunta media",
-    text: "Impulso serio de hierro, plata y aceleradores de investigacion.",
-    reward: { iron: 10400, silver: 4800, researchBoost: 4, gold: 84 },
+    text: "Impulso serio de hierro, plata, aceleradores de investigacion y cronicas de heroe.",
+    reward: { iron: 10400, silver: 4800, researchBoost: 4, gold: 84, heroXp: 4800 },
     items: {
       "card-iron-2600": 4,
       "card-silver-1200": 4,
       "card-gold-28": 3,
       "speed-research-30": 4,
-      "frag-chart": 2
+      "frag-chart": 2,
+      "hero-xp-1600": 3
     }
   },
   {
@@ -1455,15 +1458,16 @@ const packs = [
     valueLabel: "Valor 30 EUR",
     difficulty: "medium",
     difficultyLabel: "Pregunta media",
-    text: "Leva potente con recursos militares y aceleradores de entrenamiento.",
-    reward: { grain: 20800, iron: 12400, troopBoost: 6, gold: 126 },
+    text: "Leva potente con recursos militares, aceleradores de entrenamiento y cronicas de heroe.",
+    reward: { grain: 20800, iron: 12400, troopBoost: 6, gold: 126, heroXp: 6400 },
     items: {
       "card-grain-5200": 4,
       "card-iron-3100": 4,
       "card-gold-42": 3,
       "speed-training-30": 6,
       "speed-training-60": 2,
-      "frag-sword": 2
+      "frag-sword": 2,
+      "hero-xp-1600": 4
     }
   },
   {
@@ -1474,7 +1478,7 @@ const packs = [
     valueLabel: "Valor 115 EUR",
     difficulty: "hard",
     difficultyLabel: "Pregunta dificil",
-    text: "Premio mayor: recursos masivos, oro, aceleradores largos y piezas de heroe.",
+    text: "Premio mayor: recursos masivos, oro, cronicas imperiales, aceleradores largos y piezas de heroe.",
     reward: { grain: 400000, wood: 400000, stone: 400000, iron: 320000, silver: 250000, gold: 3000, heroEnergy: 9000, heroXp: 125000, buildBoost: 30 },
     items: {
       "card-grain-50000": 8,
@@ -1505,8 +1509,8 @@ const packs = [
     valueLabel: "Valor 115 EUR",
     difficulty: "hard",
     difficultyLabel: "Pregunta dificil",
-    text: "Premio mayor de armada: recursos, oro, entrenamiento y piezas navales de calidad.",
-    reward: { grain: 300000, wood: 520000, stone: 260000, iron: 420000, silver: 220000, gold: 2800, navalBoost: 26, troopBoost: 22 },
+    text: "Premio mayor de armada: recursos, oro, cronicas imperiales, entrenamiento y piezas navales de calidad.",
+    reward: { grain: 300000, wood: 520000, stone: 260000, iron: 420000, silver: 220000, gold: 2800, navalBoost: 26, troopBoost: 22, heroXp: 125000 },
     items: {
       "card-grain-50000": 6,
       "card-wood-50000": 10,
@@ -1519,6 +1523,7 @@ const packs = [
       "speed-build-8h": 6,
       "speed-research-8h": 6,
       "speed-any-24h": 3,
+      "hero-xp-25000": 5,
       "frag-compass-rare": 4,
       "frag-cannon-rare": 4,
       "frag-chart-rare": 4,
@@ -6330,6 +6335,11 @@ function runPaidBuildingAction(building, cost, apply) {
 function renderForge(message = "", focusId = "") {
   activeBuildingId = "forja";
   activeSheetMode = "forge";
+  const focusedRecipe = forgeRecipeById(focusId) || forgeRecipes.find((recipe) => recipe.fragment === focusId) || null;
+  const focusedRecipeId = focusedRecipe?.id || "";
+  const orderedRecipes = focusedRecipe
+    ? [focusedRecipe, ...forgeRecipes.filter((recipe) => recipe.id !== focusedRecipe.id)]
+    : forgeRecipes;
   const totalPieces = countInventoryByCategory("equipment");
   const forgedCount = Object.values(state.heroEquipment || {}).filter((item) => item?.level > 0).length;
   const activeCount = activeLoadoutEquipmentCount();
@@ -6339,8 +6349,8 @@ function renderForge(message = "", focusId = "") {
   sheetBody.innerHTML = `
     <div class="sheet-title">
       <div>
-        <h2>Forja de Artilleria</h2>
-        <p>Forja elementos del equipo del heroe y subelos de nivel con fragmentos.</p>
+        <h2>${focusedRecipe ? `Forja: ${focusedRecipe.name}` : "Forja de Equipo"}</h2>
+        <p>${focusedRecipe ? `${focusedRecipe.slot} del heroe. Forjala y subela de nivel con fragmentos.` : "Forja elementos del equipo del heroe y subelos de nivel con fragmentos."}</p>
       </div>
       <button class="close-sheet" type="button" data-close-sheet aria-label="Cerrar">
         <svg><use href="#i-close" /></svg>
@@ -6359,7 +6369,7 @@ function renderForge(message = "", focusId = "") {
     ${renderForgeQualityScale()}
     ${renderEquipmentLoadoutButtons()}
     <div class="forge-list">
-      ${forgeRecipes.map((recipe) => renderForgeRecipe(recipe, focusId === recipe.id)).join("")}
+      ${orderedRecipes.map((recipe) => renderForgeRecipe(recipe, focusedRecipeId === recipe.id)).join("")}
     </div>
     <p class="challenge-feedback" id="sheetFeedback">${message}</p>
   `;
@@ -10024,21 +10034,21 @@ function renderHeroEquipment() {
 
   if (heroProgress) {
     heroProgress.innerHTML = `
-      <div class="hero-progress-row">
-        <div><span>Energia heroica</span><strong>${formatNumber(energy)} / ${formatNumber(energyMax)}</strong></div>
-        <b class="hero-progress-bar"><i style="--bar:${energyProgress}%"></i></b>
+      <div class="h2-bar-row">
+        <div class="h2-lab"><span>Energia heroica</span><b>${formatNumber(energy)} / ${formatNumber(energyMax)}</b></div>
+        <b class="h2-bar energy"><i style="width:${energyProgress}%"></i></b>
       </div>
-      <div class="hero-progress-row">
-        <div><span>Proximo nivel</span><strong>${formatNumber(info.currentXp)} / ${formatNumber(info.nextXp)} XP</strong></div>
-        <b class="hero-progress-bar"><i style="--bar:${info.progress}%"></i></b>
+      <div class="h2-bar-row">
+        <div class="h2-lab"><span>Proximo nivel</span><b>${formatNumber(info.currentXp)} / ${formatNumber(info.nextXp)} XP</b></div>
+        <b class="h2-bar"><i style="width:${info.progress}%"></i></b>
       </div>
-      <div class="hero-role-grid">
-        <div><span>Ataque</span><strong>+${formatNumber(heroEquipmentBonus("attack"))}%</strong></div>
-        <div><span>Defensa</span><strong>+${formatNumber(heroEquipmentBonus("defense"))}%</strong></div>
-        <div><span>Invest.</span><strong>+${formatNumber(heroEquipmentBonus("research"))}%</strong></div>
-        <div><span>Recolect.</span><strong>+${formatNumber(heroEquipmentBonus("gathering"))}%</strong></div>
+      <div class="h2-role-grid">
+        <div><span>Ataque</span><b>+${formatNumber(heroEquipmentBonus("attack"))}%</b></div>
+        <div><span>Defensa</span><b>+${formatNumber(heroEquipmentBonus("defense"))}%</b></div>
+        <div><span>Invest.</span><b>+${formatNumber(heroEquipmentBonus("research"))}%</b></div>
+        <div><span>Recolect.</span><b>+${formatNumber(heroEquipmentBonus("gathering"))}%</b></div>
       </div>
-      <p class="hero-progress-note">El heroe sube con caza y cronicas. El equipo define si destaca en ataque, defensa, investigacion o recoleccion.</p>
+      <p class="h2-note">El heroe sube con caza, cronicas y paquetes. El equipo define si destaca en ataque, defensa, investigacion o recoleccion.</p>
     `;
   }
 
@@ -10059,7 +10069,7 @@ function renderHeroEquipment() {
     heroDetailPanel.hidden = false;
     heroDetailPanel.innerHTML = `
       ${renderEquipmentLoadoutButtons()}
-      <div class="equipment-set-note">
+      <div class="h2-set-note">
         <strong>${equipmentSetStatus().rule?.name || "Conjunto"}</strong>
         <span>${equipmentSetBonusText()}. Pulsa un conjunto para equiparlo como perfil activo.</span>
       </div>
@@ -10086,11 +10096,11 @@ function renderHeroEquipment() {
       const primaryBonus = formatEquipmentPrimaryBonus(recipe, level, qualityIndex);
       const activeText = activeInProfile ? " - equipado" : "";
       return `
-        <button class="${activeInProfile ? "is-active-loadout" : ""}" type="button" data-open-forge="${recipe.id}" style="${level ? `--item-color:${quality.color}` : ""}" aria-label="${recipe.slot}">
-          <svg><use href="#${recipe.icon}" /></svg>
-          <span>
-            <strong>${recipe.slot}: ${recipe.name}</strong>
-            <small>${level ? `Nv. ${level} ${quality.label}${primaryBonus ? ` - ${primaryBonus}` : ""}${activeText}` : "Sin forjar - abrir Forja"}</small>
+        <button class="h2-slot ${activeInProfile ? "is-active-loadout" : ""}" type="button" data-open-forge="${recipe.id}" style="${level ? `--q:${quality.color}` : ""}" aria-label="${recipe.slot}: ${recipe.name}">
+          <span class="h2-si"><svg><use href="#${recipe.icon}" /></svg></span>
+          <span class="h2-sb">
+            <strong>${recipe.slot}</strong>
+            <small>${level ? `${recipe.name} Nv. ${level} ${quality.label}${primaryBonus ? ` - ${primaryBonus}` : ""}${activeText}` : `${recipe.name} - sin forjar`}</small>
           </span>
         </button>
       `;
