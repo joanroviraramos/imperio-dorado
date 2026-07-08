@@ -462,12 +462,44 @@ svg {
 .world-canvas {
   --world-zoom: 1;
   position: relative;
-  width: calc(9600px * var(--world-zoom));
-  height: calc(19200px * var(--world-zoom));
+  width: calc(12000px * var(--world-zoom));
+  height: calc(12000px * var(--world-zoom));
   min-width: 1280px;
-  min-height: 2560px;
+  min-height: 1280px;
   overflow: hidden;
-  background: #1d1a17;
+  background: #445f36;
+}
+
+.world-terrain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 246, 223, 0.035) 0 1px, transparent 1px 92px),
+    repeating-linear-gradient(90deg, rgba(255, 246, 223, 0.032) 0 1px, transparent 1px 92px),
+    linear-gradient(135deg, rgba(79, 99, 53, 0.78), transparent 38%),
+    linear-gradient(225deg, rgba(105, 95, 54, 0.44), transparent 42%),
+    linear-gradient(180deg, #5b7844 0%, #4a6939 46%, #6f7844 100%);
+}
+
+.world-terrain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(28deg, transparent 0 116px, rgba(36, 49, 29, 0.16) 116px 120px, transparent 120px 246px),
+    repeating-linear-gradient(116deg, transparent 0 142px, rgba(255, 246, 223, 0.055) 142px 145px, transparent 145px 284px);
+  opacity: 0.62;
+}
+
+.world-terrain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0 18%, rgba(81, 114, 118, 0.28) 18.4% 19.1%, transparent 19.5% 100%),
+    linear-gradient(10deg, transparent 0 58%, rgba(108, 128, 82, 0.25) 58.4% 59.1%, transparent 59.5% 100%);
+  opacity: 0.78;
 }
 
 .world-canvas::after {
@@ -735,6 +767,31 @@ svg {
 .world-home-button svg {
   width: 22px;
   height: 22px;
+}
+
+.world-zoom-controls {
+  display: grid;
+  grid-template-columns: repeat(2, 34px);
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.world-zoom-controls button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 215, 122, 0.36);
+  border-radius: 8px;
+  background: rgba(18, 15, 12, 0.88);
+  color: var(--gold-bright);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(12px);
+}
+
+.world-zoom-controls svg {
+  width: 17px;
+  height: 17px;
 }
 
 .primary-action:disabled,
@@ -5610,8 +5667,8 @@ svg {
   }
 
   .world-canvas {
-    width: calc(9600px * var(--world-zoom));
-    height: calc(19200px * var(--world-zoom));
+    width: calc(12000px * var(--world-zoom));
+    height: calc(12000px * var(--world-zoom));
   }
 
   .world-hud {

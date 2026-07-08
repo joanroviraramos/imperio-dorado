@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260702-g41" />
-    <link rel="stylesheet" href="./hero.css?v=20260702-g41" />
+    <link rel="stylesheet" href="./styles.css?v=20260702-g42" />
+    <link rel="stylesheet" href="./hero.css?v=20260702-g42" />
   </head>
   <body>
     <svg class="icon-defs" aria-hidden="true">
@@ -107,7 +107,7 @@
         <div class="scene scene-world">
           <div class="world-viewport" id="worldViewport">
             <div class="world-canvas" id="worldCanvas">
-              <img src="./assets/mapa-imperial.png" alt="Mapa imperial con rutas, fortalezas y recursos" />
+              <div class="world-terrain" aria-hidden="true"></div>
               <div class="map-layer" id="mapLayer"></div>
             </div>
           </div>
@@ -121,6 +121,14 @@
               <svg><use href="#i-crown" /></svg>
               <span>Mi fortaleza</span>
             </button>
+            <div class="world-zoom-controls" aria-label="Zoom del mundo">
+              <button type="button" data-world-zoom="in" aria-label="Acercar mapa">
+                <svg><use href="#i-plus" /></svg>
+              </button>
+              <button type="button" data-world-zoom="out" aria-label="Alejar mapa">
+                <svg><use href="#i-minus" /></svg>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -319,6 +327,6 @@
       </nav>
     </main>
 
-    <script src="./app.js?v=20260702-g41"></script>
+    <script src="./app.js?v=20260702-g42"></script>
   </body>
 </html>

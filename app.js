@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g41";
+const DATA_VERSION = "20260702-g42";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -40,9 +40,9 @@ const KINGDOM_BALANCE_REQUIREMENTS = [
   { id: "cuartel", labelOverride: "Cuartel base" },
   { id: "hospital", labelOverride: "Hospital base" }
 ];
-const WORLD_COORD_MAX_X = 4096;
+const WORLD_COORD_MAX_X = 8192;
 const WORLD_COORD_MAX_Y = 8192;
-const WORLD_CASTLE_COUNT = 15000;
+const WORLD_CASTLE_COUNT = 24;
 const WORLD_SECTOR_SIZE = 512;
 const WORLD_RENDER_MARGIN_PERCENT = 6;
 const WORLD_CASTLE_SPRITES = {
@@ -2132,8 +2132,8 @@ let worldRenderFrame = 0;
 let worldCoordinateTimer = 0;
 let heroPanelTab = "perfil";
 
-const WORLD_MIN_ZOOM = 0.18;
-const WORLD_MAX_ZOOM = 1.8;
+const WORLD_MIN_ZOOM = 0.12;
+const WORLD_MAX_ZOOM = 2.2;
 const WORLD_ZOOM_STEP = 0.18;
 const resourceStrip = document.querySelector("#resourceStrip");
 const queueStrip = document.querySelector("#queueStrip");
