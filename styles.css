@@ -7818,7 +7818,8 @@ svg {
 }
 
 .hero-access,
-.power-button {
+.power-button,
+.account-button {
   pointer-events: auto;
 }
 

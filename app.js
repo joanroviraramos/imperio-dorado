@@ -1,7 +1,7 @@
 const STORAGE_KEY = "imperioDoradoState.v2";
 const LEGACY_STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g48";
+const DATA_VERSION = "20260702-g49";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
