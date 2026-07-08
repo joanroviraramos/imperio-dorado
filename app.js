@@ -1,7 +1,7 @@
 const STORAGE_KEY = "imperioDoradoState.v2";
 const LEGACY_STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g51";
+const DATA_VERSION = "20260702-g52";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -6071,20 +6071,25 @@ function marchCombatProjection(marker, plan) {
   const targetDefense = targetDefenseValue(marker);
   const outcome = combatOutcome(army.attack, targetDefense, troopBundleCount(plan.troops), marker.kind);
   const ratio = targetDefense > 0 ? army.attack / targetDefense : 1;
+  const victoryThreshold = combatVictoryThreshold(marker.kind);
   const title = marker.kind === "monster" ? "Prevision de caza" : "Prevision de ataque";
-  const label = ratio >= 1.25 ? "Ventaja" : ratio >= 0.95 ? "Ajustado" : "Riesgo";
-  const tone = ratio >= 1.25 ? "good" : ratio >= 0.95 ? "warn" : "danger";
+  const label = ratio >= victoryThreshold * 1.35 ? "Ventaja" : ratio >= victoryThreshold ? "Ajustado" : "Riesgo alto";
+  const tone = ratio >= victoryThreshold * 1.35 ? "good" : ratio >= victoryThreshold ? "warn" : "danger";
+  const levelGap = marker.kind === "enemy" ? enemyLevelGap(marker) : 0;
+  const levelText = levelGap > 0
+    ? ` Castillo rival Nv. ${marker.level || 1}, tu Alcazar Nv. ${playerCastleLevel()}: penalizacion defensiva x${enemyLevelDefenseMultiplier(marker).toFixed(1)}.`
+    : "";
   const heroText = plan.withHero
     ? marker.kind === "monster"
       ? ` ${heroDisplayName(plan.heroId)} suma +${formatNumber(army.monsterBonus)}% contra monstruos.`
       : ` ${heroDisplayName(plan.heroId)} va al mando.`
     : "";
   const note =
-    ratio >= 1.25
-      ? `La marcha supera claramente la defensa objetivo.${heroText}`
-      : ratio >= 0.95
-        ? `La marcha puede ganar, pero las bajas seran mas visibles.${heroText}`
-        : `Conviene subir ataque, llevar heroe, usar Maximo o convocar rally.${heroText}`;
+    ratio >= victoryThreshold * 1.35
+      ? `La marcha supera claramente la defensa objetivo.${levelText}${heroText}`
+      : ratio >= victoryThreshold
+        ? `La marcha puede ganar, pero las bajas seran mas visibles.${levelText}${heroText}`
+        : `Conviene subir Alcazar, ataque, heroe o convocar rally antes de atacar.${levelText}${heroText}`;
 
   return {
     title,
@@ -8180,10 +8185,10 @@ function enemyGarrison(marker) {
 function initialEnemyGarrison(marker) {
   const level = marker.level || 1;
   return {
-    pikemen: 180 + level * 26,
-    musketeers: 120 + level * 22,
-    cavalry: 55 + level * 11,
-    artillery: 8 + Math.floor(level * 1.8)
+    pikemen: 160 + level * 34 + Math.floor(level * level * 2),
+    musketeers: 110 + level * 30 + Math.floor(level * level * 1.7),
+    cavalry: 50 + level * 15 + Math.floor(level * level * 0.85),
+    artillery: 8 + Math.floor(level * 2.4 + level * level * 0.12)
   };
 }
 
@@ -8207,7 +8212,24 @@ function enemyGarrisonDefense(marker, troops = enemyGarrison(marker)) {
     return sum + (troop?.defense || 0) * amount;
   }, 0);
   const troopFactor = Math.min(0.44, 0.22 + level * 0.01);
-  return Math.max(1, Math.round(enemyWallValue(marker) + baseDefense * troopFactor));
+  const levelMultiplier = enemyLevelDefenseMultiplier(marker);
+  return Math.max(1, Math.round((enemyWallValue(marker) + baseDefense * troopFactor) * levelMultiplier));
+}
+
+function playerCastleLevel() {
+  return clampBuildingLevel(buildings.find((building) => building.id === "alcazar")?.level || 1);
+}
+
+function enemyLevelGap(marker) {
+  if (marker?.kind !== "enemy") return 0;
+  return Math.max(-BUILDING_MAX_LEVEL, Math.min(BUILDING_MAX_LEVEL, (marker.level || 1) - playerCastleLevel()));
+}
+
+function enemyLevelDefenseMultiplier(marker) {
+  const gap = enemyLevelGap(marker);
+  if (gap > 0) return 1 + gap * 0.22 + Math.pow(gap, 1.35) * 0.045;
+  if (gap < 0) return Math.max(0.82, 1 + gap * 0.03);
+  return 1;
 }
 
 function applyEnemyDefenderLosses(marker, combat, march) {
@@ -9205,7 +9227,7 @@ function resolveCombat(march, marker) {
 
 function combatOutcome(attack, targetDefense, troopCount, kind) {
   const ratio = targetDefense > 0 ? attack / targetDefense : 1;
-  const victory = ratio >= 0.95;
+  const victory = ratio >= combatVictoryThreshold(kind);
   const baseWoundRate = kind === "monster" ? 0.035 : 0.07;
   const pressure = Math.max(0, 1 - Math.min(1.4, ratio) / 1.4);
   const reduction = combatWoundReduction(kind);
@@ -9304,6 +9326,10 @@ function addResourceWithCap(resource, amount) {
   const next = before + amount;
   state.resources[resource] = next;
   return next - before;
+}
+
+function combatVictoryThreshold(kind) {
+  return kind === "enemy" ? 1.08 : 0.95;
 }
 
 function canPay(cost = {}) {
