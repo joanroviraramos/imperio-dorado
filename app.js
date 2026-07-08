@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g42";
+const DATA_VERSION = "20260702-g43";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -49,6 +49,12 @@ const WORLD_CASTLE_SPRITES = {
   home: "./assets/world-castle-home.png",
   rival: "./assets/world-castle-rival.png",
   royal: "./assets/world-castle-royal.png"
+};
+const WORLD_RESOURCE_SPRITES = {
+  grain: "./assets/world-resource-food.png",
+  wood: "./assets/recurso-madera-parcela.png",
+  stone: "./assets/recurso-piedra-parcela.png",
+  iron: "./assets/recurso-hierro-parcela.png"
 };
 const SERVER_EVENT_LIMIT = 80;
 const resetDemo = urlParams.has("reset");
@@ -4438,7 +4444,7 @@ function renderMapMarkerIcon(marker) {
   }
 
   if (marker.kind === "resource") {
-    return `<span class="resource-token resource-token--${marker.resource || "grain"}"><svg><use href="#${marker.icon}" /></svg><b>${marker.level}</b></span>`;
+    return renderWorldResourceToken(marker);
   }
 
   if (isWorldCastleMarker(marker)) {
@@ -4452,6 +4458,15 @@ function renderMapMarkerIcon(marker) {
 
 function isWorldCastleMarker(marker) {
   return marker?.kind === "ally" || marker?.kind === "enemy";
+}
+
+function renderWorldResourceToken(marker) {
+  const resource = marker.resource || "grain";
+  const sprite = WORLD_RESOURCE_SPRITES[resource];
+  if (sprite) {
+    return `<span class="world-resource-token world-resource-token--${resource}"><img src="${sprite}" alt="" loading="lazy"><b>${marker.level}</b></span>`;
+  }
+  return `<span class="world-resource-token world-resource-token--${resource}"><span class="world-resource-gem"></span><b>${marker.level}</b></span>`;
 }
 
 function renderMonsterToken(marker) {

@@ -467,7 +467,7 @@ svg {
   min-width: 1280px;
   min-height: 1280px;
   overflow: hidden;
-  background: #445f36;
+  background: #536846;
 }
 
 .world-terrain {
@@ -475,11 +475,11 @@ svg {
   inset: 0;
   z-index: 1;
   background:
-    repeating-linear-gradient(0deg, rgba(255, 246, 223, 0.035) 0 1px, transparent 1px 92px),
-    repeating-linear-gradient(90deg, rgba(255, 246, 223, 0.032) 0 1px, transparent 1px 92px),
-    linear-gradient(135deg, rgba(79, 99, 53, 0.78), transparent 38%),
-    linear-gradient(225deg, rgba(105, 95, 54, 0.44), transparent 42%),
-    linear-gradient(180deg, #5b7844 0%, #4a6939 46%, #6f7844 100%);
+    linear-gradient(90deg, #355f72 0 14%, #4d785e 15.5% 18%, transparent 22%),
+    linear-gradient(150deg, transparent 0 62%, rgba(88, 83, 67, 0.48) 69%, rgba(63, 63, 58, 0.72) 78%, transparent 88%),
+    linear-gradient(28deg, transparent 0 10%, rgba(139, 116, 72, 0.22) 18%, transparent 31%),
+    linear-gradient(118deg, transparent 0 42%, rgba(126, 101, 63, 0.2) 52%, transparent 66%),
+    linear-gradient(180deg, #6f864f 0%, #516f43 44%, #7b774c 100%);
 }
 
 .world-terrain::before {
@@ -487,9 +487,11 @@ svg {
   position: absolute;
   inset: 0;
   background:
-    repeating-linear-gradient(28deg, transparent 0 116px, rgba(36, 49, 29, 0.16) 116px 120px, transparent 120px 246px),
-    repeating-linear-gradient(116deg, transparent 0 142px, rgba(255, 246, 223, 0.055) 142px 145px, transparent 145px 284px);
-  opacity: 0.62;
+    repeating-linear-gradient(0deg, rgba(255, 246, 223, 0.035) 0 1px, transparent 1px 96px),
+    repeating-linear-gradient(90deg, rgba(255, 246, 223, 0.032) 0 1px, transparent 1px 96px),
+    repeating-linear-gradient(31deg, transparent 0 126px, rgba(35, 49, 30, 0.16) 126px 130px, transparent 130px 282px),
+    repeating-linear-gradient(116deg, transparent 0 174px, rgba(255, 246, 223, 0.052) 174px 177px, transparent 177px 326px);
+  opacity: 0.74;
 }
 
 .world-terrain::after {
@@ -497,9 +499,11 @@ svg {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, transparent 0 18%, rgba(81, 114, 118, 0.28) 18.4% 19.1%, transparent 19.5% 100%),
-    linear-gradient(10deg, transparent 0 58%, rgba(108, 128, 82, 0.25) 58.4% 59.1%, transparent 59.5% 100%);
-  opacity: 0.78;
+    linear-gradient(100deg, rgba(31, 72, 87, 0.72) 0 9%, rgba(65, 111, 110, 0.42) 10.5%, transparent 16%),
+    linear-gradient(55deg, transparent 0 64%, rgba(54, 60, 51, 0.54) 67%, rgba(137, 131, 104, 0.32) 70%, transparent 76%),
+    linear-gradient(24deg, transparent 0 28%, rgba(92, 73, 47, 0.16) 29%, transparent 35%),
+    linear-gradient(164deg, transparent 0 47%, rgba(80, 104, 51, 0.22) 51%, transparent 59%);
+  opacity: 0.86;
 }
 
 .world-canvas::after {
@@ -1320,6 +1324,82 @@ svg {
   color: var(--gold-bright);
   font-size: 10px;
   font-weight: 1000;
+}
+
+.map-marker[data-kind="resource"] {
+  min-width: 92px;
+  min-height: 72px;
+}
+
+.world-resource-token {
+  position: relative;
+  display: block;
+  width: 90px;
+  height: 68px;
+  filter:
+    drop-shadow(0 10px 9px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 7px rgba(255, 215, 122, 0.12));
+}
+
+.world-resource-token img {
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.world-resource-token--grain {
+  width: 116px;
+  height: 88px;
+}
+
+.world-resource-token--iron {
+  width: 82px;
+  height: 62px;
+}
+
+.world-resource-token b {
+  position: absolute;
+  right: 3px;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border: 1px solid rgba(255, 246, 223, 0.62);
+  border-radius: 50%;
+  background: rgba(18, 15, 12, 0.94);
+  color: var(--gold-bright);
+  font-size: 9px;
+  font-weight: 1000;
+  box-shadow: 0 0 0 2px rgba(18, 15, 12, 0.45);
+}
+
+.world-resource-gem {
+  position: absolute;
+  inset: 14px;
+  border: 2px solid rgba(255, 232, 179, 0.72);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(236, 243, 255, 0.82), rgba(103, 115, 134, 0.92)),
+    rgba(18, 15, 12, 0.94);
+  transform: rotate(45deg);
+}
+
+.world-canvas.is-overview .world-resource-token {
+  width: 50px;
+  height: 40px;
+}
+
+.world-canvas.is-wide-view .world-resource-token {
+  width: 66px;
+  height: 50px;
 }
 
 .resource-token {
@@ -5806,6 +5886,16 @@ svg {
     height: 36px;
   }
 
+  .world-resource-token {
+    width: 66px;
+    height: 50px;
+  }
+
+  .world-resource-token--grain {
+    width: 78px;
+    height: 60px;
+  }
+
   .monster-token--image img {
     width: 54px;
     height: 54px;
@@ -5824,7 +5914,8 @@ svg {
 
   .home-token b,
   .monster-token b,
-  .resource-token b {
+  .resource-token b,
+  .world-resource-token b {
     width: 16px;
     height: 16px;
     font-size: 8px;
