@@ -1358,9 +1358,19 @@ svg {
   height: 88px;
 }
 
+.world-resource-token--wood {
+  width: 112px;
+  height: 86px;
+}
+
+.world-resource-token--stone {
+  width: 98px;
+  height: 78px;
+}
+
 .world-resource-token--iron {
-  width: 82px;
-  height: 62px;
+  width: 104px;
+  height: 80px;
 }
 
 .world-resource-token b {
@@ -5894,6 +5904,21 @@ svg {
   .world-resource-token--grain {
     width: 78px;
     height: 60px;
+  }
+
+  .world-resource-token--wood {
+    width: 76px;
+    height: 58px;
+  }
+
+  .world-resource-token--stone {
+    width: 70px;
+    height: 54px;
+  }
+
+  .world-resource-token--iron {
+    width: 72px;
+    height: 56px;
   }
 
   .monster-token--image img {

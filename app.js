@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g43";
+const DATA_VERSION = "20260702-g44";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -52,9 +52,9 @@ const WORLD_CASTLE_SPRITES = {
 };
 const WORLD_RESOURCE_SPRITES = {
   grain: "./assets/world-resource-food.png",
-  wood: "./assets/recurso-madera-parcela.png",
-  stone: "./assets/recurso-piedra-parcela.png",
-  iron: "./assets/recurso-hierro-parcela.png"
+  wood: "./assets/world-resource-wood.png",
+  stone: "./assets/world-resource-stone.png",
+  iron: "./assets/world-resource-iron.png"
 };
 const SERVER_EVENT_LIMIT = 80;
 const resetDemo = urlParams.has("reset");
@@ -4450,7 +4450,7 @@ function renderMapMarkerIcon(marker) {
   if (isWorldCastleMarker(marker)) {
     const spriteKey = marker.castleSprite || (marker.id === HOME_MARKER_ID || marker.kind === "ally" ? "home" : "rival");
     const sprite = WORLD_CASTLE_SPRITES[spriteKey] || WORLD_CASTLE_SPRITES.rival;
-    return `<span class="world-castle-token world-castle-token--${spriteKey} world-castle-token--${marker.kind || "enemy"}"><img src="${sprite}" alt="" loading="lazy"><b>${marker.level || ""}</b></span>`;
+    return `<span class="world-castle-token world-castle-token--${spriteKey} world-castle-token--${marker.kind || "enemy"}"><img src="${sprite}" alt="" decoding="async"><b>${marker.level || ""}</b></span>`;
   }
 
   return `<span class="castle-token castle-token--${marker.kind || "enemy"}"><span class="castle-roof"></span><span class="castle-body"></span><b>${marker.level || ""}</b></span>`;
@@ -4464,7 +4464,7 @@ function renderWorldResourceToken(marker) {
   const resource = marker.resource || "grain";
   const sprite = WORLD_RESOURCE_SPRITES[resource];
   if (sprite) {
-    return `<span class="world-resource-token world-resource-token--${resource}"><img src="${sprite}" alt="" loading="lazy"><b>${marker.level}</b></span>`;
+    return `<span class="world-resource-token world-resource-token--${resource}"><img src="${sprite}" alt="" decoding="async"><b>${marker.level}</b></span>`;
   }
   return `<span class="world-resource-token world-resource-token--${resource}"><span class="world-resource-gem"></span><b>${marker.level}</b></span>`;
 }
