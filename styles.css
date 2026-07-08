@@ -2722,9 +2722,21 @@ svg {
   text-align: center;
 }
 
+.train-amount-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.train-amount-actions button {
+  min-height: 30px;
+  padding: 0 4px;
+  font-size: 9px;
+}
+
 .training-meta {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   gap: 6px;
 }
 
@@ -2751,6 +2763,15 @@ svg {
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.training-meta div.is-over-limit {
+  border-color: rgba(230, 61, 83, 0.46);
+  background: rgba(118, 36, 42, 0.26);
+}
+
+.training-meta div.is-over-limit strong {
+  color: #ff9d8d;
 }
 
 .march-planner {

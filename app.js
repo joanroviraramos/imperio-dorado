@@ -1,7 +1,7 @@
 const STORAGE_KEY = "imperioDoradoState.v2";
 const LEGACY_STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g49";
+const DATA_VERSION = "20260702-g50";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -5249,6 +5249,7 @@ function bindSheet() {
     const doctrineClear = event.target.closest("[data-doctrine-clear]");
     const researchBranch = event.target.closest("[data-research-branch]");
     const researchNode = event.target.closest("[data-start-research]");
+    const trainFill = event.target.closest("[data-train-fill]");
     const trainSubmit = event.target.closest("[data-train-submit]");
     const healFill = event.target.closest("[data-heal-fill]");
     const healClear = event.target.closest("[data-heal-clear]");
@@ -5291,6 +5292,7 @@ function bindSheet() {
     if (doctrineClear) clearDoctrineCard(doctrineClear.closest("[data-doctrine-kind]"));
     if (researchBranch) renderResearchTree(researchBranch.dataset.researchBranch);
     if (researchNode) startResearchNode(researchNode.dataset.startResearch);
+    if (trainFill) fillTrainingAmount(trainFill);
     if (trainSubmit) startSelectedTraining(trainSubmit.dataset.trainSubmit);
     if (healFill) fillHealingEditor(healFill.dataset.healFill);
     if (healClear) clearHealingEditor();
@@ -7430,10 +7432,13 @@ function renderTroopTierTrack() {
 
 function renderTrainingCard(building, troop, capacity, unlockedTier, activeQueue) {
   const locked = unlockedTier < troop.unlockTier;
-  const defaultAmount = Math.min(capacity, troop.id === "artillery" ? 12 : troop.id === "cavalry" ? 40 : 80);
-  const cost = troopTrainingCost(troop, defaultAmount, unlockedTier);
-  const duration = queueDuration("training", building, defaultAmount);
+  const affordableAmount = maxAffordableTrainingAmount(troop, capacity, unlockedTier);
+  const defaultAmount = Math.max(1, Math.min(capacity, affordableAmount || capacity));
+  const defaultCost = troopTrainingCost(troop, defaultAmount, unlockedTier);
+  const canTrainDefault = canPay(defaultCost);
   const nextTier = Math.min(5, unlockedTier + 1);
+  const quarterAmount = Math.max(1, Math.floor(capacity * 0.25));
+  const halfAmount = Math.max(1, Math.floor(capacity * 0.5));
   return `
     <article class="training-card ${locked ? "is-locked" : ""}" data-train-card="${building.id}:${troop.id}">
       <div>
@@ -7450,15 +7455,55 @@ function renderTrainingCard(building, troop, capacity, unlockedTier, activeQueue
         <span>Cantidad</span>
         <input type="number" min="1" max="${capacity}" step="1" inputmode="numeric" value="${defaultAmount}" data-train-amount="${troop.id}" ${locked || activeQueue ? "disabled" : ""} />
       </label>
-      <div class="training-meta" data-training-meta>
-        <div><span>Coste base</span><strong>${formatCost(cost)}</strong></div>
-        <div><span>Tiempo</span><strong>${formatDuration(duration)}</strong></div>
+      <div class="train-amount-actions">
+        <button class="secondary-action" type="button" data-train-fill="${building.id}:${troop.id}" data-train-fill-amount="${quarterAmount}" ${locked || activeQueue ? "disabled" : ""}>25%</button>
+        <button class="secondary-action" type="button" data-train-fill="${building.id}:${troop.id}" data-train-fill-amount="${halfAmount}" ${locked || activeQueue ? "disabled" : ""}>50%</button>
+        <button class="secondary-action" type="button" data-train-fill="${building.id}:${troop.id}" data-train-fill-amount="${capacity}" ${locked || activeQueue ? "disabled" : ""}>Max cola</button>
+        <button class="secondary-action" type="button" data-train-fill="${building.id}:${troop.id}" data-train-fill-amount="${Math.max(1, affordableAmount)}" ${locked || activeQueue || affordableAmount <= 0 ? "disabled" : ""}>Max recursos</button>
       </div>
-      <button class="primary-action" type="button" data-train-submit="${building.id}:${troop.id}" ${locked || activeQueue ? "disabled" : ""}>
-        <svg><use href="#i-sword" /></svg>${locked ? "Bloqueada" : "Entrenar"}
+      <div class="training-meta" data-training-meta>
+        ${renderTrainingMeta(troop, defaultAmount, unlockedTier, capacity)}
+      </div>
+      <button class="primary-action" type="button" data-train-submit="${building.id}:${troop.id}" ${locked || activeQueue || !canTrainDefault ? "disabled" : ""}>
+        <svg><use href="#i-sword" /></svg><span data-train-submit-label>${locked ? "Bloqueada" : canTrainDefault ? `Entrenar ${formatNumber(defaultAmount)}` : "Faltan recursos"}</span>
       </button>
     </article>
   `;
+}
+
+function renderTrainingMeta(troop, amount, tier, capacity) {
+  const cost = troopTrainingCost(troop, amount, tier);
+  const canAfford = canPay(cost);
+  const duration = queueDuration("training", null, amount);
+  return `
+    <div class="${canAfford ? "" : "is-over-limit"}"><span>Coste</span><strong>${formatCost(cost)}</strong></div>
+    <div><span>Tiempo</span><strong>${formatDuration(duration)}</strong></div>
+    <div><span>Seleccion</span><strong>${formatNumber(amount)} / ${formatNumber(capacity)}</strong></div>
+  `;
+}
+
+function maxAffordableTrainingAmount(troop, capacity, tier = troopTierLimit()) {
+  let low = 0;
+  let high = Math.max(0, Math.floor(capacity || 0));
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (canPay(troopTrainingCost(troop, mid, tier))) {
+      low = mid;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return low;
+}
+
+function fillTrainingAmount(button) {
+  const card = button.closest("[data-train-card]");
+  const input = card?.querySelector("[data-train-amount]");
+  if (!card || !input) return;
+  const capacity = Math.max(1, Math.floor(Number(input.max) || 1));
+  const requested = Math.floor(Number(button.dataset.trainFillAmount || 1));
+  input.value = Math.min(capacity, Math.max(1, Number.isFinite(requested) ? requested : 1));
+  updateTrainingCard(input);
 }
 
 function updateTrainingCard(input) {
@@ -7474,11 +7519,12 @@ function updateTrainingCard(input) {
   const amount = Math.min(capacity, Math.max(1, Number.isFinite(requested) ? requested : 1));
   input.value = amount;
   const cost = troopTrainingCost(troop, amount, troopTierLimit());
-  const duration = queueDuration("training", building, amount);
-  meta.innerHTML = `
-    <div><span>Coste</span><strong>${formatCost(cost)}</strong></div>
-    <div><span>Tiempo</span><strong>${formatDuration(duration)}</strong></div>
-  `;
+  const canAfford = canPay(cost);
+  meta.innerHTML = renderTrainingMeta(troop, amount, troopTierLimit(), capacity);
+  const submit = card.querySelector("[data-train-submit]");
+  const label = card.querySelector("[data-train-submit-label]");
+  if (submit) submit.disabled = Boolean(state.queues.training) || canAfford === false;
+  if (label) label.textContent = canAfford ? `Entrenar ${formatNumber(amount)}` : "Faltan recursos";
 }
 
 function startSelectedTraining(command) {
