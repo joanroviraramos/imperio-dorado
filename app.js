@@ -1,7 +1,7 @@
 const STORAGE_KEY = "imperioDoradoState.v2";
 const LEGACY_STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g50";
+const DATA_VERSION = "20260702-g51";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -2210,6 +2210,7 @@ const accountEmail = document.querySelector("#accountEmail");
 const accountPassword = document.querySelector("#accountPassword");
 const accountCreate = document.querySelector("#accountCreate");
 const accountLogin = document.querySelector("#accountLogin");
+const accountResend = document.querySelector("#accountResend");
 const accountLogout = document.querySelector("#accountLogout");
 const accountCloudSave = document.querySelector("#accountCloudSave");
 const accountCloudLoad = document.querySelector("#accountCloudLoad");
@@ -2770,6 +2771,7 @@ function bindAccount() {
   });
   accountCreate?.addEventListener("click", createAccountFromPanel);
   accountLogin?.addEventListener("click", loginAccountFromPanel);
+  accountResend?.addEventListener("click", resendAccountConfirmation);
   accountLogout?.addEventListener("click", logoutAccount);
   accountCloudSave?.addEventListener("click", () => saveCloudNow({ manual: true }));
   accountCloudLoad?.addEventListener("click", () => loadCloudSave({ manual: true }));
@@ -2845,7 +2847,10 @@ async function createAccountFromPanel() {
   setAccountBusy(true);
   const { data, error } = await supabaseClient.auth.signUp({
     email: credentials.email,
-    password: credentials.password
+    password: credentials.password,
+    options: {
+      emailRedirectTo: authRedirectUrl()
+    }
   });
   setAccountBusy(false);
   if (error) {
@@ -2859,6 +2864,37 @@ async function createAccountFromPanel() {
     return;
   }
   renderAccountStatus("Cuenta creada. Revisa el correo para confirmar y luego pulsa Entrar.");
+}
+
+async function resendAccountConfirmation() {
+  if (!supabaseClient) {
+    renderAccountStatus("Primero configura Supabase en supabase-config.js.");
+    return;
+  }
+  const email = String(accountEmail?.value || "").trim();
+  if (!email || !email.includes("@")) {
+    renderAccountStatus("Escribe tu correo para reenviar la confirmacion.");
+    return;
+  }
+  setAccountBusy(true);
+  const { error } = await supabaseClient.auth.resend({
+    type: "signup",
+    email,
+    options: {
+      emailRedirectTo: authRedirectUrl()
+    }
+  });
+  setAccountBusy(false);
+  if (error) {
+    renderAccountStatus(`No se pudo reenviar el correo: ${error.message}`);
+    return;
+  }
+  renderAccountStatus("Correo reenviado. Abre el enlace nuevo y volvera al juego.");
+}
+
+function authRedirectUrl() {
+  if (window.location.hostname === "imperio-dorado.pages.dev") return "https://imperio-dorado.pages.dev/";
+  return `${window.location.origin}${window.location.pathname}`;
 }
 
 async function loginAccountFromPanel() {
@@ -2919,13 +2955,13 @@ function updateAccountUi() {
   [accountCloudSave, accountCloudLoad, accountLogout].forEach((button) => {
     if (button) button.disabled = !signed || !supabaseClient;
   });
-  [accountCreate, accountLogin].forEach((button) => {
+  [accountCreate, accountLogin, accountResend].forEach((button) => {
     if (button) button.disabled = signed || !supabaseClient;
   });
 }
 
 function setAccountBusy(busy) {
-  [accountCreate, accountLogin, accountLogout, accountCloudSave, accountCloudLoad, accountNewGame].forEach((button) => {
+  [accountCreate, accountLogin, accountResend, accountLogout, accountCloudSave, accountCloudLoad, accountNewGame].forEach((button) => {
     if (button) button.disabled = Boolean(busy);
   });
   if (!busy) updateAccountUi();
