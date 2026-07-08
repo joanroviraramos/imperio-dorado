@@ -19,6 +19,7 @@ alter table public.reports enable row level security;
 alter table public.chat_messages enable row level security;
 alter table public.wisdom_claims enable row level security;
 alter table public.server_events enable row level security;
+alter table public.player_saves enable row level security;
 alter table public.game_balance enable row level security;
 
 create or replace function pg_temp.create_policy_if_missing(
@@ -189,4 +190,28 @@ select pg_temp.create_policy_if_missing(
   'server_events',
   'server events owner insertable',
   $policy$create policy "server events owner insertable" on public.server_events for insert to authenticated with check (profile_id = auth.uid() or exists (select 1 from public.cities where cities.id = server_events.city_id and cities.profile_id = auth.uid()))$policy$
+);
+
+select pg_temp.create_policy_if_missing(
+  'player_saves',
+  'player saves owner readable',
+  $policy$create policy "player saves owner readable" on public.player_saves for select to authenticated using (profile_id = auth.uid())$policy$
+);
+
+select pg_temp.create_policy_if_missing(
+  'player_saves',
+  'player saves owner insertable',
+  $policy$create policy "player saves owner insertable" on public.player_saves for insert to authenticated with check (profile_id = auth.uid())$policy$
+);
+
+select pg_temp.create_policy_if_missing(
+  'player_saves',
+  'player saves owner updatable',
+  $policy$create policy "player saves owner updatable" on public.player_saves for update to authenticated using (profile_id = auth.uid()) with check (profile_id = auth.uid())$policy$
+);
+
+select pg_temp.create_policy_if_missing(
+  'player_saves',
+  'player saves owner deletable',
+  $policy$create policy "player saves owner deletable" on public.player_saves for delete to authenticated using (profile_id = auth.uid())$policy$
 );

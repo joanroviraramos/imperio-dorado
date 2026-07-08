@@ -1,6 +1,7 @@
-const STORAGE_KEY = "imperioDoradoState.v1";
+const STORAGE_KEY = "imperioDoradoState.v2";
+const LEGACY_STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g46";
+const DATA_VERSION = "20260702-g47";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -86,6 +87,7 @@ const initialScreen = urlParams.get("screen");
 
 if (resetDemo) {
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
   window.history.replaceState(null, "", window.location.pathname);
 }
 
@@ -1819,6 +1821,10 @@ function createStarterHeroEquipment() {
   };
 }
 
+function createStarterBuildingLevels() {
+  return Object.fromEntries(buildings.filter((building) => !building.isPlotInstance).map((building) => [building.id, 1]));
+}
+
 function sanitizeHeroEquipment(equipment = {}) {
   if (!equipment || typeof equipment !== "object") return {};
   return Object.fromEntries(
@@ -2007,19 +2013,19 @@ const defaultState = {
   selectedHeroId: "alonso",
   heroes: createDefaultHeroes(),
   resources: {
-    grain: 12000,
-    wood: 9400,
-    stone: 8600,
-    iron: 6100,
-    silver: 3200,
-    gold: 180
+    grain: 3000,
+    wood: 3000,
+    stone: 2400,
+    iron: 900,
+    silver: 700,
+    gold: 0
   },
-  power: 142800,
+  power: 0,
   wisdom: {
     weekKey: getWeekKey(new Date()),
     claimed: 0
   },
-  buildingLevels: {},
+  buildingLevels: createStarterBuildingLevels(),
   alcazarRewardsClaimed: {},
   fortressAssignments: {},
   enemyResources: {},
@@ -2028,14 +2034,14 @@ const defaultState = {
   resourceTiles: {},
   monsterStates: {},
   inventory: {},
-  heroEquipment: createStarterHeroEquipment(),
+  heroEquipment: {},
   activeEquipmentLoadout: "attack",
   allianceTreasury: {
-    grain: 6000,
-    wood: 4200,
-    stone: 3200,
-    iron: 1800,
-    silver: 760
+    grain: 0,
+    wood: 0,
+    stone: 0,
+    iron: 0,
+    silver: 0
   },
   allianceHonor: 0,
   allianceConvoys: [],
@@ -2061,43 +2067,32 @@ const defaultState = {
   lastProductionAt: Date.now(),
   productionRemainder: {},
   troops: {
-    pikemen: 260,
-    musketeers: 180,
-    cavalry: 70,
-    artillery: 16,
-    galleons: 2
+    pikemen: 60,
+    musketeers: 0,
+    cavalry: 0,
+    artillery: 0,
+    galleons: 0
   },
-  woundedByTroop: {
-    pikemen: 70,
-    musketeers: 40,
-    cavalry: 16
-  },
+  woundedByTroop: {},
   marches: [],
   reports: [],
   worldBookmarks: [],
   marchSequence: 1,
-  researchLevels: {
-    "troop-attack": 1,
-    "troop-defense": 1,
-    "troop-tier": 1,
-    "march-size": 1,
-    "march-speed": 1,
-    "monster-tier": 2
-  },
+  researchLevels: {},
   marchPresets: {
     resource: { percentages: { pikemen: 45, cavalry: 20, artillery: 25, galleons: 10 }, withHero: false },
     monster: { percentages: { musketeers: 60, cavalry: 25, artillery: 10, pikemen: 5 }, withHero: true },
     enemy: { percentages: { musketeers: 42, pikemen: 28, cavalry: 18, artillery: 12 }, withHero: false }
   },
   boosts: {
-    buildBoost: 1,
-    researchBoost: 1,
+    buildBoost: 0,
+    researchBoost: 0,
     troopBoost: 0,
     navalBoost: 0
   },
-  woundedTroops: 126,
-  trainedTroops: 480,
-  researchCompleted: 14,
+  woundedTroops: 0,
+  trainedTroops: 60,
+  researchCompleted: 0,
   rallies: [],
   rallySequence: 1,
   chatMessages: {
@@ -2162,6 +2157,12 @@ let worldRenderFrame = 0;
 let worldRenderTimer = 0;
 let worldCoordinateTimer = 0;
 let heroPanelTab = "perfil";
+let supabaseClient = null;
+let accountSession = null;
+let cloudSaveTimer = 0;
+let cloudSaveInFlight = false;
+let cloudStateHydrating = false;
+let cloudAutosaveReady = false;
 
 const WORLD_MIN_ZOOM = 0.12;
 const WORLD_MAX_ZOOM = 2.2;
@@ -2200,6 +2201,19 @@ const heroAccessButton = document.querySelector("#heroAccessButton");
 const heroAccessImage = document.querySelector("#heroAccessImage");
 const heroAccessLevel = document.querySelector("#heroAccessLevel");
 const heroAccessName = document.querySelector("#heroAccessName");
+const accountButton = document.querySelector("#accountButton");
+const accountButtonLabel = document.querySelector("#accountButtonLabel");
+const accountPanel = document.querySelector("#accountPanel");
+const accountClose = document.querySelector("#accountClose");
+const accountStatus = document.querySelector("#accountStatus");
+const accountEmail = document.querySelector("#accountEmail");
+const accountPassword = document.querySelector("#accountPassword");
+const accountCreate = document.querySelector("#accountCreate");
+const accountLogin = document.querySelector("#accountLogin");
+const accountLogout = document.querySelector("#accountLogout");
+const accountCloudSave = document.querySelector("#accountCloudSave");
+const accountCloudLoad = document.querySelector("#accountCloudLoad");
+const accountNewGame = document.querySelector("#accountNewGame");
 const heroPortraitImage = document.querySelector(".hero-portrait img");
 const heroEyebrow = document.querySelector(".hero-copy span");
 const heroName = document.querySelector(".hero-copy h1");
@@ -2357,6 +2371,8 @@ function init() {
   bindHeroEquipment();
   bindRallies();
   bindAlliance();
+  bindAccount();
+  initAccount();
   if (["city", "world", "wisdom", "inventory", "military", "hero", "alliance"].includes(initialScreen)) {
     switchTab(initialScreen);
   }
@@ -2367,11 +2383,25 @@ function init() {
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return structuredClone(defaultState);
-    return mergeState(structuredClone(defaultState), JSON.parse(raw));
+    if (!raw) return createFreshState();
+    return mergeState(createFreshState(), JSON.parse(raw));
   } catch {
-    return structuredClone(defaultState);
+    return createFreshState();
   }
+}
+
+function createFreshState() {
+  const fresh = structuredClone(defaultState);
+  fresh.dataVersion = DATA_VERSION;
+  fresh.heroes = createDefaultHeroes();
+  fresh.buildingLevels = createStarterBuildingLevels();
+  fresh.resourceTiles = {};
+  fresh.monsterStates = {};
+  fresh.serverEvents = [];
+  fresh.serverEventSequence = 1;
+  fresh.lastProductionAt = Date.now();
+  fresh.wisdom.weekKey = getWeekKey(new Date());
+  return fresh;
 }
 
 function mergeState(base, saved) {
@@ -2729,6 +2759,290 @@ function mergeAllianceProjects(baseProjects = {}, savedProjects = {}) {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  scheduleCloudSave();
+}
+
+function bindAccount() {
+  accountButton?.addEventListener("click", openAccountPanel);
+  accountClose?.addEventListener("click", closeAccountPanel);
+  accountPanel?.addEventListener("click", (event) => {
+    if (event.target === accountPanel) closeAccountPanel();
+  });
+  accountCreate?.addEventListener("click", createAccountFromPanel);
+  accountLogin?.addEventListener("click", loginAccountFromPanel);
+  accountLogout?.addEventListener("click", logoutAccount);
+  accountCloudSave?.addEventListener("click", () => saveCloudNow({ manual: true }));
+  accountCloudLoad?.addEventListener("click", () => loadCloudSave({ manual: true }));
+  accountNewGame?.addEventListener("click", () => startFreshGame({ syncCloud: Boolean(accountSession) }));
+}
+
+function initAccount() {
+  const config = window.IMPERIO_SUPABASE || {};
+  const hasConfig = Boolean(config.url && config.anonKey);
+  const factory = window.supabase?.createClient;
+  if (!hasConfig || typeof factory !== "function") {
+    renderAccountStatus(hasConfig ? "Supabase no se ha cargado. La partida queda guardada en este dispositivo." : "Supabase no configurado. Rellena supabase-config.js para crear cuenta y guardar en nube.");
+    updateAccountUi();
+    return;
+  }
+
+  supabaseClient = factory(config.url, config.anonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  });
+
+  supabaseClient.auth.getSession().then(({ data, error }) => {
+    if (error) {
+      renderAccountStatus(`No se pudo recuperar la sesion: ${error.message}`);
+      updateAccountUi();
+      return;
+    }
+    setAccountSession(data?.session || null, { loadCloud: true });
+  });
+
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === "INITIAL_SESSION") {
+      setAccountSession(session, { autosaveReady: false });
+      return;
+    }
+    setAccountSession(session, { loadCloud: event === "SIGNED_IN", autosaveReady: event !== "SIGNED_IN" });
+  });
+}
+
+function openAccountPanel() {
+  accountPanel?.classList.add("is-open");
+  accountPanel?.setAttribute("aria-hidden", "false");
+  updateAccountUi();
+}
+
+function closeAccountPanel() {
+  accountPanel?.classList.remove("is-open");
+  accountPanel?.setAttribute("aria-hidden", "true");
+}
+
+function accountCredentials() {
+  const email = String(accountEmail?.value || "").trim();
+  const password = String(accountPassword?.value || "");
+  if (!email || !email.includes("@")) return { ok: false, message: "Escribe un correo valido." };
+  if (password.length < 6) return { ok: false, message: "La contrasena debe tener minimo 6 caracteres." };
+  return { ok: true, email, password };
+}
+
+async function createAccountFromPanel() {
+  if (!supabaseClient) {
+    renderAccountStatus("Primero configura Supabase en supabase-config.js.");
+    return;
+  }
+  const credentials = accountCredentials();
+  if (!credentials.ok) {
+    renderAccountStatus(credentials.message);
+    return;
+  }
+
+  setAccountBusy(true);
+  const { data, error } = await supabaseClient.auth.signUp({
+    email: credentials.email,
+    password: credentials.password
+  });
+  setAccountBusy(false);
+  if (error) {
+    renderAccountStatus(`No se pudo crear la cuenta: ${error.message}`);
+    return;
+  }
+  if (data?.session) {
+    await setAccountSession(data.session, { loadCloud: false });
+    await saveCloudNow({ manual: true });
+    renderAccountStatus("Cuenta creada y partida inicial guardada en la nube.");
+    return;
+  }
+  renderAccountStatus("Cuenta creada. Revisa el correo para confirmar y luego pulsa Entrar.");
+}
+
+async function loginAccountFromPanel() {
+  if (!supabaseClient) {
+    renderAccountStatus("Primero configura Supabase en supabase-config.js.");
+    return;
+  }
+  const credentials = accountCredentials();
+  if (!credentials.ok) {
+    renderAccountStatus(credentials.message);
+    return;
+  }
+
+  setAccountBusy(true);
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email: credentials.email,
+    password: credentials.password
+  });
+  setAccountBusy(false);
+  if (error) {
+    renderAccountStatus(`No se pudo entrar: ${error.message}`);
+    return;
+  }
+  await setAccountSession(data?.session || null, { loadCloud: true });
+}
+
+async function logoutAccount() {
+  if (!supabaseClient) return;
+  setAccountBusy(true);
+  const { error } = await supabaseClient.auth.signOut();
+  setAccountBusy(false);
+  if (error) {
+    renderAccountStatus(`No se pudo cerrar sesion: ${error.message}`);
+    return;
+  }
+  setAccountSession(null);
+  renderAccountStatus("Sesion cerrada. La partida queda guardada localmente en este dispositivo.");
+}
+
+async function setAccountSession(session, options = {}) {
+  accountSession = session || null;
+  cloudAutosaveReady = Boolean(accountSession && options.autosaveReady);
+  if (accountSession?.user?.email && accountEmail && !accountEmail.value) {
+    accountEmail.value = accountSession.user.email;
+  }
+  updateAccountUi();
+  if (accountSession && options.loadCloud) {
+    cloudAutosaveReady = false;
+    await loadCloudSave({ manual: false });
+  } else if (accountSession) {
+    renderAccountStatus(`Conectado como ${accountSession.user.email}.`);
+  }
+}
+
+function updateAccountUi() {
+  const signed = Boolean(accountSession);
+  if (accountButtonLabel) accountButtonLabel.textContent = signed ? "Online" : "Cuenta";
+  [accountCloudSave, accountCloudLoad, accountLogout].forEach((button) => {
+    if (button) button.disabled = !signed || !supabaseClient;
+  });
+  [accountCreate, accountLogin].forEach((button) => {
+    if (button) button.disabled = signed || !supabaseClient;
+  });
+}
+
+function setAccountBusy(busy) {
+  [accountCreate, accountLogin, accountLogout, accountCloudSave, accountCloudLoad, accountNewGame].forEach((button) => {
+    if (button) button.disabled = Boolean(busy);
+  });
+  if (!busy) updateAccountUi();
+}
+
+function renderAccountStatus(message) {
+  if (accountStatus) accountStatus.textContent = message;
+}
+
+function scheduleCloudSave() {
+  if (!accountSession || !supabaseClient || cloudStateHydrating || !cloudAutosaveReady) return;
+  window.clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = window.setTimeout(() => saveCloudNow({ manual: false }), 2500);
+}
+
+async function saveCloudNow({ manual = false } = {}) {
+  if (!accountSession || !supabaseClient) {
+    if (manual) renderAccountStatus("Entra con tu cuenta para guardar en nube.");
+    return;
+  }
+  if (cloudSaveInFlight) return;
+  cloudSaveInFlight = true;
+  if (manual) setAccountBusy(true);
+  const payload = stateForCloud();
+  const { error } = await supabaseClient
+    .from("player_saves")
+    .upsert({
+      profile_id: accountSession.user.id,
+      email: accountSession.user.email,
+      state: payload,
+      data_version: DATA_VERSION,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "profile_id" });
+  cloudSaveInFlight = false;
+  if (manual) setAccountBusy(false);
+  if (error) {
+    renderAccountStatus(`No se pudo guardar en nube: ${error.message}`);
+    return;
+  }
+  cloudAutosaveReady = true;
+  renderAccountStatus(`Guardado en nube: ${new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}.`);
+}
+
+async function loadCloudSave({ manual = false } = {}) {
+  if (!accountSession || !supabaseClient) {
+    if (manual) renderAccountStatus("Entra con tu cuenta para cargar la nube.");
+    return;
+  }
+  if (manual) setAccountBusy(true);
+  const { data, error } = await supabaseClient
+    .from("player_saves")
+    .select("state, updated_at, data_version")
+    .eq("profile_id", accountSession.user.id)
+    .maybeSingle();
+  if (manual) setAccountBusy(false);
+  if (error) {
+    renderAccountStatus(`No se pudo cargar la nube: ${error.message}`);
+    return;
+  }
+  if (!data?.state) {
+    await saveCloudNow({ manual: false });
+    cloudAutosaveReady = true;
+    renderAccountStatus("No habia partida en nube. Se ha creado una partida nueva desde cero.");
+    return;
+  }
+
+  cloudStateHydrating = true;
+  state = mergeState(createFreshState(), data.state);
+  state.dataVersion = DATA_VERSION;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  restoreFortressAssignments();
+  applySavedBuildingLevels();
+  closeSheet();
+  renderGameUi();
+  cloudStateHydrating = false;
+  cloudAutosaveReady = true;
+  const savedAt = data.updated_at ? new Date(data.updated_at).toLocaleString("es-ES") : "fecha desconocida";
+  renderAccountStatus(`Partida cargada de la nube. Ultimo guardado: ${savedAt}.`);
+}
+
+function stateForCloud() {
+  return {
+    ...cloneForSnapshot(state),
+    dataVersion: DATA_VERSION,
+    savedAt: new Date().toISOString()
+  };
+}
+
+function startFreshGame({ syncCloud = false } = {}) {
+  if (!window.confirm("Esto reinicia construccion, investigacion, tropas, recursos e inventario. ¿Crear partida nueva desde cero?")) return;
+  cloudStateHydrating = true;
+  state = createFreshState();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  restoreFortressAssignments();
+  applySavedBuildingLevels();
+  closeSheet();
+  renderGameUi();
+  cloudStateHydrating = false;
+  renderAccountStatus("Nueva partida creada desde cero en este dispositivo.");
+  if (syncCloud) saveCloudNow({ manual: true });
+}
+
+function renderGameUi() {
+  renderResources();
+  renderQueueStrip();
+  renderBuildings();
+  renderMap();
+  renderPacks();
+  renderChallengePanel();
+  renderInventory();
+  renderMilitary();
+  renderHeroEquipment();
+  renderRallies();
+  renderAllianceSummary();
+  renderAllianceMembers();
+  renderAllianceChat();
+  renderAllianceFeed();
 }
 
 function recordServerEvent(type, detail = {}) {

@@ -8,8 +8,9 @@ Esta carpeta prepara la fase Supabase sin necesitar todavia claves reales.
 3. Ejecutar `schema.sql`.
 4. Ejecutar `policies-safe.sql`.
 5. Activar Auth por email.
-6. Crear un usuario de prueba.
-7. Ejecutar `seed-demo.sql` para crear una ciudad inicial al usuario mas reciente.
+6. Copiar `Project URL` y `anon public key` en `supabase-config.js`.
+7. Crear una cuenta desde el juego.
+8. Usar "Guardar nube" para sincronizar la partida inicial.
 
 ## Variables necesarias
 - `SUPABASE_URL`
@@ -19,7 +20,9 @@ Esta carpeta prepara la fase Supabase sin necesitar todavia claves reales.
 La service role key solo se usa en backend o Edge Functions. No debe ir en `app.js`, Cloudflare Pages publicas ni en el navegador.
 
 ## Criterio de migracion
-Mientras no haya backend, el juego sigue usando estado local. Cuando conectemos Supabase, cada accion local debe pasar por una funcion autoritativa:
+La primera fase guarda una copia completa de la partida en `player_saves` por usuario autenticado. Eso permite cuenta por correo y continuar desde otro dispositivo.
+
+La fase final debera mover cada accion local a funciones autoritativas:
 - validar recursos;
 - descontar coste;
 - crear cola o marcha;

@@ -19,6 +19,7 @@ alter table public.reports enable row level security;
 alter table public.chat_messages enable row level security;
 alter table public.wisdom_claims enable row level security;
 alter table public.server_events enable row level security;
+alter table public.player_saves enable row level security;
 alter table public.game_balance enable row level security;
 
 drop policy if exists "kingdoms are readable" on public.kingdoms;
@@ -255,3 +256,28 @@ with check (
       and cities.profile_id = auth.uid()
   )
 );
+
+drop policy if exists "player saves owner readable" on public.player_saves;
+create policy "player saves owner readable"
+on public.player_saves for select
+to authenticated
+using (profile_id = auth.uid());
+
+drop policy if exists "player saves owner insertable" on public.player_saves;
+create policy "player saves owner insertable"
+on public.player_saves for insert
+to authenticated
+with check (profile_id = auth.uid());
+
+drop policy if exists "player saves owner updatable" on public.player_saves;
+create policy "player saves owner updatable"
+on public.player_saves for update
+to authenticated
+using (profile_id = auth.uid())
+with check (profile_id = auth.uid());
+
+drop policy if exists "player saves owner deletable" on public.player_saves;
+create policy "player saves owner deletable"
+on public.player_saves for delete
+to authenticated
+using (profile_id = auth.uid());

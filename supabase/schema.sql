@@ -212,6 +212,15 @@ create table if not exists public.server_events (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.player_saves (
+  profile_id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  state jsonb not null default '{}'::jsonb,
+  data_version text not null default 'unknown',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.game_balance (
   key text primary key,
   value jsonb not null,
@@ -225,6 +234,7 @@ create index if not exists idx_queues_city_status on public.city_queues(city_id,
 create index if not exists idx_reports_city_created on public.reports(city_id, created_at desc);
 create index if not exists idx_chat_kingdom_created on public.chat_messages(kingdom_id, channel, created_at desc);
 create index if not exists idx_events_city_created on public.server_events(city_id, created_at desc);
+create index if not exists idx_player_saves_updated on public.player_saves(updated_at desc);
 
 insert into public.kingdoms (id, name)
 values ('reino-1', 'Reino 1')
