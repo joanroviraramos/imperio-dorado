@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g40";
+const DATA_VERSION = "20260702-g41";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -40,8 +40,16 @@ const KINGDOM_BALANCE_REQUIREMENTS = [
   { id: "cuartel", labelOverride: "Cuartel base" },
   { id: "hospital", labelOverride: "Hospital base" }
 ];
-const WORLD_COORD_MAX_X = 512;
-const WORLD_COORD_MAX_Y = 1024;
+const WORLD_COORD_MAX_X = 4096;
+const WORLD_COORD_MAX_Y = 8192;
+const WORLD_CASTLE_COUNT = 15000;
+const WORLD_SECTOR_SIZE = 512;
+const WORLD_RENDER_MARGIN_PERCENT = 6;
+const WORLD_CASTLE_SPRITES = {
+  home: "./assets/world-castle-home.png",
+  rival: "./assets/world-castle-rival.png",
+  royal: "./assets/world-castle-royal.png"
+};
 const SERVER_EVENT_LIMIT = 80;
 const resetDemo = urlParams.has("reset");
 const initialScreen = urlParams.get("screen");
@@ -428,9 +436,11 @@ const mapMarkers = [
     icon: "i-crown",
     kind: "ally",
     x: 48,
-    y: 49,
+    y: 58,
     level: 8,
     alliance: "OD",
+    castleSprite: "home",
+    prominence: 100,
     range: "Tu ciudad",
     reward: "Protegida",
     body: "Capital costera del jugador. Desde aqui salen marchas terrestres y navales."
@@ -440,10 +450,12 @@ const mapMarkers = [
     name: "Torre del Virrey",
     icon: "i-crown",
     kind: "ally",
-    x: 51,
-    y: 31,
+    x: 50,
+    y: 50,
     level: 10,
     alliance: "Reino",
+    castleSprite: "royal",
+    prominence: 100,
     range: "Centro",
     reward: "Titulos",
     body: "Wonder del reino. Mas adelante se conquistara con rallies de alianza."
@@ -457,6 +469,8 @@ const mapMarkers = [
     y: 53,
     level: 9,
     alliance: "OD",
+    castleSprite: "home",
+    prominence: 95,
     range: "Aliado",
     reward: "Refuerzo",
     body: "Ciudad aliada cercana. Servira para ayuda, refuerzos y rutas de alianza."
@@ -470,6 +484,8 @@ const mapMarkers = [
     y: 57,
     level: 7,
     alliance: "OD",
+    castleSprite: "home",
+    prominence: 90,
     range: "Aliado",
     reward: "Refuerzo",
     body: "Miembro de la Orden del Dorado. En guerra formara parte del bloque defensivo."
@@ -483,6 +499,8 @@ const mapMarkers = [
     y: 66,
     level: 7,
     alliance: "SN",
+    castleSprite: "rival",
+    prominence: 92,
     range: "00:24",
     reward: "Botin",
     body: "Ciudad de otro jugador. Antes de atacar conviene espiar y coordinar alianza."
@@ -496,6 +514,8 @@ const mapMarkers = [
     y: 39,
     level: 12,
     alliance: "LE",
+    castleSprite: "royal",
+    prominence: 96,
     range: "00:31",
     reward: "Botin alto",
     body: "Castillo fuerte de otra alianza. Buen objetivo para rally si tu ataque directo no llega."
@@ -509,6 +529,8 @@ const mapMarkers = [
     y: 69,
     level: 6,
     alliance: "MR",
+    castleSprite: "rival",
+    prominence: 88,
     range: "00:22",
     reward: "Plata",
     body: "Posicion costera rival. Los galeones y la artilleria tendran ventaja en futuras reglas navales."
@@ -638,14 +660,15 @@ const mapMarkers = [
     reward: "Plata",
     body: "Casilla rara. La plata se recolecta mas lenta, pero acelera forja, academia y tropas."
   },
-  ...generateKingdomMarkers()
+  ...generateKingdomMarkers(),
+  ...generateWorldCastleField()
 ];
 
 const HOME_MARKER_ID = "home";
 
 const worldRegions = [
-  { id: "capital", label: "Centro del Reino", x: 51, y: 31, w: 17, h: 10, tone: "royal" },
-  { id: "od", label: "Orden del Dorado", x: 48, y: 52, w: 24, h: 16, tone: "ally" },
+  { id: "capital", label: "Zona de Maravilla", x: 50, y: 50, w: 14, h: 9, tone: "royal" },
+  { id: "od", label: "Orden del Dorado", x: 48, y: 58, w: 24, h: 16, tone: "ally" },
   { id: "sn", label: "Sombra Norte", x: 25, y: 68, w: 19, h: 14, tone: "enemy" },
   { id: "le", label: "Liga Esmeralda", x: 75, y: 34, w: 21, h: 15, tone: "enemy" },
   { id: "mr", label: "Mar de Rojo", x: 82, y: 72, w: 18, h: 13, tone: "enemy" },
@@ -657,7 +680,7 @@ function generateKingdomMarkers() {
     ...generateAllianceCluster({
       tag: "OD",
       kind: "ally",
-      origin: { x: 47, y: 51 },
+      origin: { x: 47, y: 58 },
       names: ["Real de Alcantara", "Fortin San Telmo", "Casa de Contratacion", "Puerto Nuevo", "Baluarte de Cadiz", "Villa de la Flota"],
       icon: "i-crown",
       start: 3
@@ -690,6 +713,75 @@ function generateKingdomMarkers() {
   ];
 }
 
+function generateWorldCastleField() {
+  const regions = [
+    { tag: "OD", kind: "ally", x: 48, y: 58, w: 28, h: 20, names: ["Real", "Villa", "Puerto", "Baluarte", "Fortin"] },
+    { tag: "SN", kind: "enemy", x: 24, y: 68, w: 28, h: 22, names: ["Castillo", "Torre", "Marca", "Bastida", "Fuerte"] },
+    { tag: "LE", kind: "enemy", x: 74, y: 35, w: 30, h: 23, names: ["Ciudad", "Guardia", "Arsenal", "Baluarte", "Torre"] },
+    { tag: "MR", kind: "enemy", x: 82, y: 72, w: 24, h: 20, names: ["Puerto", "Dique", "Faro", "Cala", "Fortaleza"] },
+    { tag: "FR", kind: "enemy", x: 56, y: 83, w: 54, h: 16, names: ["Atalaya", "Villa", "Paso", "Fuerte", "Campamento"] },
+    { tag: "AR", kind: "enemy", x: 50, y: 20, w: 74, h: 22, names: ["Torre", "Real", "Bastion", "Plaza", "Muralla"] }
+  ];
+  const markers = [];
+
+  for (let index = 0; markers.length < WORLD_CASTLE_COUNT; index += 1) {
+    const region = regions[index % regions.length];
+    const seed = worldSeed(index + 1);
+    const jitterX = seededUnit(seed, 11) - 0.5;
+    const jitterY = seededUnit(seed, 29) - 0.5;
+    let x = clampPercent(region.x + jitterX * region.w);
+    let y = clampPercent(region.y + jitterY * region.h);
+
+    if (worldPointInWonderReserve(x, y)) {
+      x = clampPercent(x + (x < 50 ? -8 : 8));
+      y = clampPercent(y + (y < 50 ? -6 : 6));
+    }
+
+    const coord = worldCoordFromPercent(x, y);
+    const level = 1 + (worldSeed(index + 17) % 25);
+    const prominence = worldSeed(index + 73) % 100;
+    const nameRoot = region.names[index % region.names.length];
+    markers.push({
+      id: `world-castle-${index + 1}`,
+      name: `${nameRoot} ${region.tag}-${index + 1}`,
+      icon: region.kind === "ally" ? "i-crown" : "i-shield",
+      kind: region.kind,
+      x,
+      y,
+      coord,
+      level,
+      alliance: region.tag,
+      castleSprite: level >= 16 ? "royal" : "rival",
+      prominence,
+      generated: true,
+      range: kingdomRangeLabel(x, y),
+      reward: region.kind === "ally" ? "Refuerzo" : "Botin",
+      body: region.kind === "ally"
+        ? `Ciudad aliada de ${region.tag}. Forma parte del tejido enorme del reino.`
+        : `Castillo de la alianza ${region.tag}. En un mundo grande conviene localizarlo por coordenadas, espiar y guardar marcador.`
+    });
+  }
+
+  return markers;
+}
+
+function worldSeed(value) {
+  let seed = (value | 0) + 0x6d2b79f5;
+  seed = Math.imul(seed ^ (seed >>> 15), seed | 1);
+  seed ^= seed + Math.imul(seed ^ (seed >>> 7), seed | 61);
+  return ((seed ^ (seed >>> 14)) >>> 0);
+}
+
+function seededUnit(seed, salt) {
+  return (worldSeed(seed + salt) % 100000) / 100000;
+}
+
+function worldPointInWonderReserve(x, y) {
+  const dx = (x - 50) / 8;
+  const dy = (y - 50) / 5;
+  return dx * dx + dy * dy < 1;
+}
+
 function generateAllianceCluster({ tag, kind, origin, names, icon, start }) {
   const offsets = [
     [-7, -6], [-2, -7], [5, -6], [-8, -1], [8, -1], [-4, 5], [4, 6], [0, 0]
@@ -707,6 +799,8 @@ function generateAllianceCluster({ tag, kind, origin, names, icon, start }) {
       y,
       level: 5 + ((start + index) % 11),
       alliance: tag,
+      castleSprite: kind === "ally" ? "home" : "rival",
+      prominence: 80 + (index % 20),
       range: kingdomRangeLabel(x, y),
       reward: kind === "ally" ? "Refuerzo" : "Botin",
       body: kind === "ally"
@@ -2034,9 +2128,11 @@ let worldFilter = "all";
 let worldZoom = 1;
 let worldHasCentered = false;
 let worldPinch = null;
+let worldRenderFrame = 0;
+let worldCoordinateTimer = 0;
 let heroPanelTab = "perfil";
 
-const WORLD_MIN_ZOOM = 0.28;
+const WORLD_MIN_ZOOM = 0.18;
 const WORLD_MAX_ZOOM = 1.8;
 const WORLD_ZOOM_STEP = 0.18;
 const resourceStrip = document.querySelector("#resourceStrip");
@@ -2046,6 +2142,7 @@ const buildingLayer = document.querySelector("#buildingLayer");
 const worldViewport = document.querySelector("#worldViewport");
 const worldCanvas = document.querySelector("#worldCanvas");
 const worldCoordinates = document.querySelector("#worldCoordinates");
+const worldTouchCoordinates = document.querySelector("#worldTouchCoordinates");
 const worldJumpForm = document.querySelector("#worldJumpForm");
 const worldJumpX = document.querySelector("#worldJumpX");
 const worldJumpY = document.querySelector("#worldJumpY");
@@ -2055,6 +2152,7 @@ const mapLayer = document.querySelector("#mapLayer");
 const sheet = document.querySelector("#detailSheet");
 const sheetBody = document.querySelector("#sheetBody");
 const packGrid = document.querySelector("#packGrid");
+const packShortcutButton = document.querySelector("#packShortcutButton");
 const challengePanel = document.querySelector("#challengePanel");
 const weeklyCount = document.querySelector("#weeklyCount");
 const weeklyMeterFill = document.querySelector("#weeklyMeterFill");
@@ -3973,9 +4071,18 @@ function markerCoordLabel(marker) {
 
 function markerSectorLabel(marker) {
   const coord = markerWorldCoord(marker);
-  const sectorX = Math.floor(coord.x / 64) + 1;
-  const sectorY = Math.floor(coord.y / 128) + 1;
+  const sectorX = Math.floor(coord.x / WORLD_SECTOR_SIZE) + 1;
+  const sectorY = Math.floor(coord.y / WORLD_SECTOR_SIZE) + 1;
   return `S${sectorX}-${sectorY}`;
+}
+
+function worldPercentFromClient(clientX, clientY) {
+  if (!worldCanvas) return { x: 0, y: 0 };
+  const rect = worldCanvas.getBoundingClientRect();
+  return {
+    x: Math.max(0, Math.min(100, ((clientX - rect.left) / Math.max(1, rect.width)) * 100)),
+    y: Math.max(0, Math.min(100, ((clientY - rect.top) / Math.max(1, rect.height)) * 100))
+  };
 }
 
 function renderBuildings() {
@@ -4141,6 +4248,8 @@ function renderMap() {
           data-depleted="${marker.kind === "resource" && resourceTileState(marker).depleted ? "true" : "false"}"
           data-defeated="${marker.kind === "monster" && monsterState(marker).defeated ? "true" : "false"}"
           data-home="${marker.id === HOME_MARKER_ID ? "true" : "false"}"
+          data-castle="${isWorldCastleMarker(marker) ? "true" : "false"}"
+          data-generated="${marker.generated ? "true" : "false"}"
           data-marker="${marker.id}"
           data-world-x="${coord.x}"
           data-world-y="${coord.y}"
@@ -4190,27 +4299,70 @@ function renderMap() {
 }
 
 function renderWorldSectorLabels() {
-  return [
-    { x: 25, y: 25 },
-    { x: 50, y: 25 },
-    { x: 75, y: 25 },
-    { x: 25, y: 50 },
-    { x: 50, y: 50 },
-    { x: 75, y: 50 },
-    { x: 25, y: 75 },
-    { x: 50, y: 75 },
-    { x: 75, y: 75 }
-  ]
-    .map((point) => {
-      const coord = worldCoordFromPercent(point.x, point.y);
+  return visibleWorldSectors()
+    .map((coord) => {
+      const point = worldPercentFromCoord(coord.x, coord.y);
       return `<span class="world-sector-label" style="left:${point.x}%; top:${point.y}%">X${coord.x} Y${coord.y}</span>`;
     })
     .join("");
 }
 
 function visibleMapMarkers() {
-  if (worldFilter === "all") return mapMarkers;
-  return mapMarkers.filter((marker) => marker.id === HOME_MARKER_ID || marker.kind === worldFilter);
+  const bounds = worldVisibleBounds();
+  const source = worldFilter === "all"
+    ? mapMarkers
+    : mapMarkers.filter((marker) => marker.id === HOME_MARKER_ID || marker.id === "wonder" || marker.kind === worldFilter);
+
+  return source.filter((marker) => {
+    if (marker.id === HOME_MARKER_ID || marker.id === "wonder" || marker.id === activeMapMarkerId) return true;
+    if (!bounds) return !marker.generated;
+    if (!markerInWorldBounds(marker, bounds)) return false;
+    return markerPassesZoomDensity(marker);
+  });
+}
+
+function visibleWorldSectors() {
+  const bounds = worldVisibleBounds();
+  const minX = bounds ? Math.floor((bounds.left / 100) * WORLD_COORD_MAX_X / WORLD_SECTOR_SIZE) * WORLD_SECTOR_SIZE : 0;
+  const maxX = bounds ? Math.ceil((bounds.right / 100) * WORLD_COORD_MAX_X / WORLD_SECTOR_SIZE) * WORLD_SECTOR_SIZE : WORLD_COORD_MAX_X;
+  const minY = bounds ? Math.floor((bounds.top / 100) * WORLD_COORD_MAX_Y / WORLD_SECTOR_SIZE) * WORLD_SECTOR_SIZE : 0;
+  const maxY = bounds ? Math.ceil((bounds.bottom / 100) * WORLD_COORD_MAX_Y / WORLD_SECTOR_SIZE) * WORLD_SECTOR_SIZE : WORLD_COORD_MAX_Y;
+  const sectors = [];
+
+  for (let x = Math.max(0, minX); x <= Math.min(WORLD_COORD_MAX_X, maxX); x += WORLD_SECTOR_SIZE) {
+    for (let y = Math.max(0, minY); y <= Math.min(WORLD_COORD_MAX_Y, maxY); y += WORLD_SECTOR_SIZE) {
+      sectors.push({ x, y });
+    }
+  }
+
+  return sectors.slice(0, 60);
+}
+
+function worldVisibleBounds() {
+  if (!worldViewport || !worldCanvas || !worldViewport.clientWidth || !worldViewport.clientHeight) return null;
+  const width = Math.max(1, worldCanvas.scrollWidth);
+  const height = Math.max(1, worldCanvas.scrollHeight);
+  const marginX = WORLD_RENDER_MARGIN_PERCENT / Math.max(0.6, worldZoom);
+  const marginY = WORLD_RENDER_MARGIN_PERCENT / Math.max(0.6, worldZoom);
+
+  return {
+    left: Math.max(0, ((worldViewport.scrollLeft / width) * 100) - marginX),
+    right: Math.min(100, (((worldViewport.scrollLeft + worldViewport.clientWidth) / width) * 100) + marginX),
+    top: Math.max(0, ((worldViewport.scrollTop / height) * 100) - marginY),
+    bottom: Math.min(100, (((worldViewport.scrollTop + worldViewport.clientHeight) / height) * 100) + marginY)
+  };
+}
+
+function markerInWorldBounds(marker, bounds) {
+  return marker.x >= bounds.left && marker.x <= bounds.right && marker.y >= bounds.top && marker.y <= bounds.bottom;
+}
+
+function markerPassesZoomDensity(marker) {
+  if (!marker.generated) return true;
+  if (worldZoom <= 0.32) return marker.level >= 22 && marker.prominence >= 86;
+  if (worldZoom <= 0.48) return marker.level >= 18 && marker.prominence >= 70;
+  if (worldZoom <= 0.72) return marker.level >= 12 || marker.prominence >= 62;
+  return true;
 }
 
 function renderWorldRegions() {
@@ -4281,10 +4433,6 @@ function renderWorldMarchRoutes() {
 }
 
 function renderMapMarkerIcon(marker) {
-  if (marker.id === HOME_MARKER_ID) {
-    return `<span class="home-token"><svg><use href="#i-crown" /></svg><b>${marker.level}</b></span>`;
-  }
-
   if (marker.kind === "monster") {
     return renderMonsterToken(marker);
   }
@@ -4293,7 +4441,17 @@ function renderMapMarkerIcon(marker) {
     return `<span class="resource-token resource-token--${marker.resource || "grain"}"><svg><use href="#${marker.icon}" /></svg><b>${marker.level}</b></span>`;
   }
 
+  if (isWorldCastleMarker(marker)) {
+    const spriteKey = marker.castleSprite || (marker.id === HOME_MARKER_ID || marker.kind === "ally" ? "home" : "rival");
+    const sprite = WORLD_CASTLE_SPRITES[spriteKey] || WORLD_CASTLE_SPRITES.rival;
+    return `<span class="world-castle-token world-castle-token--${spriteKey} world-castle-token--${marker.kind || "enemy"}"><img src="${sprite}" alt="" loading="lazy"><b>${marker.level || ""}</b></span>`;
+  }
+
   return `<span class="castle-token castle-token--${marker.kind || "enemy"}"><span class="castle-roof"></span><span class="castle-body"></span><b>${marker.level || ""}</b></span>`;
+}
+
+function isWorldCastleMarker(marker) {
+  return marker?.kind === "ally" || marker?.kind === "enemy";
 }
 
 function renderMonsterToken(marker) {
@@ -4320,7 +4478,15 @@ function renderMapMarkerBadge(marker) {
 function bindWorldMap() {
   if (!worldViewport || !worldCanvas) return;
 
-  worldViewport.addEventListener("scroll", updateWorldCoordinates, { passive: true });
+  worldViewport.addEventListener("scroll", () => {
+    updateWorldCoordinates();
+    scheduleWorldRender();
+  }, { passive: true });
+  worldViewport.addEventListener("pointerdown", showWorldPointerCoordinates, { passive: true });
+  worldViewport.addEventListener("pointermove", (event) => {
+    if (event.pointerType === "mouse" && event.buttons !== 1) return;
+    showWorldPointerCoordinates(event);
+  }, { passive: true });
   worldViewport.addEventListener("touchstart", startWorldPinch, { passive: false });
   worldViewport.addEventListener("touchmove", moveWorldPinch, { passive: false });
   worldViewport.addEventListener("touchend", endWorldPinch, { passive: true });
@@ -4355,6 +4521,14 @@ function bindWorldMap() {
   applyWorldZoom();
 }
 
+function scheduleWorldRender() {
+  if (!mapLayer || currentTab !== "world" || worldRenderFrame) return;
+  worldRenderFrame = window.requestAnimationFrame(() => {
+    worldRenderFrame = 0;
+    renderMap();
+  });
+}
+
 function bindSceneDismiss() {
   document.querySelectorAll(".scene-city, .scene-world").forEach((scene) => {
     scene.addEventListener("click", (event) => {
@@ -4386,6 +4560,7 @@ function setWorldZoomValue(nextZoom, anchor = null) {
 
   worldViewport.scrollLeft = contentRatioX * worldCanvas.scrollWidth - anchorX;
   worldViewport.scrollTop = contentRatioY * worldCanvas.scrollHeight - anchorY;
+  renderMap();
   updateWorldCoordinates();
 }
 
@@ -4499,6 +4674,7 @@ function centerWorldOnPoint(x, y, marker = null) {
   worldViewport.scrollLeft = Math.max(0, targetX);
   worldViewport.scrollTop = Math.max(0, targetY);
   worldHasCentered = true;
+  renderMap();
   updateWorldCoordinates(marker || { x, y });
 }
 
@@ -4508,6 +4684,26 @@ function updateWorldCoordinates(marker = null) {
   const centerY = marker ? marker.y / 100 : (worldViewport.scrollTop + worldViewport.clientHeight / 2) / Math.max(1, worldCanvas.scrollHeight);
   const coord = worldCoordFromPercent(centerX * 100, centerY * 100);
   worldCoordinates.textContent = `X:${coord.x} Y:${coord.y}`;
+}
+
+function showWorldPointerCoordinates(event) {
+  if (!worldTouchCoordinates || !worldCanvas) return;
+  const point = worldPercentFromClient(event.clientX, event.clientY);
+  const coord = worldCoordFromPercent(point.x, point.y);
+  const sceneRect = document.querySelector(".scene-world")?.getBoundingClientRect();
+  const localX = sceneRect ? event.clientX - sceneRect.left : event.clientX;
+  const localY = sceneRect ? event.clientY - sceneRect.top : event.clientY;
+  worldTouchCoordinates.textContent = `X:${coord.x} Y:${coord.y}`;
+  worldTouchCoordinates.style.left = `${Math.max(58, Math.min(localX, (sceneRect?.width || 420) - 58))}px`;
+  worldTouchCoordinates.style.top = `${Math.max(74, Math.min(localY - 34, (sceneRect?.height || 720) - 118))}px`;
+  worldTouchCoordinates.hidden = false;
+  worldTouchCoordinates.classList.add("is-visible");
+  if (worldCoordinates) worldCoordinates.textContent = `X:${coord.x} Y:${coord.y}`;
+  window.clearTimeout(worldCoordinateTimer);
+  worldCoordinateTimer = window.setTimeout(() => {
+    worldTouchCoordinates.classList.remove("is-visible");
+    worldTouchCoordinates.hidden = true;
+  }, 1600);
 }
 
 function renderWorldMarchOverlays() {
@@ -4618,6 +4814,7 @@ function bindNavigation() {
     button.addEventListener("click", () => switchTab(button.dataset.tab));
   });
   heroAccessButton?.addEventListener("click", () => switchTab("hero"));
+  packShortcutButton?.addEventListener("click", () => switchTab("wisdom"));
 }
 
 function switchTab(tab) {

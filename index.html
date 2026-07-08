@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260702-g40" />
-    <link rel="stylesheet" href="./hero.css?v=20260702-g40" />
+    <link rel="stylesheet" href="./styles.css?v=20260702-g41" />
+    <link rel="stylesheet" href="./hero.css?v=20260702-g41" />
   </head>
   <body>
     <svg class="icon-defs" aria-hidden="true">
@@ -89,6 +89,10 @@
       </header>
 
       <section class="resource-strip" id="resourceStrip" aria-label="Recursos"></section>
+      <button class="pack-shortcut" id="packShortcutButton" type="button" aria-label="Abrir paquetes">
+        <svg><use href="#i-bag" /></svg>
+        <span>Paquetes</span>
+      </button>
       <section class="queue-strip" id="queueStrip" aria-label="Colas activas"></section>
 
       <section class="screen is-active" id="screen-city" data-screen="city" aria-label="Fortaleza">
@@ -107,22 +111,12 @@
               <div class="map-layer" id="mapLayer"></div>
             </div>
           </div>
+          <div class="world-touch-coordinates" id="worldTouchCoordinates" hidden>X:0 Y:0</div>
           <div class="world-march-panel" id="worldMarchPanel"></div>
           <div class="world-hud">
-            <form class="world-jump-form" id="worldJumpForm" aria-label="Ir a coordenadas">
+            <div class="world-coordinate-badge" aria-label="Coordenadas visibles">
               <span id="worldCoordinates">X:0 Y:0</span>
-              <label>
-                <span>X</span>
-                <input id="worldJumpX" type="number" min="0" max="512" inputmode="numeric" placeholder="X" />
-              </label>
-              <label>
-                <span>Y</span>
-                <input id="worldJumpY" type="number" min="0" max="1024" inputmode="numeric" placeholder="Y" />
-              </label>
-              <button type="submit" aria-label="Ir a coordenadas">
-                <svg><use href="#i-target" /></svg>
-              </button>
-            </form>
+            </div>
             <button class="world-home-button" type="button" data-world-center="home" aria-label="Localizar fortaleza">
               <svg><use href="#i-crown" /></svg>
               <span>Mi fortaleza</span>
@@ -306,10 +300,6 @@
           <svg><use href="#i-map" /></svg>
           <span>Mundo</span>
         </button>
-        <button type="button" data-tab="wisdom" aria-label="Sabios">
-          <svg><use href="#i-scroll" /></svg>
-          <span>Sabios</span>
-        </button>
         <button type="button" data-tab="inventory" aria-label="Inventario">
           <svg><use href="#i-bag" /></svg>
           <span>Invent.</span>
@@ -329,6 +319,6 @@
       </nav>
     </main>
 
-    <script src="./app.js?v=20260702-g40"></script>
+    <script src="./app.js?v=20260702-g41"></script>
   </body>
 </html>
