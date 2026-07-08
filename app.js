@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g39";
+const DATA_VERSION = "20260702-g40";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -376,7 +376,7 @@ const fortressPlots = [
   { id: "base-alcazar", zone: "base", label: "Alcázar", x: 50, y: 13, buildingId: "alcazar" },
   { id: "base-academia", zone: "base", label: "Academia", x: 61, y: 30, buildingId: "academia" },
   { id: "base-forja", zone: "base", label: "Solar de forja", x: 74, y: 31 },
-  { id: "base-mercado", zone: "base", label: "Solar de mercado", x: 27, y: 34 },
+  { id: "base-mercado", zone: "base", label: "Solar de mercado", x: 27, y: 31 },
   { id: "base-embajada", zone: "base", label: "Solar de embajada", x: 41, y: 30 },
   { id: "base-prision", zone: "base", label: "Solar de prision", x: 86, y: 33 },
   { id: "base-alianza", zone: "base", label: "Solar de alianza", x: 20, y: 39 },
@@ -2165,10 +2165,10 @@ function init() {
       }
       .scene-city .fortress-plot--military .fortress-plot-sprite {
         transform: translate(-50%, 50%) !important;
-        width: 50px !important;
+        width: 52px !important;
       }
       .scene-city .fortress-plot--military[data-building-kind="barracks"] .fortress-plot-sprite {
-        width: 52px !important;
+        width: 54px !important;
       }
       .scene-city .fortress-plot--base .fortress-plot-sprite {
         transform: translate(-50%, 40%) !important;
