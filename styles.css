@@ -207,6 +207,10 @@ svg {
   pointer-events: none;
 }
 
+.app-shell[data-active-tab="world"] .resource-strip {
+  display: none;
+}
+
 .pack-shortcut {
   position: absolute;
   z-index: 34;
@@ -703,6 +707,38 @@ svg {
   border-right: 1px solid rgba(255, 215, 122, 0.32);
   border-bottom: 1px solid rgba(255, 215, 122, 0.32);
   transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.world-top-hud {
+  position: absolute;
+  z-index: 34;
+  top: 106px;
+  left: 12px;
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 215, 122, 0.34);
+  border-radius: 8px;
+  background: rgba(18, 15, 12, 0.86);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.world-top-hud span {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 1000;
+  text-transform: uppercase;
+}
+
+.world-top-hud strong {
+  color: var(--gold-bright);
+  font-size: 12px;
+  font-weight: 1000;
 }
 
 .world-jump-form label {
@@ -1373,6 +1409,11 @@ svg {
   height: 80px;
 }
 
+.world-resource-token--silver {
+  width: 102px;
+  height: 80px;
+}
+
 .world-resource-token b {
   position: absolute;
   right: 3px;
@@ -1579,6 +1620,28 @@ svg {
     0 10px 18px rgba(0, 0, 0, 0.36);
 }
 
+.world-march-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.world-march-icon--hero {
+  overflow: hidden;
+  border-color: rgba(255, 215, 122, 0.94);
+  background: rgba(18, 15, 12, 0.94);
+  box-shadow:
+    0 0 0 4px rgba(232, 184, 79, 0.22),
+    0 0 18px rgba(255, 215, 122, 0.44),
+    0 10px 18px rgba(0, 0, 0, 0.38);
+}
+
+.world-march-icon--hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.18);
+}
+
 .world-march--gathering .world-march-icon {
   border-color: rgba(185, 232, 118, 0.94);
   background:
@@ -1643,6 +1706,11 @@ svg {
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
   backdrop-filter: blur(14px);
   scrollbar-width: none;
+}
+
+.world-march-panel[hidden],
+.world-march-panel {
+  display: none;
 }
 
 .world-march-panel::-webkit-scrollbar {
@@ -5917,6 +5985,11 @@ svg {
   }
 
   .world-resource-token--iron {
+    width: 72px;
+    height: 56px;
+  }
+
+  .world-resource-token--silver {
     width: 72px;
     height: 56px;
   }

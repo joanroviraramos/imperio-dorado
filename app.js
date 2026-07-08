@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g45";
+const DATA_VERSION = "20260702-g46";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -54,8 +54,32 @@ const WORLD_RESOURCE_SPRITES = {
   grain: "./assets/world-resource-food.png",
   wood: "./assets/world-resource-wood.png",
   stone: "./assets/world-resource-stone.png",
-  iron: "./assets/world-resource-iron.png"
+  iron: "./assets/world-resource-iron.png",
+  silver: "./assets/world-resource-silver.png"
 };
+const RESOURCE_TILE_BASE_CAPACITY = {
+  grain: 30000,
+  wood: 28000,
+  stone: 26000,
+  iron: 24000,
+  silver: 15000
+};
+const RESOURCE_TILE_LEVEL_CAPACITY = {
+  grain: 35000,
+  wood: 32000,
+  stone: 30000,
+  iron: 28000,
+  silver: 17000
+};
+const RESOURCE_GATHER_RATE_PER_MINUTE = {
+  grain: 9000,
+  wood: 8400,
+  stone: 7600,
+  iron: 6800,
+  silver: 5200
+};
+const RESOURCE_GATHER_MIN_MS = 2 * 60 * 1000;
+const RESOURCE_GATHER_MAX_MS = 45 * 60 * 1000;
 const SERVER_EVENT_LIMIT = 80;
 const resetDemo = urlParams.has("reset");
 const initialScreen = urlParams.get("screen");
@@ -2155,6 +2179,7 @@ const worldJumpX = document.querySelector("#worldJumpX");
 const worldJumpY = document.querySelector("#worldJumpY");
 const worldFilterTabs = document.querySelector("#worldFilterTabs");
 const worldMarchPanel = document.querySelector("#worldMarchPanel");
+const worldMarchCount = document.querySelector("#worldMarchCount");
 const mapLayer = document.querySelector("#mapLayer");
 const sheet = document.querySelector("#detailSheet");
 const sheetBody = document.querySelector("#sheetBody");
@@ -2511,7 +2536,13 @@ function normalizeResourceTiles(tiles = {}) {
       .map(([markerId, tile]) => {
         const marker = markerById(markerId);
         const max = resourceTileCapacity(marker);
-        const remaining = tile?.remaining === undefined ? max : Math.min(max, Math.max(0, Math.floor(Number(tile.remaining) || 0)));
+        const previousMax = Math.max(0, Number(tile?.max) || 0);
+        let savedRemaining = tile?.remaining === undefined ? max : Number(tile.remaining);
+        if (tile?.remaining !== undefined && previousMax > 0 && previousMax !== max) {
+          const filledRatio = Math.min(1, Math.max(0, Number(tile.remaining) / previousMax));
+          savedRemaining = Math.round(max * filledRatio);
+        }
+        const remaining = Math.min(max, Math.max(0, Math.floor(Number.isFinite(savedRemaining) ? savedRemaining : max)));
         const updatedAt = Math.max(0, Math.floor(Number(tile?.updatedAt) || Date.now()));
         return [markerId, { remaining, max, updatedAt }];
       })
@@ -3072,12 +3103,10 @@ function applyOfflineProduction() {
     state.productionRemainder[resource] = raw - amount;
     if (amount <= 0) return;
 
-    const cap = resourceCapacity(resource);
     const before = state.resources[resource] || 0;
-    const next = Math.min(cap, before + amount);
+    const next = before + amount;
     state.resources[resource] = next;
     if (next !== before) changed = true;
-    if (next >= cap) state.productionRemainder[resource] = 0;
   });
   state.lastProductionAt = now;
   return changed;
@@ -3106,6 +3135,17 @@ function formatNumber(value) {
   }).format(value);
 }
 
+function formatHudNumber(value) {
+  const safe = Math.max(0, Math.floor(Number(value) || 0));
+  if (safe >= 1000000) {
+    const amount = safe / 1000000;
+    const text = amount >= 10 ? Math.floor(amount) : Math.floor(amount * 10) / 10;
+    return `${String(text).replace(".", ",")}M`;
+  }
+  if (safe >= 1000) return `${Math.floor(safe / 1000)}k`;
+  return formatNumber(safe);
+}
+
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
@@ -3123,10 +3163,9 @@ function renderResources() {
       const cap = resourceCapacity(resource.id);
       const fill = Math.min(100, Math.max(0, (value / cap) * 100));
       return `
-        <div class="resource-chip" title="${resource.name}: ${formatNumber(value)} / ${formatNumber(cap)}">
+        <div class="resource-chip" title="${resource.name}: ${formatNumber(value)}. Protegido por almacen: ${formatNumber(cap)}">
           <i class="resource-dot" style="color:${resource.color}; background:${resource.color}"></i>
-          <span>${formatNumber(value)}</span>
-          <b>${formatNumber(cap)}</b>
+          <span>${formatHudNumber(value)}</span>
           <em style="--fill:${fill}%"></em>
         </div>
       `;
@@ -4273,9 +4312,10 @@ function renderMap() {
     .join("") +
     renderWorldMarchOverlays();
 
+  updateWorldMarchCount();
   if (worldMarchPanel) {
-    worldMarchPanel.classList.toggle("is-empty", !state.marches.length && !state.rallies?.length && !state.reports?.length && !state.worldBookmarks?.length);
-    worldMarchPanel.innerHTML = renderWorldMarchPanel();
+    worldMarchPanel.hidden = true;
+    worldMarchPanel.innerHTML = "";
   }
 
   mapLayer.querySelectorAll("[data-marker]").forEach((button) => {
@@ -4290,19 +4330,12 @@ function renderMap() {
   mapLayer.querySelectorAll("[data-world-report]").forEach((button) => {
     button.addEventListener("click", () => openReport(button.dataset.worldReport));
   });
-  worldMarchPanel?.querySelectorAll("[data-world-march]").forEach((button) => {
-    button.addEventListener("click", () => openWorldMarch(button.dataset.worldMarch));
-  });
-  worldMarchPanel?.querySelectorAll("[data-world-rally]").forEach((button) => {
-    button.addEventListener("click", () => openRallyDetail(button.dataset.worldRally));
-  });
-  worldMarchPanel?.querySelectorAll("[data-world-report]").forEach((button) => {
-    button.addEventListener("click", () => openReport(button.dataset.worldReport));
-  });
-  worldMarchPanel?.querySelectorAll("[data-world-bookmark]").forEach((button) => {
-    button.addEventListener("click", () => centerWorldOnMarker(button.dataset.worldBookmark, { flash: true }));
-  });
   updateWorldCoordinates();
+}
+
+function updateWorldMarchCount() {
+  if (!worldMarchCount) return;
+  worldMarchCount.textContent = `${state.marches.length}/${marchSlots()}`;
 }
 
 function renderWorldSectorLabels() {
@@ -4395,11 +4428,12 @@ function renderWorldMarchRoutes() {
 
   const routes = state.marches
     .map((march) => {
+      if (march.phase === "gathering") return "";
       const target = mapMarkers.find((marker) => marker.id === march.markerId);
       if (!target) return "";
       const current = marchMapPosition(march);
       const activeStart = march.phase === "returning" ? target : home;
-      const activeEnd = march.phase === "gathering" ? target : current;
+      const activeEnd = current;
       const targetLabel = `${marchPhaseName(march.phase)} ${march.targetName}`;
 
       return `
@@ -4741,12 +4775,20 @@ function renderWorldMarchOverlays() {
           style="left:${position.x}%; top:${position.y}%"
           aria-label="${marchPhaseName(march.phase)} ${march.targetName}"
         >
-          <span class="world-march-icon"><svg><use href="#${marchIcon(march)}" /></svg></span>
+          ${renderWorldMarchIcon(march)}
           <span class="world-march-label"><strong>${marchPhaseName(march.phase)}</strong><em>${formatDuration(remaining)}</em></span>
         </button>
       `;
     })
     .join("");
+}
+
+function renderWorldMarchIcon(march) {
+  if (march.withHero && march.heroId) {
+    const hero = heroById(march.heroId);
+    return `<span class="world-march-icon world-march-icon--hero"><img src="${hero.portrait}" alt="" decoding="async"></span>`;
+  }
+  return `<span class="world-march-icon"><svg><use href="#${marchIcon(march)}" /></svg></span>`;
 }
 
 function renderWorldMarchPanel() {
@@ -4840,6 +4882,7 @@ function bindNavigation() {
 
 function switchTab(tab) {
   currentTab = tab;
+  document.querySelector("#app")?.setAttribute("data-active-tab", tab);
   closeSheet();
   document.querySelectorAll(".screen").forEach((screen) => {
     screen.classList.toggle("is-active", screen.dataset.screen === tab);
@@ -4851,6 +4894,7 @@ function switchTab(tab) {
   if (tab === "world" && !worldHasCentered) {
     window.setTimeout(() => centerWorldOnMarker(HOME_MARKER_ID), 0);
   }
+  updateWorldMarchCount();
 }
 
 function openSheet() {
@@ -5587,10 +5631,7 @@ function updateMarchPlannerSummary(planner) {
   const totalSelected = plan ? Object.values(plan.troops).reduce((sum, value) => sum + value, 0) : 0;
   const limitHeroId = plan?.withHero ? plan.heroId : null;
   const load = plan ? troopBundleLoad(plan.troops, limitHeroId) : 0;
-  const storageFree = marker.kind === "resource"
-    ? Math.max(0, resourceCapacity(marker.resource || "iron") - (state.resources[marker.resource || "iron"] || 0))
-    : load;
-  const visibleLoad = marker.kind === "resource" ? Math.min(load, resourceTileState(marker).remaining, storageFree) : load;
+  const visibleLoad = marker.kind === "resource" ? Math.min(load, resourceTileState(marker).remaining) : load;
   const marchLimit = maxMarchSize(limitHeroId);
   const overLimit = totalSelected > marchLimit;
   summary.innerHTML = `
@@ -5615,8 +5656,8 @@ function renderMarchPreview(marker, plan) {
     const load = troopBundleLoad(plan.troops, plan.withHero ? plan.heroId : null);
     const tile = resourceTileState(marker);
     const resource = marker.resource || "iron";
-    const storageFree = Math.max(0, resourceCapacity(resource) - (state.resources[resource] || 0));
-    const collectable = Math.min(load, tile.remaining, storageFree);
+    const protectedAmount = resourceCapacity(resource);
+    const collectable = Math.min(load, tile.remaining);
     return `
       <div class="march-preview-head">
         <span>Recoleccion prevista${plan.withHero ? ` con ${heroDisplayName(plan.heroId)}` : ""}</span>
@@ -5627,7 +5668,7 @@ function renderMarchPreview(marker, plan) {
         <div><span>Regreso</span><strong>${formatDuration(plan.returnDurationMs)}</strong></div>
         <div><span>Carga total</span><strong>${formatNumber(load)}</strong></div>
       </div>
-      <p>${tile.depleted ? `Casilla agotada. Rellena en ${formatDuration(tile.refillMs)}.` : `Almacen libre: ${formatNumber(storageFree)}. Quedarian ${formatNumber(Math.max(0, tile.remaining - collectable))} tras esta marcha.`}</p>
+      <p>${tile.depleted ? `Casilla agotada. Rellena en ${formatDuration(tile.refillMs)}.` : `Protegido por almacen: ${formatNumber(protectedAmount)}. Puedes acumular mas; quedarian ${formatNumber(Math.max(0, tile.remaining - collectable))} en la casilla.`}</p>
     `;
   }
 
@@ -5798,20 +5839,20 @@ function getBuildingStats(building) {
   if (building.kind === "resource") {
     return {
       status: queueStatus || `+${resourceProductionRate(building)}/h`,
-      thirdLabel: "Almacen",
-      thirdValue: `${formatNumber(state.resources[building.resource] || 0)} / ${formatNumber(resourceCapacity(building.resource))}`,
+      thirdLabel: "Protegido",
+      thirdValue: formatNumber(resourceCapacity(building.resource)),
       guideTitle: "Produccion de recurso",
-      guideBody: `Produce automaticamente ${resourceProductionRate(building)} de ${resourceName(building.resource).toLowerCase()} por hora. No se recolecta pulsando: se acumula con el tiempo hasta el limite del Almacen Real.`
+      guideBody: `Produce automaticamente ${resourceProductionRate(building)} de ${resourceName(building.resource).toLowerCase()} por hora. Puedes acumular por encima del Almacen Real; el almacen solo protege recursos ante saqueos.`
     };
   }
 
   if (building.kind === "storage") {
     return {
-      status: "Capacidad ciudad",
-      thirdLabel: "Tope",
+      status: "Proteccion ciudad",
+      thirdLabel: "Protege",
       thirdValue: formatNumber(resourceCapacity("grain")),
       guideTitle: "Almacenamiento",
-      guideBody: "Marca el limite de recursos que pueden producir tus edificios economicos. Si una reserva llega al tope, la produccion de ese recurso se detiene hasta que gastes o amplies el almacen."
+      guideBody: "El Almacen Real no limita cuantos recursos puedes tener. Define cuantos quedan protegidos si te atacan; lo que supere esa proteccion queda expuesto al saqueo."
     };
   }
 
@@ -5968,7 +6009,7 @@ function runBuildingAction(command) {
   if (action === "production") {
     renderResourceBuildingSheet(
       building,
-      `${building.name} produce automaticamente. Reserva: ${formatNumber(state.resources[building.resource] || 0)} / ${formatNumber(resourceCapacity(building.resource))}.`
+      `${building.name} produce automaticamente. Reserva: ${formatNumber(state.resources[building.resource] || 0)}. Protegido por almacen: ${formatNumber(resourceCapacity(building.resource))}.`
     );
     return;
   }
@@ -6389,8 +6430,11 @@ function monsterDropQualityIndex(marker) {
 }
 
 function resourceTileCapacity(marker) {
-  const base = marker.resource === "silver" ? 900 : 1800;
-  return Math.round(base + marker.level * (marker.resource === "silver" ? 520 : 1150));
+  const resource = marker?.resource || "grain";
+  const level = Math.max(1, Math.floor(Number(marker?.level) || 1));
+  const base = RESOURCE_TILE_BASE_CAPACITY[resource] || RESOURCE_TILE_BASE_CAPACITY.grain;
+  const perLevel = RESOURCE_TILE_LEVEL_CAPACITY[resource] || RESOURCE_TILE_LEVEL_CAPACITY.grain;
+  return Math.round(base + level * perLevel);
 }
 
 function resourceTileState(marker, now = Date.now()) {
@@ -6398,7 +6442,12 @@ function resourceTileState(marker, now = Date.now()) {
   if (!state.resourceTiles) state.resourceTiles = {};
   const max = resourceTileCapacity(marker);
   const saved = state.resourceTiles[marker.id] || {};
-  const savedRemaining = saved.remaining === undefined ? max : Number(saved.remaining);
+  const previousMax = Math.max(0, Number(saved.max) || 0);
+  let savedRemaining = saved.remaining === undefined ? max : Number(saved.remaining);
+  if (saved.remaining !== undefined && previousMax > 0 && previousMax !== max) {
+    const filledRatio = Math.min(1, Math.max(0, Number(saved.remaining) / previousMax));
+    savedRemaining = Math.round(max * filledRatio);
+  }
   let remaining = Math.min(max, Math.max(0, Math.floor(Number.isFinite(savedRemaining) ? savedRemaining : max)));
   let updatedAt = Math.max(0, Math.floor(Number(saved.updatedAt) || now));
 
@@ -8378,7 +8427,7 @@ function createMarchPlan(marker, troops, withHero = false, heroId = null) {
     heroId: resolvedHeroId,
     durationMs: marchDuration(marker, troops, useHero),
     returnDurationMs: marchReturnDuration(marker, troops, useHero),
-    gatherDurationMs: marker.kind === "resource" ? gatheringDuration(troops, useHero ? resolvedHeroId : null) : 0
+    gatherDurationMs: marker.kind === "resource" ? gatheringDuration(marker, troops, useHero ? resolvedHeroId : null) : 0
   };
 }
 
@@ -8406,9 +8455,27 @@ function marchReturnDuration(marker, troops, withHero = false) {
   return Math.max(7000, Math.round(marchDuration(marker, troops, withHero) * 0.75));
 }
 
-function gatheringDuration(troops, heroId = state.selectedHeroId) {
-  const speedFactor = Math.max(0.30, 1 - researchLevel("gathering-speed") * 0.06 - heroEquipmentBonus("gathering") * 0.01 - heroTraitBonus("gathering", heroId) * 0.01);
-  return Math.max(9000, Math.min(45000, Math.round((8000 + troopBundleLoad(troops, heroId) * 6) * speedFactor)));
+function gatheringDuration(markerOrTroops, troopsOrHeroId, heroId = state.selectedHeroId) {
+  const marker = markerOrTroops?.kind === "resource" ? markerOrTroops : null;
+  const troops = marker ? troopsOrHeroId : markerOrTroops || {};
+  const resolvedHeroId = marker ? heroId : troopsOrHeroId === undefined ? state.selectedHeroId : troopsOrHeroId;
+  const resource = marker?.resource || "grain";
+  const amount = marker ? resourceGatherAmount(marker, troops, resolvedHeroId) : troopBundleLoad(troops, resolvedHeroId);
+  const rate = resourceGatherRate(resource, resolvedHeroId);
+  const rawMs = (Math.max(1, amount) / rate) * 60000;
+  return Math.max(RESOURCE_GATHER_MIN_MS, Math.min(RESOURCE_GATHER_MAX_MS, Math.round(rawMs)));
+}
+
+function resourceGatherAmount(marker, troops, heroId = state.selectedHeroId) {
+  const load = troopBundleLoad(troops, heroId);
+  if (!marker?.id) return load;
+  return Math.max(0, Math.min(load, resourceTileState(marker).remaining));
+}
+
+function resourceGatherRate(resource, heroId = state.selectedHeroId) {
+  const base = RESOURCE_GATHER_RATE_PER_MINUTE[resource] || RESOURCE_GATHER_RATE_PER_MINUTE.grain;
+  const speedBonus = researchLevel("gathering-speed") * 0.06 + heroEquipmentBonus("gathering") * 0.01 + heroTraitBonus("gathering", heroId) * 0.01;
+  return Math.max(1000, Math.round(base * (1 + speedBonus)));
 }
 
 function markerById(id) {
@@ -8509,9 +8576,10 @@ function processMarches() {
 
     if (march.phase === "outbound") {
       if (march.kind === "resource") {
+        const marker = markerById(march.markerId);
         march.phase = "gathering";
         march.startedAt = now;
-        march.arriveAt = now + (march.gatherDurationMs || gatheringDuration(march.troops || {}, march.withHero ? march.heroId : null));
+        march.arriveAt = now + (march.gatherDurationMs || gatheringDuration(marker, march.troops || {}, march.withHero ? march.heroId : null));
         addAllianceFeed("Recoleccion iniciada", `${march.targetName}: tropas ocupando la casilla.`);
         changed = true;
         return true;
@@ -8550,16 +8618,13 @@ function resolveMarchReward(march) {
     const marker = markerById(march.markerId);
     const resource = marker.resource || "iron";
     const load = troopBundleLoad(march.troops, march.withHero ? march.heroId : null);
-    const storageFree = Math.max(0, resourceCapacity(resource) - (state.resources[resource] || 0));
-    const harvest = harvestResourceTile(marker, Math.min(load, storageFree));
+    const harvest = harvestResourceTile(marker, load);
     return {
       resources: { [resource]: harvest.amount },
       tile: harvest,
       text: harvest.amount
         ? `+${formatNumber(harvest.amount)} ${resourceName(resource).toLowerCase()}${harvest.depleted ? ". Casilla agotada" : ""}`
-        : storageFree <= 0
-          ? `Sin espacio para ${resourceName(resource).toLowerCase()}. Mejora el Almacen Real`
-          : `Sin ${resourceName(resource).toLowerCase()} disponible. Casilla agotada`
+        : `Sin ${resourceName(resource).toLowerCase()} disponible. Casilla agotada`
     };
   }
 
@@ -8831,9 +8896,8 @@ function formatReportTime(timestamp) {
 }
 
 function addResourceWithCap(resource, amount) {
-  const cap = resourceCapacity(resource);
   const before = state.resources[resource] || 0;
-  const next = Math.min(cap, before + amount);
+  const next = before + amount;
   state.resources[resource] = next;
   return next - before;
 }
@@ -11712,7 +11776,7 @@ function openBetaStatusSheet() {
     </div>
     <div class="world-meta">
       <div><span>Poder</span><strong>${formatNumber(snapshot.player.power)}</strong></div>
-      <div><span>Recursos</span><strong>${formatNumber(snapshot.economy.totalStock)} / ${formatNumber(snapshot.economy.totalCapacity)}</strong></div>
+      <div><span>Recursos</span><strong>${formatNumber(snapshot.economy.totalStock)}</strong></div>
       <div><span>Tropas</span><strong>${formatNumber(snapshot.military.totalTroops)}</strong></div>
       <div><span>Heridos</span><strong>${formatNumber(snapshot.military.woundedTotal)} / ${formatNumber(snapshot.military.hospitalCapacity)}</strong></div>
       <div><span>Marchas</span><strong>${snapshot.world.marches.length} / ${snapshot.limits.marchSlots}</strong></div>
@@ -11769,7 +11833,7 @@ function openBetaStatusSheet() {
 
 function buildBetaSnapshot() {
   const stock = cloneForSnapshot(state.resources || {});
-  const capacity = Object.fromEntries(resources.map((resource) => [resource.id, resourceCapacity(resource.id)]));
+  const protectedCapacity = Object.fromEntries(resources.map((resource) => [resource.id, resourceCapacity(resource.id)]));
   const reports = cloneForSnapshot(state.reports || []);
   const chatMessages = cloneForSnapshot(state.chatMessages || {});
   const serverEvents = normalizeServerEvents(state.serverEvents || []);
@@ -11823,9 +11887,9 @@ function buildBetaSnapshot() {
     },
     economy: {
       stock,
-      capacity,
+      protectedCapacity,
       totalStock: resourceBundleTotal(stock),
-      totalCapacity: Object.values(capacity).reduce((sum, value) => sum + value, 0),
+      totalProtectedCapacity: Object.values(protectedCapacity).reduce((sum, value) => sum + value, 0),
       inventory: cloneForSnapshot(state.inventory || {})
     },
     city: {
@@ -11916,7 +11980,7 @@ function buildBetaSnapshot() {
 
 function buildBetaChecks(snapshot) {
   const maxBuilding = Math.max(...snapshot.city.buildings.map((building) => building.level));
-  const resourcesWithinCap = resources.every((resource) => (snapshot.economy.stock[resource.id] || 0) <= (snapshot.economy.capacity[resource.id] || 0));
+  const resourcesTracked = resources.every((resource) => Number.isFinite(snapshot.economy.stock[resource.id] || 0));
   const reportsWithTargets = snapshot.world.reports.filter((report) => reportTargetMarker(report) || reportTargetCoordLabel(report)).length;
   const chatTotal = Object.values(snapshot.social.chatMessages || {}).reduce((sum, list) => sum + (Array.isArray(list) ? list.length : 0), 0);
   const audit = snapshot.military.audit || {};
@@ -11929,7 +11993,7 @@ function buildBetaChecks(snapshot) {
   const serverEventsReady = (snapshot.server?.commandLog || []).every((event) => event.id && event.type && Number.isFinite(event.at));
   return [
     { label: "Edificios", ok: maxBuilding <= BUILDING_MAX_LEVEL, value: `max ${maxBuilding}/${BUILDING_MAX_LEVEL}` },
-    { label: "Recursos", ok: resourcesWithinCap, value: `${formatNumber(snapshot.economy.totalStock)}` },
+    { label: "Recursos", ok: resourcesTracked, value: `${formatNumber(snapshot.economy.totalStock)}` },
     { label: "Marchas", ok: snapshot.world.marches.length <= snapshot.limits.marchSlots, value: `${snapshot.world.marches.length}/${snapshot.limits.marchSlots}` },
     { label: "Hospital", ok: snapshot.military.woundedTotal <= snapshot.military.hospitalCapacity, value: `${formatNumber(snapshot.military.woundedTotal)}/${formatNumber(snapshot.military.hospitalCapacity)}` },
     { label: "Combate", ok: heroApplies && countersApply && rallyApplies, value: `heroe +${formatNumber(Math.max(0, (audit.withHero?.value || 0) - (audit.noHero?.value || 0)))}` },
