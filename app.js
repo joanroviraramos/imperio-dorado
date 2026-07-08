@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g38";
+const DATA_VERSION = "20260702-g39";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -375,15 +375,15 @@ const buildings = [
 const fortressPlots = [
   { id: "base-alcazar", zone: "base", label: "Alcázar", x: 50, y: 13, buildingId: "alcazar" },
   { id: "base-academia", zone: "base", label: "Academia", x: 61, y: 30, buildingId: "academia" },
-  { id: "base-forja", zone: "base", label: "Solar de forja", x: 74, y: 32 },
-  { id: "base-mercado", zone: "base", label: "Solar de mercado", x: 29, y: 33 },
-  { id: "base-embajada", zone: "base", label: "Solar de embajada", x: 42, y: 31 },
-  { id: "base-prision", zone: "base", label: "Solar de prision", x: 84, y: 34 },
-  { id: "base-alianza", zone: "base", label: "Solar de alianza", x: 23, y: 42 },
-  { id: "base-salon-guerra", zone: "base", label: "Solar de guerra", x: 51, y: 39 },
-  { id: "base-sabios", zone: "base", label: "Solar de sabios", x: 36, y: 42 },
-  { id: "base-almacen", zone: "base", label: "Solar de almacen", x: 78, y: 42 },
-  { id: "base-astillero", zone: "base", label: "Solar naval", x: 64, y: 42 },
+  { id: "base-forja", zone: "base", label: "Solar de forja", x: 74, y: 31 },
+  { id: "base-mercado", zone: "base", label: "Solar de mercado", x: 27, y: 34 },
+  { id: "base-embajada", zone: "base", label: "Solar de embajada", x: 41, y: 30 },
+  { id: "base-prision", zone: "base", label: "Solar de prision", x: 86, y: 33 },
+  { id: "base-alianza", zone: "base", label: "Solar de alianza", x: 20, y: 39 },
+  { id: "base-salon-guerra", zone: "base", label: "Solar de guerra", x: 51, y: 37 },
+  { id: "base-sabios", zone: "base", label: "Solar de sabios", x: 34, y: 39 },
+  { id: "base-almacen", zone: "base", label: "Solar de almacen", x: 81, y: 39 },
+  { id: "base-astillero", zone: "base", label: "Solar naval", x: 66, y: 39 },
   { id: "base-muralla", zone: "base", label: "Muralla", x: 50, y: 57, buildingId: "muralla" },
 
   { id: "military-1", zone: "military", label: "Solar militar", x: 14, y: 46, allowed: "Cuartel u hospital" },
