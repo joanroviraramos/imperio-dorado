@@ -1,6 +1,6 @@
 const STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g44";
+const DATA_VERSION = "20260702-g45";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -2135,6 +2135,7 @@ let worldZoom = 1;
 let worldHasCentered = false;
 let worldPinch = null;
 let worldRenderFrame = 0;
+let worldRenderTimer = 0;
 let worldCoordinateTimer = 0;
 let heroPanelTab = "perfil";
 
@@ -4536,12 +4537,17 @@ function bindWorldMap() {
   applyWorldZoom();
 }
 
-function scheduleWorldRender() {
-  if (!mapLayer || currentTab !== "world" || worldRenderFrame) return;
-  worldRenderFrame = window.requestAnimationFrame(() => {
-    worldRenderFrame = 0;
-    renderMap();
-  });
+function scheduleWorldRender(delay = 180) {
+  if (!mapLayer || currentTab !== "world") return;
+  window.clearTimeout(worldRenderTimer);
+  worldRenderTimer = window.setTimeout(() => {
+    worldRenderTimer = 0;
+    if (worldRenderFrame) window.cancelAnimationFrame(worldRenderFrame);
+    worldRenderFrame = window.requestAnimationFrame(() => {
+      worldRenderFrame = 0;
+      renderMap();
+    });
+  }, delay);
 }
 
 function bindSceneDismiss() {
