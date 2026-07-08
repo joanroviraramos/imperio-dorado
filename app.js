@@ -1,7 +1,7 @@
 const STORAGE_KEY = "imperioDoradoState.v2";
 const LEGACY_STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g47";
+const DATA_VERSION = "20260702-g48";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -2962,7 +2962,7 @@ async function saveCloudNow({ manual = false } = {}) {
   cloudSaveInFlight = false;
   if (manual) setAccountBusy(false);
   if (error) {
-    renderAccountStatus(`No se pudo guardar en nube: ${error.message}`);
+    renderAccountStatus(cloudErrorMessage(error, "guardar"));
     return;
   }
   cloudAutosaveReady = true;
@@ -2982,7 +2982,7 @@ async function loadCloudSave({ manual = false } = {}) {
     .maybeSingle();
   if (manual) setAccountBusy(false);
   if (error) {
-    renderAccountStatus(`No se pudo cargar la nube: ${error.message}`);
+    renderAccountStatus(cloudErrorMessage(error, "cargar"));
     return;
   }
   if (!data?.state) {
@@ -3012,6 +3012,14 @@ function stateForCloud() {
     dataVersion: DATA_VERSION,
     savedAt: new Date().toISOString()
   };
+}
+
+function cloudErrorMessage(error, action) {
+  const text = String(error?.message || "");
+  if (/player_saves|schema cache|relation .* does not exist/i.test(text)) {
+    return "La cuenta ya conecta, pero falta activar el guardado dentro de Supabase. Abre SQL Editor y lo dejamos listo.";
+  }
+  return `No se pudo ${action} en nube: ${text || "error desconocido"}`;
 }
 
 function startFreshGame({ syncCloud = false } = {}) {
