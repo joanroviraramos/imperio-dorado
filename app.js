@@ -1,7 +1,7 @@
 const STORAGE_KEY = "imperioDoradoState.v2";
 const LEGACY_STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g52";
+const DATA_VERSION = "20260702-g53";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -41,9 +41,11 @@ const KINGDOM_BALANCE_REQUIREMENTS = [
   { id: "cuartel", labelOverride: "Cuartel base" },
   { id: "hospital", labelOverride: "Hospital base" }
 ];
-const WORLD_COORD_MAX_X = 8192;
-const WORLD_COORD_MAX_Y = 8192;
+const WORLD_COORD_MAX_X = 16384;
+const WORLD_COORD_MAX_Y = 16384;
 const WORLD_CASTLE_COUNT = 24;
+const WORLD_RESOURCE_TILE_COUNT = 120;
+const WORLD_MONSTER_TILE_COUNT = 72;
 const WORLD_SECTOR_SIZE = 512;
 const WORLD_RENDER_MARGIN_PERCENT = 6;
 const WORLD_CASTLE_SPRITES = {
@@ -741,7 +743,8 @@ function generateKingdomMarkers() {
       icon: "i-ship",
       start: 18
     }),
-    ...generateResourceTiles()
+    ...generateResourceTiles(),
+    ...generateMonsterTiles()
   ];
 }
 
@@ -844,24 +847,72 @@ function generateAllianceCluster({ tag, kind, origin, names, icon, start }) {
 
 function generateResourceTiles() {
   const resourceTypes = [
-    { resource: "grain", icon: "i-crown", names: ["Campos", "Graneros", "Huertas"] },
-    { resource: "wood", icon: "i-hammer", names: ["Bosque", "Robledal", "Pinar"] },
-    { resource: "stone", icon: "i-shield", names: ["Cantera", "Pedrera", "Sillar"] },
-    { resource: "iron", icon: "i-hammer", names: ["Mina", "Ferreria", "Filon"] },
-    { resource: "silver", icon: "i-scroll", names: ["Veta", "Real de Plata", "Galeria"] }
+    { resource: "grain", icon: "i-crown", weight: 3, names: ["Campos", "Graneros", "Huertas"] },
+    { resource: "wood", icon: "i-hammer", weight: 3, names: ["Bosque", "Robledal", "Pinar"] },
+    { resource: "stone", icon: "i-shield", weight: 2, names: ["Cantera", "Pedrera", "Sillar"] },
+    { resource: "iron", icon: "i-hammer", weight: 2, names: ["Mina", "Ferreria", "Filon"] },
+    { resource: "silver", icon: "i-scroll", weight: 1, names: ["Veta", "Real de Plata", "Galeria"] }
   ];
-  const points = [
-    [13, 16], [19, 26], [30, 18], [41, 15], [58, 17], [70, 18], [86, 16],
-    [10, 44], [18, 50], [29, 40], [38, 63], [47, 72], [61, 68], [72, 58], [88, 47],
-    [12, 86], [23, 82], [35, 88], [49, 84], [60, 91], [75, 86], [90, 82],
-    [6, 60], [94, 61], [53, 9], [52, 95]
+  const resourceDeck = resourceTypes.flatMap((type) => Array.from({ length: type.weight }, () => type));
+  const zones = [
+    { x: 46, y: 57, w: 18, h: 18 },
+    { x: 53, y: 62, w: 18, h: 18 },
+    { x: 13, y: 18, w: 23, h: 24 },
+    { x: 32, y: 21, w: 30, h: 28 },
+    { x: 65, y: 20, w: 30, h: 26 },
+    { x: 18, y: 48, w: 26, h: 29 },
+    { x: 79, y: 48, w: 26, h: 32 },
+    { x: 24, y: 77, w: 32, h: 22 },
+    { x: 56, y: 83, w: 38, h: 20 },
+    { x: 88, y: 78, w: 18, h: 24 },
+    { x: 51, y: 9, w: 42, h: 14 },
+    { x: 52, y: 95, w: 56, h: 10 }
   ];
-  return points.map(([x, y], index) => {
-    const type = resourceTypes[index % resourceTypes.length];
-    const level = 1 + ((index + Math.floor(x + y)) % 6);
+  const starterTiles = [
+    { resource: "grain", x: 47.1, y: 56.3, level: 3 },
+    { resource: "wood", x: 49.2, y: 56.8, level: 3 },
+    { resource: "stone", x: 50.4, y: 58.8, level: 4 },
+    { resource: "iron", x: 46.9, y: 59.6, level: 4 },
+    { resource: "silver", x: 49.3, y: 60.1, level: 5 }
+  ];
+
+  const fixedStarterTiles = starterTiles.map((point, index) => {
+    const type = resourceTypes.find((item) => item.resource === point.resource) || resourceTypes[0];
     const name = `${type.names[index % type.names.length]} ${resourceName(type.resource)}`;
     return {
-      id: `tile-${type.resource}-${index + 1}`,
+      id: `tile-${type.resource}-home-${index + 1}`,
+      name,
+      icon: type.icon,
+      kind: "resource",
+      resource: type.resource,
+      x: point.x,
+      y: point.y,
+      level: point.level,
+      prominence: 96,
+      generated: true,
+      range: kingdomRangeLabel(point.x, point.y),
+      reward: resourceName(type.resource),
+      body: `Casilla de ${resourceName(type.resource).toLowerCase()} Nv. ${point.level}. Recurso cercano a tu fortaleza para empezar a recolectar sin recorrer medio reino.`
+    };
+  });
+
+  const generatedTiles = Array.from({ length: Math.max(0, WORLD_RESOURCE_TILE_COUNT - fixedStarterTiles.length) }, (_, index) => {
+    const globalIndex = index + fixedStarterTiles.length;
+    const zone = zones[index % zones.length];
+    const seed = worldSeed(3100 + index * 37);
+    let x = clampPercent(zone.x + (seededUnit(seed, 3) - 0.5) * zone.w);
+    let y = clampPercent(zone.y + (seededUnit(seed, 17) - 0.5) * zone.h);
+
+    if (worldPointInWonderReserve(x, y)) {
+      x = clampPercent(x + (x < 50 ? -9 : 9));
+      y = clampPercent(y + (y < 50 ? -6 : 6));
+    }
+
+    const type = resourceDeck[(globalIndex + Math.floor(x / 7) + Math.floor(y / 9)) % resourceDeck.length];
+    const level = 1 + ((worldSeed(4100 + globalIndex) + Math.floor(x + y)) % 6);
+    const name = `${type.names[globalIndex % type.names.length]} ${resourceName(type.resource)}`;
+    return {
+      id: `tile-${type.resource}-${globalIndex + 1}`,
       name,
       icon: type.icon,
       kind: "resource",
@@ -869,15 +920,141 @@ function generateResourceTiles() {
       x,
       y,
       level,
+      prominence: 20 + (worldSeed(5100 + index) % 80),
+      generated: true,
       range: kingdomRangeLabel(x, y),
       reward: resourceName(type.resource),
       body: `Casilla de ${resourceName(type.resource).toLowerCase()} Nv. ${level}. Se agota al recolectar y luego reaparece en otra zona del reino.`
     };
   });
+
+  return [...fixedStarterTiles, ...generatedTiles];
 }
 
 function generateMonsterTiles() {
-  return [];
+  const monsterTypes = [
+    {
+      key: "licantropo",
+      name: "Licantropo de Sierra",
+      image: "./assets/monster-licantropo.png",
+      sprite: "boar",
+      material: "frag-morrion",
+      reward: "Fragmentos de casco",
+      body: "Bestia rapida para heroes de caza. Buena para probar marchas cortas."
+    },
+    {
+      key: "ogro",
+      name: "Ogro de la Cantera",
+      image: "./assets/monster-ogro-martillo.png",
+      sprite: "basilisk",
+      material: "frag-coraza",
+      reward: "Fragmentos de armadura",
+      body: "Monstruo pesado. Conviene mandar heroe y tropas suficientes."
+    },
+    {
+      key: "garrote",
+      name: "Ogro del Garrote",
+      image: "./assets/monster-ogro-garrote.png",
+      sprite: "griffin",
+      material: "frag-sword",
+      reward: "Fragmentos de arma",
+      body: "Objetivo de fuerza media con botin de equipo ofensivo."
+    },
+    {
+      key: "serpiente",
+      name: "Serpiente de Jade",
+      image: "./assets/monster-serpiente-jade.png",
+      sprite: "kraken",
+      material: "frag-cannon",
+      reward: "Planos de artilleria",
+      body: "Criatura dura. El nivel marca mucho la dificultad real."
+    },
+    {
+      key: "dragon",
+      name: "Dragon Rojo",
+      image: "./assets/monster-dragon-rojo.png",
+      sprite: "dragon",
+      material: "frag-sword",
+      reward: "Reliquias de guerra",
+      body: "Monstruo de alto nivel. Atacarlo antes de tiempo suele ser mala idea."
+    }
+  ];
+  const zones = [
+    { x: 45, y: 56, w: 20, h: 18 },
+    { x: 55, y: 62, w: 18, h: 18 },
+    { x: 19, y: 23, w: 26, h: 24 },
+    { x: 44, y: 19, w: 34, h: 22 },
+    { x: 74, y: 25, w: 30, h: 28 },
+    { x: 18, y: 56, w: 24, h: 34 },
+    { x: 52, y: 61, w: 34, h: 32 },
+    { x: 83, y: 62, w: 24, h: 32 },
+    { x: 30, y: 86, w: 34, h: 18 },
+    { x: 70, y: 88, w: 32, h: 18 }
+  ];
+  const starterMonsters = [
+    { type: "licantropo", x: 47.2, y: 58.7, level: 2 },
+    { type: "ogro", x: 49.0, y: 57.9, level: 4 },
+    { type: "garrote", x: 47.7, y: 59.8, level: 5 },
+    { type: "serpiente", x: 49.7, y: 56.5, level: 6 }
+  ];
+
+  const fixedStarterMonsters = starterMonsters.map((point, index) => {
+    const type = monsterTypes.find((item) => item.key === point.type) || monsterTypes[0];
+    return {
+      id: `monster-${type.key}-home-${index + 1}`,
+      name: `${type.name} ${romanSuffix(index)}`,
+      icon: "i-target",
+      kind: "monster",
+      x: point.x,
+      y: point.y,
+      level: point.level,
+      image: type.image,
+      sprite: type.sprite,
+      material: type.material,
+      prominence: 98,
+      generated: true,
+      range: kingdomRangeLabel(point.x, point.y),
+      reward: type.reward,
+      body: type.body
+    };
+  });
+
+  const generatedMonsters = Array.from({ length: Math.max(0, WORLD_MONSTER_TILE_COUNT - fixedStarterMonsters.length) }, (_, index) => {
+    const globalIndex = index + fixedStarterMonsters.length;
+    const zone = zones[index % zones.length];
+    const seed = worldSeed(7100 + index * 53);
+    let x = clampPercent(zone.x + (seededUnit(seed, 5) - 0.5) * zone.w);
+    let y = clampPercent(zone.y + (seededUnit(seed, 23) - 0.5) * zone.h);
+
+    if (worldPointInWonderReserve(x, y)) {
+      x = clampPercent(x + (x < 50 ? -10 : 10));
+      y = clampPercent(y + (y < 50 ? -7 : 7));
+    }
+
+    const tierBoost = Math.floor(Math.hypot(x - 50, y - 50) / 12);
+    const level = Math.max(1, Math.min(15, 1 + ((worldSeed(8100 + globalIndex) + tierBoost + globalIndex) % 12)));
+    const type = monsterTypes[(globalIndex + Math.floor(level / 3)) % monsterTypes.length];
+
+    return {
+      id: `monster-${type.key}-${globalIndex + 1}`,
+      name: `${type.name} ${romanSuffix(globalIndex)}`,
+      icon: "i-target",
+      kind: "monster",
+      x,
+      y,
+      level,
+      image: type.image,
+      sprite: type.sprite,
+      material: type.material,
+      prominence: 30 + level * 4 + (worldSeed(9100 + index) % 28),
+      generated: true,
+      range: kingdomRangeLabel(x, y),
+      reward: type.reward,
+      body: type.body
+    };
+  });
+
+  return [...fixedStarterMonsters, ...generatedMonsters];
 }
 
 function romanSuffix(index) {
@@ -2164,7 +2341,7 @@ let cloudSaveInFlight = false;
 let cloudStateHydrating = false;
 let cloudAutosaveReady = false;
 
-const WORLD_MIN_ZOOM = 0.12;
+const WORLD_MIN_ZOOM = 0.08;
 const WORLD_MAX_ZOOM = 2.2;
 const WORLD_ZOOM_STEP = 0.18;
 const resourceStrip = document.querySelector("#resourceStrip");
@@ -4757,6 +4934,21 @@ function markerInWorldBounds(marker, bounds) {
 
 function markerPassesZoomDensity(marker) {
   if (!marker.generated) return true;
+
+  if (marker.kind === "resource") {
+    if (worldZoom <= 0.22) return marker.level >= 5 || marker.prominence >= 88;
+    if (worldZoom <= 0.4) return marker.level >= 4 || marker.prominence >= 68;
+    if (worldZoom <= 0.64) return marker.level >= 3 || marker.prominence >= 48;
+    return true;
+  }
+
+  if (marker.kind === "monster") {
+    if (worldZoom <= 0.22) return marker.level >= 10 || marker.prominence >= 88;
+    if (worldZoom <= 0.4) return marker.level >= 7 || marker.prominence >= 72;
+    if (worldZoom <= 0.64) return marker.level >= 4 || marker.prominence >= 52;
+    return true;
+  }
+
   if (worldZoom <= 0.32) return marker.level >= 22 && marker.prominence >= 86;
   if (worldZoom <= 0.48) return marker.level >= 18 && marker.prominence >= 70;
   if (worldZoom <= 0.72) return marker.level >= 12 || marker.prominence >= 62;

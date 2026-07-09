@@ -494,10 +494,10 @@ svg {
 .world-canvas {
   --world-zoom: 1;
   position: relative;
-  width: calc(12000px * var(--world-zoom));
-  height: calc(12000px * var(--world-zoom));
-  min-width: 1280px;
-  min-height: 1280px;
+  width: calc(18000px * var(--world-zoom));
+  height: calc(18000px * var(--world-zoom));
+  min-width: 1600px;
+  min-height: 1600px;
   overflow: hidden;
   background: #536846;
 }
@@ -5989,8 +5989,8 @@ svg {
   }
 
   .world-canvas {
-    width: calc(12000px * var(--world-zoom));
-    height: calc(12000px * var(--world-zoom));
+    width: calc(18000px * var(--world-zoom));
+    height: calc(18000px * var(--world-zoom));
   }
 
   .world-hud {
