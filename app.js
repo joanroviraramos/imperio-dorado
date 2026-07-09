@@ -1,7 +1,7 @@
 const STORAGE_KEY = "imperioDoradoState.v2";
 const LEGACY_STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g54";
+const DATA_VERSION = "20260702-g55";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -593,7 +593,7 @@ const mapMarkers = [
     kind: "monster",
     x: 67,
     y: 52,
-    level: 3,
+    level: 2,
     range: "00:18",
     material: "frag-sword",
     reward: "Materiales",
@@ -608,7 +608,7 @@ const mapMarkers = [
     kind: "monster",
     x: 84,
     y: 25,
-    level: 5,
+    level: 4,
     range: "00:27",
     material: "frag-coraza",
     reward: "Piezas azules",
@@ -623,7 +623,7 @@ const mapMarkers = [
     kind: "monster",
     x: 90,
     y: 51,
-    level: 11,
+    level: 5,
     range: "00:52",
     material: "frag-cannon",
     reward: "Botin imperial",
@@ -992,10 +992,10 @@ function generateMonsterTiles() {
     { x: 70, y: 88, w: 32, h: 18 }
   ];
   const starterMonsters = [
-    { type: "licantropo", x: 47.2, y: 58.7, level: 2 },
-    { type: "ogro", x: 49.0, y: 57.9, level: 4 },
-    { type: "garrote", x: 47.7, y: 59.8, level: 5 },
-    { type: "serpiente", x: 49.7, y: 56.5, level: 6 }
+    { type: "licantropo", x: 47.2, y: 58.7, level: 1 },
+    { type: "ogro", x: 49.0, y: 57.9, level: 2 },
+    { type: "garrote", x: 47.7, y: 59.8, level: 3 },
+    { type: "serpiente", x: 49.7, y: 56.5, level: 4 }
   ];
 
   const fixedStarterMonsters = starterMonsters.map((point, index) => {
@@ -1031,9 +1031,9 @@ function generateMonsterTiles() {
       y = clampPercent(y + (y < 50 ? -7 : 7));
     }
 
-    const tierBoost = Math.floor(Math.hypot(x - 50, y - 50) / 12);
-    const level = Math.max(1, Math.min(15, 1 + ((worldSeed(8100 + globalIndex) + tierBoost + globalIndex) % 12)));
-    const type = monsterTypes[(globalIndex + Math.floor(level / 3)) % monsterTypes.length];
+    const tierBoost = Math.floor(Math.hypot(x - 50, y - 50) / 18);
+    const level = Math.max(1, Math.min(5, 1 + ((worldSeed(8100 + globalIndex) + tierBoost + globalIndex) % 5)));
+    const type = monsterTypes[(globalIndex + level) % monsterTypes.length];
 
     return {
       id: `monster-${type.key}-${globalIndex + 1}`,
@@ -1473,11 +1473,11 @@ const researchBranches = [
       {
         id: "monster-tier",
         name: "Rastreo de Monstruos",
-        max: 10,
+        max: 4,
         tier: 1,
         cost: { grain: 540, silver: 260, gold: 4 },
         timeMs: 19000,
-        effect: "Permite enfrentarse a monstruos de mayor nivel"
+        effect: "Permite enfrentarse a monstruos hasta Nv. 5"
       },
       {
         id: "hero-monster-attack",
@@ -5052,10 +5052,11 @@ function renderWorldResourceToken(marker) {
 }
 
 function renderMonsterToken(marker) {
+  const level = monsterLevel(marker);
   if (marker.image) {
-    return `<span class="monster-token monster-token--image"><img src="${marker.image}" alt="" decoding="async"><b>${marker.level}</b></span>`;
+    return `<span class="monster-token monster-token--image"><img src="${marker.image}" alt="" decoding="async"><b>${level}</b></span>`;
   }
-  return `<span class="monster-token monster-token--${marker.sprite || "boar"}"><b>${marker.level}</b></span>`;
+  return `<span class="monster-token monster-token--${marker.sprite || "boar"}"><b>${level}</b></span>`;
 }
 
 function renderMapMarkerLabel(marker) {
@@ -5066,7 +5067,7 @@ function renderMapMarkerLabel(marker) {
 }
 
 function renderMapMarkerBadge(marker) {
-  if (marker.kind === "monster") return `<small>Nv. ${marker.level}</small>`;
+  if (marker.kind === "monster") return `<small>Nv. ${monsterLevel(marker)}</small>`;
   if (marker.kind === "resource") return `<small>${resourceName(marker.resource)} ${marker.level}</small>`;
   if (marker.alliance) return `<small>Alianza ${marker.alliance}</small>`;
   return "";
@@ -6780,7 +6781,7 @@ function renderMarkerIntel(marker) {
     const xp = monsterXpReward(marker, heroId || state.selectedHeroId);
     const hunt = monsterState(marker);
     const healthPct = hunt.max ? Math.round((hunt.health / hunt.max) * 100) : 0;
-    const unlocked = marker.level <= monsterTierLimit();
+    const unlocked = monsterLevel(marker) <= monsterTierLimit();
     const heroText = heroId
       ? `${heroDisplayName(heroId).replace(/^Don /, "")} listo`
       : "Sin heroe con energia";
@@ -6799,7 +6800,7 @@ function renderMarkerIntel(marker) {
           <div><span>Plata</span><strong>${formatNumber(silver)}</strong></div>
           <div><span>XP heroe</span><strong>${formatNumber(xp)}</strong></div>
           <div><span>Piezas</span><strong>${materialAmount} ${quality.label}</strong></div>
-          <div><span>Estado</span><strong>${hunt.defeated ? `Respawn ${formatDuration(hunt.respawnMs)}` : unlocked ? heroText : `Rastreo Nv. ${marker.level}`}</strong></div>
+          <div><span>Estado</span><strong>${hunt.defeated ? `Respawn ${formatDuration(hunt.respawnMs)}` : unlocked ? heroText : `Rastreo Nv. ${monsterLevel(marker)}`}</strong></div>
         </div>
         <div class="monster-health-meter">
           <span style="--monster-health:${healthPct}%"></span>
@@ -6880,10 +6881,12 @@ function markerRewardLabel(marker) {
   return marker.reward || "--";
 }
 
+function monsterLevel(marker) {
+  return Math.min(5, Math.max(1, Math.floor(Number(marker?.level) || 1)));
+}
+
 function monsterThreatLabel(marker) {
-  if (marker.level >= 9) return "Caza imperial";
-  if (marker.level >= 5) return "Caza avanzada";
-  return "Caza comun";
+  return `Caza Nv. ${monsterLevel(marker)}`;
 }
 
 function monsterRewardPreview(marker) {
@@ -6894,11 +6897,12 @@ function monsterRewardPreview(marker) {
 }
 
 function monsterMaxHealth(marker) {
-  return 520 + (marker?.level || 1) * 185;
+  const level = monsterLevel(marker);
+  return 560 + level * level * 180;
 }
 
 function monsterRespawnMs(marker) {
-  return MONSTER_RESPAWN_BASE_MS + (marker?.level || 1) * 60000;
+  return MONSTER_RESPAWN_BASE_MS + monsterLevel(marker) * 60000;
 }
 
 function monsterState(marker, now = Date.now()) {
@@ -6951,27 +6955,36 @@ function applyMonsterDamage(marker, combat) {
 }
 
 function monsterSilverReward(marker, heroId = state.selectedHeroId) {
-  return Math.round((260 + marker.level * 95) * (1 + monsterRewardBonus(heroId) / 100));
+  const baseByLevel = [0, 700, 1800, 4200, 9000, 18000];
+  const base = baseByLevel[monsterLevel(marker)] || baseByLevel[1];
+  return Math.round(base * (1 + monsterRewardBonus(heroId) / 100));
 }
 
 function monsterXpReward(marker, heroId = state.selectedHeroId) {
-  return Math.round((180 + marker.level * 70) * (1 + researchLevel("hero-xp-boost") * 0.06 + heroTraitBonus("monsterLoot", heroId) * 0.01));
+  const baseByLevel = [0, 350, 900, 2100, 4800, 10000];
+  const base = baseByLevel[monsterLevel(marker)] || baseByLevel[1];
+  return Math.round(base * (1 + researchLevel("hero-xp-boost") * 0.06 + heroTraitBonus("monsterLoot", heroId) * 0.01));
 }
 
 function monsterMaterialAmount(marker) {
-  return marker.level >= 9 ? 3 : marker.level >= 5 ? 2 : 1;
+  return [0, 1, 2, 4, 7, 12][monsterLevel(marker)] || 1;
 }
 
 function monsterSpeedReward(marker, hunt) {
   const reward = {};
   if (!hunt?.killed) {
-    if ((hunt?.damage || 0) > 0 && marker.level <= 4) reward["speed-build-5"] = 1;
+    if ((hunt?.damage || 0) > 0 && monsterLevel(marker) <= 3) reward["speed-build-5"] = 1;
     return reward;
   }
-  reward["speed-build-5"] = 1 + Math.floor(marker.level / 4);
-  if (marker.level >= 3) reward["speed-training-5"] = 1;
-  if (marker.level >= 5) reward["speed-build-15"] = 1;
-  if (marker.level >= 7) reward["speed-research-15"] = 1;
+  const level = monsterLevel(marker);
+  reward["speed-build-5"] = level;
+  if (level >= 2) reward["speed-training-5"] = level - 1;
+  if (level >= 3) reward["speed-research-5"] = level - 2;
+  if (level >= 4) reward["speed-build-15"] = level - 3;
+  if (level >= 5) {
+    reward["speed-training-15"] = 1;
+    reward["speed-research-15"] = 1;
+  }
   return reward;
 }
 
@@ -6980,7 +6993,7 @@ function monsterDropQuality(marker) {
 }
 
 function monsterDropQualityIndex(marker) {
-  return Math.min(forgeQualities.length - 1, Math.max(0, Math.floor((marker.level - 1) / 2)));
+  return Math.min(forgeQualities.length - 1, monsterLevel(marker) - 1);
 }
 
 function resourceTileCapacity(marker) {
@@ -7068,7 +7081,7 @@ function buildMonsterTargetSnapshot() {
       return {
         markerId: marker.id,
         name: marker.name,
-        level: marker.level || 1,
+        level: monsterLevel(marker),
         coord: markerWorldCoord(marker),
         sector: markerSectorLabel(marker),
         material: marker.material || "frag-sword",
@@ -7920,7 +7933,9 @@ function researchNodeById(id) {
 }
 
 function researchLevel(id) {
-  return Math.max(0, Number(state.researchLevels?.[id] || 0));
+  const saved = Math.max(0, Number(state.researchLevels?.[id] || 0));
+  const node = researchNodeById(id);
+  return node ? Math.min(node.max, saved) : saved;
 }
 
 function researchRequirementsMet(node) {
@@ -8827,8 +8842,8 @@ function startMarch(marker, plan = null) {
     return { ok: false, message: "Este monstruo esta derrotado. Espera a que reaparezca." };
   }
 
-  if (marker.kind === "monster" && marker.level > monsterTierLimit()) {
-    return { ok: false, message: `Investiga Rastreo de Monstruos Nv. ${marker.level} para cazar este objetivo.` };
+  if (marker.kind === "monster" && monsterLevel(marker) > monsterTierLimit()) {
+    return { ok: false, message: `Investiga Rastreo de Monstruos Nv. ${monsterLevel(marker)} para cazar este objetivo.` };
   }
 
   if (plan.withHero && heroIsMarching(plan.heroId)) {
@@ -10005,7 +10020,7 @@ function maxMarchSize(heroId = state.selectedHeroId) {
 }
 
 function monsterTierLimit() {
-  return 1 + researchLevel("monster-tier");
+  return Math.min(5, 1 + researchLevel("monster-tier"));
 }
 
 function troopTierLimit() {

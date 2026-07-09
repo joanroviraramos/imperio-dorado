@@ -1373,7 +1373,16 @@ svg {
 }
 
 .monster-token.monster-token--image b {
-  display: none;
+  top: 8px;
+  right: 8px;
+  bottom: auto;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  border-color: rgba(255, 215, 122, 0.72);
+  background: rgba(18, 15, 12, 0.94);
+  color: var(--gold-bright);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
 }
 
 .world-canvas.is-overview .monster-token--image img {
