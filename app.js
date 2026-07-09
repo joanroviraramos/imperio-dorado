@@ -1,7 +1,7 @@
 const STORAGE_KEY = "imperioDoradoState.v2";
 const LEGACY_STORAGE_KEY = "imperioDoradoState.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g53";
+const DATA_VERSION = "20260702-g54";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -4943,9 +4943,6 @@ function markerPassesZoomDensity(marker) {
   }
 
   if (marker.kind === "monster") {
-    if (worldZoom <= 0.22) return marker.level >= 10 || marker.prominence >= 88;
-    if (worldZoom <= 0.4) return marker.level >= 7 || marker.prominence >= 72;
-    if (worldZoom <= 0.64) return marker.level >= 4 || marker.prominence >= 52;
     return true;
   }
 
@@ -5056,7 +5053,7 @@ function renderWorldResourceToken(marker) {
 
 function renderMonsterToken(marker) {
   if (marker.image) {
-    return `<span class="monster-token monster-token--image"><img src="${marker.image}" alt="" loading="lazy"><b>${marker.level}</b></span>`;
+    return `<span class="monster-token monster-token--image"><img src="${marker.image}" alt="" decoding="async"><b>${marker.level}</b></span>`;
   }
   return `<span class="monster-token monster-token--${marker.sprite || "boar"}"><b>${marker.level}</b></span>`;
 }

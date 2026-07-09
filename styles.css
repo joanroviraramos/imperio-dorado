@@ -1348,17 +1348,21 @@ svg {
 .monster-token--dragon { background-position: 100% 100%; }
 
 .monster-token--image {
+  width: 82px;
+  height: 82px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   overflow: visible;
-  background:
-    radial-gradient(circle at 50% 70%, rgba(255, 217, 122, 0.28), rgba(31, 24, 16, 0.9) 66%, rgba(10, 8, 6, 0.96));
+  background: transparent;
 }
 
 .monster-token--image img {
   position: absolute;
   left: 50%;
-  bottom: 4px;
-  width: 76px;
-  height: 76px;
+  bottom: 0;
+  width: 82px;
+  height: 82px;
   max-width: none;
   object-fit: contain;
   transform: translateX(-50%);
@@ -1366,6 +1370,10 @@ svg {
   filter:
     drop-shadow(0 8px 8px rgba(0, 0, 0, 0.72))
     drop-shadow(0 0 10px rgba(255, 196, 92, 0.34));
+}
+
+.monster-token.monster-token--image b {
+  display: none;
 }
 
 .world-canvas.is-overview .monster-token--image img {
