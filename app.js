@@ -1,7 +1,8 @@
 const STORAGE_KEY = "imperioDoradoState.v2";
 const LEGACY_STORAGE_KEY = "imperioDoradoState.v1";
+const ACCOUNT_PENDING_SAVE_KEY = "imperioDoradoPendingCloudSave.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g55";
+const DATA_VERSION = "20260702-g56";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -2973,15 +2974,6 @@ function initAccount() {
     }
   });
 
-  supabaseClient.auth.getSession().then(({ data, error }) => {
-    if (error) {
-      renderAccountStatus(`No se pudo recuperar la sesion: ${error.message}`);
-      updateAccountUi();
-      return;
-    }
-    setAccountSession(data?.session || null, { loadCloud: true });
-  });
-
   supabaseClient.auth.onAuthStateChange((event, session) => {
     if (event === "INITIAL_SESSION") {
       setAccountSession(session, { autosaveReady: false });
@@ -2989,6 +2981,23 @@ function initAccount() {
     }
     setAccountSession(session, { loadCloud: event === "SIGNED_IN", autosaveReady: event !== "SIGNED_IN" });
   });
+
+  completeAccountRedirect()
+    .then((redirectSession) => {
+      if (redirectSession) return setAccountSession(redirectSession, { loadCloud: true, saveLocalIfEmpty: true });
+      return supabaseClient.auth.getSession().then(({ data, error }) => {
+        if (error) {
+          renderAccountStatus(`No se pudo recuperar la sesion: ${error.message}`);
+          updateAccountUi();
+          return null;
+        }
+        return setAccountSession(data?.session || null, { loadCloud: true });
+      });
+    })
+    .catch((error) => {
+      renderAccountStatus(`No se pudo completar la confirmacion: ${error.message || error}`);
+      updateAccountUi();
+    });
 }
 
 function openAccountPanel() {
@@ -3007,7 +3016,11 @@ function accountCredentials() {
   const password = String(accountPassword?.value || "");
   if (!email || !email.includes("@")) return { ok: false, message: "Escribe un correo valido." };
   if (password.length < 6) return { ok: false, message: "La contrasena debe tener minimo 6 caracteres." };
-  return { ok: true, email, password };
+  return { ok: true, email: normalizeAccountEmail(email), password };
+}
+
+function normalizeAccountEmail(email = "") {
+  return String(email || "").trim().toLowerCase();
 }
 
 async function createAccountFromPanel() {
@@ -3031,16 +3044,18 @@ async function createAccountFromPanel() {
   });
   setAccountBusy(false);
   if (error) {
-    renderAccountStatus(`No se pudo crear la cuenta: ${error.message}`);
+    renderAccountStatus(authErrorMessage(error, "No se pudo crear la cuenta"));
     return;
   }
   if (data?.session) {
+    clearPendingCloudSave();
     await setAccountSession(data.session, { loadCloud: false });
     await saveCloudNow({ manual: true });
     renderAccountStatus("Cuenta creada y partida inicial guardada en la nube.");
     return;
   }
-  renderAccountStatus("Cuenta creada. Revisa el correo para confirmar y luego pulsa Entrar.");
+  rememberPendingCloudSave(credentials.email);
+  renderAccountStatus("Cuenta creada. Revisa el correo; al confirmar volvera al juego y se guardara esta fortaleza en esa cuenta.");
 }
 
 async function resendAccountConfirmation() {
@@ -3048,11 +3063,12 @@ async function resendAccountConfirmation() {
     renderAccountStatus("Primero configura Supabase en supabase-config.js.");
     return;
   }
-  const email = String(accountEmail?.value || "").trim();
+  const email = normalizeAccountEmail(accountEmail?.value || "");
   if (!email || !email.includes("@")) {
     renderAccountStatus("Escribe tu correo para reenviar la confirmacion.");
     return;
   }
+  rememberPendingCloudSave(email);
   setAccountBusy(true);
   const { error } = await supabaseClient.auth.resend({
     type: "signup",
@@ -3063,7 +3079,7 @@ async function resendAccountConfirmation() {
   });
   setAccountBusy(false);
   if (error) {
-    renderAccountStatus(`No se pudo reenviar el correo: ${error.message}`);
+    renderAccountStatus(authErrorMessage(error, "No se pudo reenviar el correo"));
     return;
   }
   renderAccountStatus("Correo reenviado. Abre el enlace nuevo y volvera al juego.");
@@ -3072,6 +3088,53 @@ async function resendAccountConfirmation() {
 function authRedirectUrl() {
   if (window.location.hostname === "imperio-dorado.pages.dev") return "https://imperio-dorado.pages.dev/";
   return `${window.location.origin}${window.location.pathname}`;
+}
+
+async function completeAccountRedirect() {
+  if (!supabaseClient) return null;
+  const query = new URLSearchParams(window.location.search || "");
+  const hash = new URLSearchParams(String(window.location.hash || "").replace(/^#/, ""));
+  const code = query.get("code");
+  const accessToken = hash.get("access_token");
+  const refreshToken = hash.get("refresh_token");
+  const hasAuthRedirect = Boolean(code || accessToken || refreshToken || query.get("error") || hash.get("error"));
+
+  if (!hasAuthRedirect) return null;
+
+  const errorText = query.get("error_description") || hash.get("error_description") || query.get("error") || hash.get("error");
+  if (errorText) {
+    cleanAccountRedirectUrl();
+    throw new Error(errorText);
+  }
+
+  renderAccountStatus("Confirmacion recibida. Conectando cuenta...");
+
+  if (code && typeof supabaseClient.auth.exchangeCodeForSession === "function") {
+    const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
+    cleanAccountRedirectUrl();
+    if (error) throw error;
+    return data?.session || null;
+  }
+
+  if (accessToken && refreshToken && typeof supabaseClient.auth.setSession === "function") {
+    const { data, error } = await supabaseClient.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken
+    });
+    cleanAccountRedirectUrl();
+    if (error) throw error;
+    return data?.session || null;
+  }
+
+  const { data, error } = await supabaseClient.auth.getSession();
+  cleanAccountRedirectUrl();
+  if (error) throw error;
+  return data?.session || null;
+}
+
+function cleanAccountRedirectUrl() {
+  const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+  window.history.replaceState(null, "", cleanUrl);
 }
 
 async function loginAccountFromPanel() {
@@ -3092,7 +3155,7 @@ async function loginAccountFromPanel() {
   });
   setAccountBusy(false);
   if (error) {
-    renderAccountStatus(`No se pudo entrar: ${error.message}`);
+    renderAccountStatus(authErrorMessage(error, "No se pudo entrar"));
     return;
   }
   await setAccountSession(data?.session || null, { loadCloud: true });
@@ -3107,20 +3170,31 @@ async function logoutAccount() {
     renderAccountStatus(`No se pudo cerrar sesion: ${error.message}`);
     return;
   }
-  setAccountSession(null);
-  renderAccountStatus("Sesion cerrada. La partida queda guardada localmente en este dispositivo.");
+  await setAccountSession(null);
+  if (accountEmail) accountEmail.value = "";
+  if (accountPassword) accountPassword.value = "";
+  renderAccountStatus("Cuenta desconectada. Escribe otro correo para cambiar de fortaleza.");
 }
 
 async function setAccountSession(session, options = {}) {
   accountSession = session || null;
   cloudAutosaveReady = Boolean(accountSession && options.autosaveReady);
-  if (accountSession?.user?.email && accountEmail && !accountEmail.value) {
+  if (accountSession?.user?.email && accountEmail) {
     accountEmail.value = accountSession.user.email;
   }
+  if (accountSession && accountPassword) accountPassword.value = "";
   updateAccountUi();
+  if (accountSession) {
+    try {
+      const pendingUploaded = await uploadPendingCloudSave(accountSession);
+      if (pendingUploaded) return;
+    } catch (error) {
+      renderAccountStatus(`Cuenta conectada, pero no se pudo subir la partida pendiente: ${error.message || error}`);
+    }
+  }
   if (accountSession && options.loadCloud) {
     cloudAutosaveReady = false;
-    await loadCloudSave({ manual: false });
+    await loadCloudSave({ manual: false, saveLocalIfEmpty: Boolean(options.saveLocalIfEmpty) });
   } else if (accountSession) {
     renderAccountStatus(`Conectado como ${accountSession.user.email}.`);
   }
@@ -3129,6 +3203,9 @@ async function setAccountSession(session, options = {}) {
 function updateAccountUi() {
   const signed = Boolean(accountSession);
   if (accountButtonLabel) accountButtonLabel.textContent = signed ? "Online" : "Cuenta";
+  if (accountEmail) accountEmail.disabled = signed || !supabaseClient;
+  if (accountPassword) accountPassword.disabled = signed || !supabaseClient;
+  if (accountLogout) accountLogout.textContent = signed ? "Cambiar cuenta / salir" : "Cambiar cuenta";
   [accountCloudSave, accountCloudLoad, accountLogout].forEach((button) => {
     if (button) button.disabled = !signed || !supabaseClient;
   });
@@ -3152,6 +3229,78 @@ function scheduleCloudSave() {
   if (!accountSession || !supabaseClient || cloudStateHydrating || !cloudAutosaveReady) return;
   window.clearTimeout(cloudSaveTimer);
   cloudSaveTimer = window.setTimeout(() => saveCloudNow({ manual: false }), 2500);
+}
+
+function rememberPendingCloudSave(email) {
+  try {
+    localStorage.setItem(ACCOUNT_PENDING_SAVE_KEY, JSON.stringify({
+      email: normalizeAccountEmail(email),
+      state: stateForCloud(),
+      dataVersion: DATA_VERSION,
+      createdAt: new Date().toISOString()
+    }));
+  } catch {
+    renderAccountStatus("Cuenta creada, pero este navegador no pudo preparar la partida para subirla al confirmar.");
+  }
+}
+
+function readPendingCloudSave(session) {
+  try {
+    const raw = localStorage.getItem(ACCOUNT_PENDING_SAVE_KEY);
+    if (!raw) return null;
+    const pending = JSON.parse(raw);
+    const pendingEmail = normalizeAccountEmail(pending?.email || "");
+    const sessionEmail = normalizeAccountEmail(session?.user?.email || "");
+    if (!pending?.state || !pendingEmail || !sessionEmail || pendingEmail !== sessionEmail) return null;
+    return pending;
+  } catch {
+    return null;
+  }
+}
+
+function clearPendingCloudSave() {
+  localStorage.removeItem(ACCOUNT_PENDING_SAVE_KEY);
+}
+
+async function uploadPendingCloudSave(session) {
+  const pending = readPendingCloudSave(session);
+  if (!pending || !supabaseClient) return false;
+
+  const pendingState = mergeState(createFreshState(), pending.state);
+  pendingState.dataVersion = DATA_VERSION;
+  const payload = {
+    ...cloneForSnapshot(pendingState),
+    dataVersion: DATA_VERSION,
+    savedAt: new Date().toISOString()
+  };
+
+  const { error } = await supabaseClient
+    .from("player_saves")
+    .upsert({
+      profile_id: session.user.id,
+      email: session.user.email,
+      state: payload,
+      data_version: DATA_VERSION,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "profile_id" });
+
+  if (error) {
+    renderAccountStatus(cloudErrorMessage(error, "guardar"));
+    return false;
+  }
+
+  cloudStateHydrating = true;
+  state = pendingState;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  restoreFortressAssignments();
+  applySavedBuildingLevels();
+  closeSheet();
+  renderGameUi();
+  cloudStateHydrating = false;
+  cloudAutosaveReady = true;
+  clearPendingCloudSave();
+  renderAccountStatus(`Cuenta confirmada. Fortaleza guardada en nube para ${session.user.email}.`);
+  return true;
 }
 
 async function saveCloudNow({ manual = false } = {}) {
@@ -3182,7 +3331,7 @@ async function saveCloudNow({ manual = false } = {}) {
   renderAccountStatus(`Guardado en nube: ${new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}.`);
 }
 
-async function loadCloudSave({ manual = false } = {}) {
+async function loadCloudSave({ manual = false, saveLocalIfEmpty = false } = {}) {
   if (!accountSession || !supabaseClient) {
     if (manual) renderAccountStatus("Entra con tu cuenta para cargar la nube.");
     return;
@@ -3199,9 +3348,14 @@ async function loadCloudSave({ manual = false } = {}) {
     return;
   }
   if (!data?.state) {
-    await saveCloudNow({ manual: false });
-    cloudAutosaveReady = true;
-    renderAccountStatus("No habia partida en nube. Se ha creado una partida nueva desde cero.");
+    if (saveLocalIfEmpty) {
+      await saveCloudNow({ manual: false });
+      cloudAutosaveReady = true;
+      renderAccountStatus("Cuenta confirmada. Se ha guardado esta fortaleza en la cuenta.");
+      return;
+    }
+    cloudAutosaveReady = false;
+    renderAccountStatus("Esta cuenta no tiene fortaleza guardada. Pulsa Nueva partida desde cero para crear una fortaleza nueva, o Guardar nube para vincular la actual.");
     return;
   }
 
@@ -3233,6 +3387,20 @@ function cloudErrorMessage(error, action) {
     return "La cuenta ya conecta, pero falta activar el guardado dentro de Supabase. Abre SQL Editor y lo dejamos listo.";
   }
   return `No se pudo ${action} en nube: ${text || "error desconocido"}`;
+}
+
+function authErrorMessage(error, fallback) {
+  const text = String(error?.message || "");
+  if (/email not confirmed|not confirmed/i.test(text)) {
+    return "El correo aun no esta confirmado. Abre el email de Supabase y pulsa confirmar.";
+  }
+  if (/invalid login credentials|invalid credentials/i.test(text)) {
+    return "Correo o contrasena incorrectos. Si es otra fortaleza, pulsa Cambiar cuenta / salir y entra con ese correo.";
+  }
+  if (/user already registered|already registered|already exists/i.test(text)) {
+    return "Ese correo ya tiene cuenta. Pulsa Entrar con ese correo, o usa otro correo para otra fortaleza.";
+  }
+  return `${fallback}: ${text || "error desconocido"}`;
 }
 
 function startFreshGame({ syncCloud = false } = {}) {
