@@ -4,8 +4,17 @@
 
 begin;
 
-delete from public.player_saves;
-delete from public.profiles;
+do $$
+begin
+  if to_regclass('public.player_saves') is not null then
+    execute 'delete from public.player_saves';
+  end if;
+
+  if to_regclass('public.profiles') is not null then
+    execute 'delete from public.profiles';
+  end if;
+end $$;
+
 delete from auth.users;
 
 commit;
