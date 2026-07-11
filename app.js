@@ -2,7 +2,7 @@ const STORAGE_KEY = "imperioDoradoState.v2";
 const LEGACY_STORAGE_KEY = "imperioDoradoState.v1";
 const ACCOUNT_PENDING_SAVE_KEY = "imperioDoradoPendingCloudSave.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g56";
+const DATA_VERSION = "20260702-g57";
 const BUILDING_MAX_LEVEL = 25;
 const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
 const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
@@ -3047,6 +3047,11 @@ async function createAccountFromPanel() {
     renderAccountStatus(authErrorMessage(error, "No se pudo crear la cuenta"));
     return;
   }
+  if (isDuplicateSignupResponse(data)) {
+    clearPendingCloudSave();
+    renderAccountStatus(existingAccountMessage());
+    return;
+  }
   if (data?.session) {
     clearPendingCloudSave();
     await setAccountSession(data.session, { loadCloud: false });
@@ -3056,6 +3061,12 @@ async function createAccountFromPanel() {
   }
   rememberPendingCloudSave(credentials.email);
   renderAccountStatus("Cuenta creada. Revisa el correo; al confirmar volvera al juego y se guardara esta fortaleza en esa cuenta.");
+}
+
+function isDuplicateSignupResponse(data) {
+  const user = data?.user;
+  if (!user || data?.session) return false;
+  return Array.isArray(user.identities) && user.identities.length === 0;
 }
 
 async function resendAccountConfirmation() {
@@ -3398,9 +3409,13 @@ function authErrorMessage(error, fallback) {
     return "Correo o contrasena incorrectos. Si es otra fortaleza, pulsa Cambiar cuenta / salir y entra con ese correo.";
   }
   if (/user already registered|already registered|already exists/i.test(text)) {
-    return "Ese correo ya tiene cuenta. Pulsa Entrar con ese correo, o usa otro correo para otra fortaleza.";
+    return existingAccountMessage();
   }
   return `${fallback}: ${text || "error desconocido"}`;
+}
+
+function existingAccountMessage() {
+  return "Esa cuenta ya existe. Pulsa Entrar con ese correo, o usa otro correo para otra fortaleza.";
 }
 
 function startFreshGame({ syncCloud = false } = {}) {
