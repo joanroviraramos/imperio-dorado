@@ -2,10 +2,20 @@ const STORAGE_KEY = "imperioDoradoState.v2";
 const LEGACY_STORAGE_KEY = "imperioDoradoState.v1";
 const ACCOUNT_PENDING_SAVE_KEY = "imperioDoradoPendingCloudSave.v1";
 const urlParams = new URLSearchParams(window.location.search);
-const DATA_VERSION = "20260702-g57";
+const DATA_VERSION = "20260702-g58";
 const BUILDING_MAX_LEVEL = 25;
-const CONSTRUCTION_BASE_LEVEL_MS = 2 * 60 * 1000;
-const CONSTRUCTION_LEVEL_MULTIPLIER = 1.4;
+const CONSTRUCTION_BASE_LEVEL_MS = 8 * 60 * 1000;
+const CONSTRUCTION_LEVEL_MULTIPLIER = 1.52;
+const RESEARCH_TIME_SCALE = 20;
+const TRAINING_BASE_MS = 2 * 60 * 1000;
+const TRAINING_MS_PER_TROOP = 650;
+const TRAINING_CAPACITY_BASE = 250;
+const TRAINING_CAPACITY_PER_LEVEL = 350;
+const TRAINING_CAPACITY_RESEARCH_BONUS = 250;
+const MARCH_BASE_SIZE = 4500;
+const MARCH_SIZE_PER_ALCAZAR_LEVEL = 2200;
+const MARCH_RESEARCH_SIZE_PER_LEVEL = 3000;
+const MARCH_FLAT_BONUS_SCALE = 50;
 const ALCAZAR_UPGRADE_REQUIREMENTS = {
   2: [{ id: "muralla", level: 1 }],
   3: [{ id: "almacen", level: 2 }, { resource: "grain", level: 2 }],
@@ -1289,7 +1299,7 @@ const researchBranches = [
         requires: [{ id: "troop-tier", level: 2 }],
         cost: { grain: 680, iron: 420, silver: 210 },
         timeMs: 18000,
-        effect: "+10 tropas por cola de entrenamiento"
+        effect: "+250 tropas por cola de entrenamiento"
       },
       {
         id: "training-speed",
@@ -1316,7 +1326,7 @@ const researchBranches = [
         tier: 1,
         cost: { grain: 620, wood: 340, silver: 220 },
         timeMs: 18000,
-        effect: "+80 tropas maximas por marcha"
+        effect: "+3.000 tropas maximas por marcha"
       },
       {
         id: "march-speed",
@@ -1731,6 +1741,8 @@ const packs = [
       "card-wood-2200": 1,
       "card-stone-2400": 1,
       "card-silver-320": 1,
+      "speed-build-1": 3,
+      "speed-build-5": 2,
       "speed-build-15": 1,
       "hero-xp-1600": 1
     }
@@ -1749,6 +1761,8 @@ const packs = [
       "card-iron-2600": 4,
       "card-silver-1200": 4,
       "card-gold-28": 3,
+      "speed-research-1": 5,
+      "speed-research-5": 4,
       "speed-research-30": 4,
       "frag-chart": 2,
       "hero-xp-1600": 3
@@ -1768,6 +1782,8 @@ const packs = [
       "card-grain-5200": 4,
       "card-iron-3100": 4,
       "card-gold-42": 3,
+      "speed-training-1": 5,
+      "speed-training-5": 4,
       "speed-training-30": 6,
       "speed-training-60": 2,
       "frag-sword": 2,
@@ -1902,15 +1918,18 @@ const inventoryCatalog = {
   "card-iron-50000": cardItem("Tarjeta de Hierro", "Legendaria", "i-sword", "Usar: +50.000 hierro.", { iron: 50000 }),
   "card-silver-25000": cardItem("Tarjeta de Plata", "Legendaria", "i-scroll", "Usar: +25.000 plata.", { silver: 25000 }),
   "card-gold-1000": cardItem("Tarjeta de Oro", "Legendaria", "i-crown", "Usar: +1.000 oro.", { gold: 1000 }),
+  "speed-build-1": boostItem("Acelerador de Obra", "1 min", "i-hammer", "Reduce una cola muy corta de construccion.", { queue: "construction", seconds: 60 }),
   "speed-build-5": boostItem("Acelerador de Obra", "5 min", "i-hammer", "Reduce una cola corta de construccion.", { queue: "construction", seconds: 300 }),
   "speed-build-15": boostItem("Acelerador de Obra", "15 min", "i-hammer", "Reduce una cola de construccion activa.", { queue: "construction", seconds: 900 }),
   "speed-build-60": boostItem("Acelerador de Obra", "60 min", "i-hammer", "Acelerador largo para mejoras de edificios.", { queue: "construction", seconds: 3600 }),
   "speed-build-8h": boostItem("Acelerador de Obra", "8 h", "i-hammer", "Acelerador mayor para mejoras largas.", { queue: "construction", seconds: 28800 }),
   "speed-build-24h": boostItem("Acelerador de Obra", "24 h", "i-hammer", "Acelerador de dia completo para construccion.", { queue: "construction", seconds: 86400 }),
+  "speed-research-1": boostItem("Acelerador de Ciencia", "1 min", "i-book", "Reduce una investigacion muy corta de Academia.", { queue: "research", seconds: 60 }),
   "speed-research-5": boostItem("Acelerador de Ciencia", "5 min", "i-book", "Reduce una investigacion corta de Academia.", { queue: "research", seconds: 300 }),
   "speed-research-15": boostItem("Acelerador de Ciencia", "15 min", "i-book", "Reduce una investigacion de Academia.", { queue: "research", seconds: 900 }),
   "speed-research-30": boostItem("Acelerador de Ciencia", "30 min", "i-book", "Reduce una investigacion de Academia.", { queue: "research", seconds: 1800 }),
   "speed-research-8h": boostItem("Acelerador de Ciencia", "8 h", "i-book", "Acelerador mayor para investigaciones largas.", { queue: "research", seconds: 28800 }),
+  "speed-training-1": boostItem("Acelerador de Leva", "1 min", "i-sword", "Reduce una cola muy corta de entrenamiento.", { queue: "training", seconds: 60 }),
   "speed-training-5": boostItem("Acelerador de Leva", "5 min", "i-sword", "Reduce una cola corta de entrenamiento.", { queue: "training", seconds: 300 }),
   "speed-training-15": boostItem("Acelerador de Leva", "15 min", "i-sword", "Reduce una cola de entrenamiento.", { queue: "training", seconds: 900 }),
   "speed-training-30": boostItem("Acelerador de Leva", "30 min", "i-sword", "Reduce una cola de entrenamiento.", { queue: "training", seconds: 1800 }),
@@ -2134,8 +2153,16 @@ function heroTraitBonus(key, heroId = state?.selectedHeroId) {
   return Math.max(0, Math.round(Number(hero?.bonuses?.[key] || 0)));
 }
 
+function marchBonusCapacity(value = 0) {
+  return Math.round(Math.max(0, Number(value) || 0) * MARCH_FLAT_BONUS_SCALE);
+}
+
+function formatMarchCapacityBonus(value = 0) {
+  return `+${formatNumber(marchBonusCapacity(value))}`;
+}
+
 function formatHeroTraitBonus(key, value = heroTraitBonus(key)) {
-  if (key === "marchSize") return `+${formatNumber(value)}`;
+  if (key === "marchSize") return formatMarchCapacityBonus(value);
   if (key === "monsterEnergySave") return `-${formatNumber(value)}%`;
   return `+${formatNumber(value)}%`;
 }
@@ -4706,8 +4733,8 @@ function completeQueue(type, queue) {
 
 function queueDuration(type, building, amount = 0) {
   if (type === "construction") return constructionDurationForBuilding(building);
-  if (type === "research") return Math.round((22 + building.level * 4) * 1000 * durationFactor("research"));
-  if (type === "training") return Math.round((16 + Math.ceil(amount / 12)) * 1000 * durationFactor("training"));
+  if (type === "research") return Math.round(((building?.level || 1) * 90 + 240) * 1000 * durationFactor("research"));
+  if (type === "training") return Math.round((TRAINING_BASE_MS + Math.max(0, amount) * TRAINING_MS_PER_TROOP) * durationFactor("training"));
   if (type === "healing") return Math.round((14 + Math.ceil(amount / 10)) * 1000 * durationFactor("healing"));
   return 20 * 1000;
 }
@@ -5686,7 +5713,7 @@ function bindSheet() {
     if (marchFill) fillMarchPlanner(marchFill.dataset.marchFill);
     if (marchMax) fillMaxMarchPlanner(marchMax.dataset.marchMax);
     if (marchPreset) applyDoctrineToPlanner(marchPreset.dataset.marchPreset);
-    if (marchSize) renderResearchTree("command", "Orden de Marcha aumenta el maximo de tropas por marcha. Algunas piezas de forja tambien suman capacidad.");
+    if (marchSize) renderResearchTree("command", "El Alcazar marca la marcha base. Orden de Marcha, heroe y equipo aumentan miles de tropas por salida.");
     if (cancelMarch) cancelMarchById(cancelMarch.dataset.cancelMarch);
     if (centerMarch) centerWorldOnMarch(centerMarch.dataset.centerMarch);
     if (centerMarker) {
@@ -7156,11 +7183,14 @@ function monsterMaterialAmount(marker) {
 function monsterSpeedReward(marker, hunt) {
   const reward = {};
   if (!hunt?.killed) {
-    if ((hunt?.damage || 0) > 0 && monsterLevel(marker) <= 3) reward["speed-build-5"] = 1;
+    if ((hunt?.damage || 0) > 0 && monsterLevel(marker) <= 3) reward["speed-build-1"] = 1;
     return reward;
   }
   const level = monsterLevel(marker);
+  reward["speed-build-1"] = level * 2;
   reward["speed-build-5"] = level;
+  if (level >= 2) reward["speed-training-1"] = level;
+  if (level >= 3) reward["speed-research-1"] = level - 1;
   if (level >= 2) reward["speed-training-5"] = level - 1;
   if (level >= 3) reward["speed-research-5"] = level - 2;
   if (level >= 4) reward["speed-build-15"] = level - 3;
@@ -8158,7 +8188,7 @@ function nextResearchCost(node) {
 function researchDuration(node) {
   const level = researchLevel(node.id);
   const speed = Math.max(0.45, 1 - researchLevel("research-method") * 0.05 - heroEquipmentBonus("research") * 0.01);
-  return Math.round(node.timeMs * (1 + level * 0.45) * (1 + ((node.tier || 1) - 1) * 0.2) * speed);
+  return Math.round(node.timeMs * RESEARCH_TIME_SCALE * (1 + level * 0.45) * (1 + ((node.tier || 1) - 1) * 0.2) * speed);
 }
 
 function researchOutcomeText(id, level) {
@@ -8172,14 +8202,14 @@ function researchOutcomeText(id, level) {
     "siege-attack": `Artilleria ataque +${value * 5}%`,
     "troop-health": `Heridos en combate -${value * 2}%`,
     "troop-tier": `Nivel de tropa entrenable ${Math.min(5, 1 + Math.floor(value / 2))}`,
-    "march-size": `Maximo por marcha ${formatNumber(220 + value * 80)} tropas`,
+    "march-size": `Maximo base por marcha ${formatNumber(baseMarchSize() + value * MARCH_RESEARCH_SIZE_PER_LEVEL)} tropas`,
     "march-speed": `Velocidad de marcha +${value * 4}%`,
     "scout-precision": `Espionaje -${value * 4}% coste`,
     "bonus-march-slot": `Slots de marcha hasta ${Math.min(6, 1 + Math.floor((buildings.find((building) => building.id === "alcazar")?.level || 1) / 4) + value)}`,
     "rally-tactics": `Refuerzo aliado en rally +${value * 5}%`,
     "rally-size": `Ataque de rally +${value * 4}%`,
     "reinforcement-capacity": `Refuerzos preparados nivel ${value}`,
-    "training-capacity": `Leva +${value * 10} tropas por cola`,
+    "training-capacity": `Leva +${formatNumber(value * TRAINING_CAPACITY_RESEARCH_BONUS)} tropas por cola`,
     "training-speed": `Entrenamiento +${value * 5}%`,
     "wall-defense": `Defensa de muralla +${value * 4}%`,
     "garrison-defense": `Defensa de guarnicion +${value * 3}%`,
@@ -9852,7 +9882,7 @@ function totalHospitalCapacity() {
 }
 
 function trainingBatch(building) {
-  return 36 + building.level * 12 + researchLevel("training-capacity") * 10;
+  return TRAINING_CAPACITY_BASE + building.level * TRAINING_CAPACITY_PER_LEVEL + researchLevel("training-capacity") * TRAINING_CAPACITY_RESEARCH_BONUS;
 }
 
 function trainingCapacityForBuilding(building) {
@@ -10199,7 +10229,16 @@ function marchSlots() {
 }
 
 function maxMarchSize(heroId = state.selectedHeroId) {
-  return 220 + researchLevel("march-size") * 80 + heroEquipmentBonus("marchSize") + heroTraitBonus("marchSize", heroId);
+  return baseMarchSize() + researchLevel("march-size") * MARCH_RESEARCH_SIZE_PER_LEVEL + marchFlatBonus(heroId);
+}
+
+function baseMarchSize() {
+  const alcazar = buildings.find((building) => building.id === "alcazar");
+  return MARCH_BASE_SIZE + (alcazar?.level || 1) * MARCH_SIZE_PER_ALCAZAR_LEVEL;
+}
+
+function marchFlatBonus(heroId = state.selectedHeroId) {
+  return marchBonusCapacity(heroEquipmentBonus("marchSize") + heroTraitBonus("marchSize", heroId));
 }
 
 function monsterTierLimit() {
@@ -10333,7 +10372,7 @@ function equipmentSetBonusText(loadoutId = state.activeEquipmentLoadout) {
         monster: "monstruos",
         marchSize: "marcha"
       }[key] || key;
-      return key === "marchSize" ? `+${formatNumber(total)} ${label}` : `+${formatNumber(total)}% ${label}`;
+      return key === "marchSize" ? `${formatMarchCapacityBonus(total)} ${label}` : `+${formatNumber(total)}% ${label}`;
     })
     .join(" / ");
   return `${stageText} ${quality.label}: ${values}`;
@@ -10373,7 +10412,7 @@ function equipmentBonusKeyLabel(key) {
 }
 
 function formatLoadoutBonusValue(key, value) {
-  return key === "marchSize" ? `+${formatNumber(value)}` : `+${formatNumber(value)}%`;
+  return key === "marchSize" ? formatMarchCapacityBonus(value) : `+${formatNumber(value)}%`;
 }
 
 function renderEquipmentLoadoutButtons() {
@@ -10414,7 +10453,7 @@ function loadoutPreviewText(loadout) {
     monster: "monstruos",
     marchSize: "marcha"
   }[key] || key;
-  return key === "marchSize" ? `+${formatNumber(value)} ${label}` : `+${formatNumber(value)}% ${label}`;
+  return key === "marchSize" ? `${formatMarchCapacityBonus(value)} ${label}` : `+${formatNumber(value)}% ${label}`;
 }
 
 function selectEquipmentLoadout(id) {
@@ -10443,7 +10482,7 @@ function formatEquipmentBonus(recipe, level, qualityIndex = 0) {
   return Object.entries(recipe.bonus || {})
     .map(([key, value]) => {
       const total = Math.round(value * level * equipmentQualityMultiplier(qualityIndex));
-      return key === "marchSize" ? `${labels[key]} +${formatNumber(total)}` : `${labels[key]} +${formatNumber(total)}%`;
+      return key === "marchSize" ? `${labels[key]} ${formatMarchCapacityBonus(total)}` : `${labels[key]} +${formatNumber(total)}%`;
     })
     .join(" / ");
 }
@@ -10461,7 +10500,7 @@ function formatCompactEquipmentBonus(recipe, level, qualityIndex = 0) {
   return Object.entries(recipe.bonus || {})
     .map(([key, value]) => {
       const total = Math.round(value * level * equipmentQualityMultiplier(qualityIndex));
-      return key === "marchSize" ? `${labels[key]} +${formatNumber(total)}` : `${labels[key]} +${formatNumber(total)}%`;
+      return key === "marchSize" ? `${labels[key]} ${formatMarchCapacityBonus(total)}` : `${labels[key]} +${formatNumber(total)}%`;
     })
     .join(" / ");
 }
@@ -10478,7 +10517,7 @@ function formatEquipmentPrimaryBonus(recipe, level, qualityIndex = 0) {
     research: "invest.",
     gathering: "recol."
   }[key] || key;
-  return key === "marchSize" ? `+${formatNumber(total)} ${label}` : `+${formatNumber(total)}% ${label}`;
+  return key === "marchSize" ? `${formatMarchCapacityBonus(total)} ${label}` : `+${formatNumber(total)}% ${label}`;
 }
 
 function equipmentPowerScore() {
@@ -12103,6 +12142,12 @@ function openAllianceShopSheet(message = "") {
 
 function allianceShopCatalog() {
   return [
+    { id: "build-1", itemId: "speed-build-1", quantity: 3, cost: 8 },
+    { id: "research-1", itemId: "speed-research-1", quantity: 3, cost: 10 },
+    { id: "training-1", itemId: "speed-training-1", quantity: 3, cost: 10 },
+    { id: "build-5", itemId: "speed-build-5", quantity: 1, cost: 9 },
+    { id: "research-5", itemId: "speed-research-5", quantity: 1, cost: 12 },
+    { id: "training-5", itemId: "speed-training-5", quantity: 1, cost: 12 },
     { id: "build-15", itemId: "speed-build-15", quantity: 1, cost: 16 },
     { id: "research-30", itemId: "speed-research-30", quantity: 1, cost: 28 },
     { id: "training-30", itemId: "speed-training-30", quantity: 1, cost: 26 },
